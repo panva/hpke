@@ -1,0 +1,90 @@
+name: Test
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '53 11 * * 1'
+  workflow_dispatch:
+
+jobs:
+  node-versions:
+    uses: panva/.github/.github/workflows/node-versions.yml@main
+    with:
+      min: 22
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: 'npm'
+          check-latest: true
+      - run: npm clean-install
+      - run: node --run build
+      - run: node --run build:other
+      - run: node --run format
+      - run: git diff --exit-code
+
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: 'npm'
+          check-latest: true
+      - run: npm clean-install
+      - run: node --run docs
+      - run: git diff --exit-code
+      - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: latest
+      - run: node --run test:docs
+
+  node:
+    needs:
+      - node-versions
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: ${{ fromJSON(needs.node-versions.outputs.matrix) }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          check-latest: true
+      - run: npm clean-install
+      - run: node --run test
+
+  deno:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: latest
+      - run: npm clean-install
+      - run: deno run test:deno
+
+  bun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: npm clean-install
+      - run: bun run test:bun

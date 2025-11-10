@@ -1,0 +1,77 @@
+name: Release
+
+permissions: {}
+
+on:
+  push:
+    tags: ['v0.[0-9]+.[0-9]+']
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+      - run: npm publish
+
+  cleanup:
+    needs:
+      - npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - run: git push origin $GITHUB_SHA:v0.x
+      - run: git rm index.js index.d.ts index.d.ts.map
+      - run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore: cleanup after release"
+      - run: git push origin HEAD:main
+
+  github:
+    needs:
+      - npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      discussions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 2
+      - name: Create GitHub Release
+        run: |
+          # Get the CHANGELOG.md content from the current commit
+          git show HEAD -- CHANGELOG.md > CHANGELOG.diff
+
+          # Get the tag name pointing at the current commit
+          tag=$(git tag --points-at HEAD)
+
+          # Extract release notes from the diff:
+          # 1. Select only lines starting with '+' (additions)
+          # 2. Exclude the '+++ b/CHANGELOG.md' header line
+          # 3. Remove the leading '+' from each line
+          # 4. Skip the first 3 lines (likely header/metadata)
+          sed -n '/^+/p' CHANGELOG.diff | \
+            grep -v '^+++' | \
+            sed 's/^+//' | \
+            tail -n +4 > notes.md
+
+          # Create a GitHub release with the extracted notes
+          gh release create "$tag" -F notes.md --title "$tag" --discussion-category Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

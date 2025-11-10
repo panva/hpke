@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["./test/**/*.ts"],
+  "compilerOptions": {
+    "moduleResolution": "NodeNext",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "noUnusedLocals": false,
+    "types": ["node"],
+    "isolatedDeclarations": false
+  }
+}

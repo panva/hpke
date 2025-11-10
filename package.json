@@ -1,0 +1,72 @@
+{
+  "name": "@panva/hpke",
+  "version": "0.0.0",
+  "description": "Hybrid Public Key Encryption (HPKE) for Node.js, Browser, Cloudflare Workers, Deno, Bun, and other Web-interoperable runtimes",
+  "keywords": [
+    "browser",
+    "bun",
+    "cloudflare",
+    "decrypt",
+    "deno",
+    "edge",
+    "electron",
+    "encrypt",
+    "hpke",
+    "netlify",
+    "next.js",
+    "next",
+    "nextjs",
+    "rfc9180",
+    "vercel",
+    "webcrypto",
+    "workerd",
+    "workers"
+  ],
+  "homepage": "https://github.com/panva/hpke",
+  "repository": "panva/hpke",
+  "funding": {
+    "url": "https://github.com/sponsors/panva"
+  },
+  "license": "MIT",
+  "author": "Filip Skokan <panva.ip@gmail.com>",
+  "sideEffects": false,
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts",
+    "index.d.ts.map",
+    "index.js",
+    "index.ts"
+  ],
+  "scripts": {
+    "build": "npx tsc -p tsconfig.json && node build.cjs",
+    "build:other": "npx tsc -p tsconfig.test.json && npx tsc -p tsconfig.examples.json",
+    "docs": "npx typedoc",
+    "format": "prettier --log-level silent --write ./index.ts test/**/*.ts examples/**/*.ts",
+    "test": "node --test --no-warnings test/*.ts",
+    "test:bun": "bun test ./test/*.ts",
+    "test:deno": "deno test --no-check --allow-read test/*.ts",
+    "test:docs": "node --run docs && npx tsc -p tsconfig.docs.json && ./check-examples.sh"
+  },
+  "devDependencies": {
+    "@noble/ciphers": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@noble/post-quantum": "^0.5.2",
+    "@types/node": "^24.10.1",
+    "@types/web": "^0.0.294",
+    "amaro": "^1.1.5",
+    "prettier": "^3.6.2",
+    "prettier-plugin-jsdoc": "^1.5.0",
+    "remark-behead": "^3.1.0",
+    "remark-insert-headings": "^0.0.0",
+    "remark-toc": "^9.0.0",
+    "typedoc": "^0.28.14",
+    "typedoc-plugin-markdown": "^4.9.0",
+    "typedoc-plugin-remark": "^2.0.1",
+    "typescript": "^5.9.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

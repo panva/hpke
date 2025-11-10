@@ -1,0 +1,70 @@
+{
+  "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "disableSources": true,
+  "hideBreadcrumbs": true,
+  "visibilityFilters": {
+    "protected": false,
+    "private": false,
+    "inherited": true,
+    "external": false
+  },
+  "includeVersion": false,
+  "entryPoints": ["index.ts"],
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "gitRevision": "main",
+  "hideGenerator": true,
+  "out": "docs",
+  "plugin": [
+    "typedoc-plugin-markdown",
+    "typedoc-plugin-remark",
+    "./docs-theme.ts"
+  ],
+  "readme": "none",
+  "sort": ["kind", "static-first", "required-first", "alphabetical"],
+  "groupOrder": [
+    "Core",
+    "KEM Algorithms",
+    "KDF Algorithms",
+    "AEAD Algorithms",
+    "Constructors",
+    "Methods",
+    "Properties"
+  ],
+  "categoryOrder": ["Encryption Context", "Key Management", "Single-Shot APIs"],
+  "githubPages": false,
+  "parametersFormat": "table",
+  "hidePageHeader": true,
+  "expandObjects": false,
+  "expandParameters": false,
+  "interfacePropertiesFormat": "list",
+  "tableColumnSettings": {
+    "hideDefaults": true,
+    "hideInherited": false,
+    "hideModifiers": false,
+    "hideOverrides": false,
+    "hideSources": false,
+    "hideValues": false,
+    "leftAlignHeaders": true
+  },
+  "theme": "my-markdown",
+  "remarkStringifyOptions": {
+    "bullet": "-"
+  },
+  "remarkPlugins": [
+    {
+      "applyTo": ["Class", "Interface"],
+      "plugins": [
+        ["remark-insert-headings", { "text": "Contents" }],
+        ["remark-toc", { "maxDepth": 3, "skip": "Extends|See|Example" }]
+      ]
+    },
+    {
+      "applyTo": ["Class"],
+      "plugins": [
+        ["remark-behead", { "between": ["Constructor", "Encryption Context"], "depth": -1 }]
+      ]
+    }
+  ]
+}

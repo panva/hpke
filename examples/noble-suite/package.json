@@ -1,0 +1,11 @@
+{
+  "name": "noble-suite",
+  "private": true,
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.ts",
+  "keywords": [],
+  "author": "Filip Skokan <panva.ip@gmail.com>",
+  "license": "MIT",
+  "type": "module"
+}
