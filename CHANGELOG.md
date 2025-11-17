@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.1](https://github.com/panva/hpke/compare/v0.2.0...v0.2.1) (2025-11-17)
+
+
+### Fixes
+
+* correctly detext SharedArrayBuffer ([b33ea4c](https://github.com/panva/hpke/commit/b33ea4c5bbe5f8240d0a4ef7b629b6ec80561231))
+
 ## [0.2.0](https://github.com/panva/hpke/compare/v0.1.0...v0.2.0) (2025-11-17)
 
 
