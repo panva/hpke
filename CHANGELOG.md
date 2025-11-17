@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.2](https://github.com/panva/hpke/compare/v0.2.1...v0.2.2) (2025-11-17)
+
+
+### Fixes
+
+* work around firefox and safari NIST curve pkcs8 format limitations ([df28631](https://github.com/panva/hpke/commit/df2863108a4939f221a52ca930efd75b8da4aa4b))
+
 ## [0.2.1](https://github.com/panva/hpke/compare/v0.2.0...v0.2.1) (2025-11-17)
 
 
