@@ -27,14 +27,14 @@ const suite = new HPKE.CipherSuite(
 )
 
 // 2. Generate recipient key pair
-const recipientKeyPair = await suite.GenerateKeyPair()
+const recipient = await suite.GenerateKeyPair()
 
 // 3. Encrypt a message
 const plaintext = new TextEncoder().encode('Hello, World!')
-const { encapsulated_key, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext)
+const { encapsulated_key, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
 
 // 4. Decrypt the message
-const decrypted = await suite.Open(recipientKeyPair, encapsulated_key, ciphertext)
+const decrypted = await suite.Open(recipient.privateKey, encapsulated_key, ciphertext)
 console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 ```
 
