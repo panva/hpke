@@ -4,7 +4,7 @@
 
 Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ML-KEM-768 key encapsulation
 - ECDH with P-256 curve

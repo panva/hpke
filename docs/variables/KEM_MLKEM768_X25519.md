@@ -4,7 +4,7 @@
 
 Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519 aka X-Wing).
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ML-KEM-768 key encapsulation
 - X25519 key agreement

@@ -7,7 +7,7 @@ Diffie-Hellman Key Encapsulation Mechanism using Curve25519 and HKDF-SHA256.
 A Diffie-Hellman based KEM using the X25519 elliptic curve (Curve25519 for ECDH) with HKDF-SHA256
 for key derivation.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - X25519 key agreement
 - HMAC with SHA-256 (for HKDF)

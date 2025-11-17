@@ -7,7 +7,7 @@ Diffie-Hellman Key Encapsulation Mechanism using NIST P-384 curve and HKDF-SHA38
 A Diffie-Hellman based KEM using the NIST P-384 elliptic curve (also known as secp384r1) with
 HKDF-SHA384 for key derivation.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ECDH with P-384 curve
 - HMAC with SHA-384 (for HKDF)

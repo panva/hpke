@@ -7,7 +7,7 @@ Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA51
 A Diffie-Hellman based KEM using the NIST P-521 elliptic curve (also known as secp521r1) with
 HKDF-SHA512 for key derivation.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ECDH with P-521 curve
 - HMAC with SHA-512 (for HKDF)

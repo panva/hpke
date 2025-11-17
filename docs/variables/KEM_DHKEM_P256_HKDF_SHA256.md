@@ -7,7 +7,7 @@ Diffie-Hellman Key Encapsulation Mechanism using NIST P-256 curve and HKDF-SHA25
 A Diffie-Hellman based KEM using the NIST P-256 elliptic curve (also known as secp256r1) with
 HKDF-SHA256 for key derivation.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ECDH with P-256 curve
 - HMAC with SHA-256 (for HKDF)

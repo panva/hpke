@@ -6,7 +6,7 @@ Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-768).
 
 A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ML-KEM-768 key encapsulation
 - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation

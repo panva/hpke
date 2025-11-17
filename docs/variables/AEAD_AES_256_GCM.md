@@ -6,7 +6,7 @@ AES-256-GCM Authenticated Encryption with Associated Data (AEAD).
 
 Uses AES in Galois/Counter Mode with 256-bit keys.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - AES-GCM encryption and decryption
 

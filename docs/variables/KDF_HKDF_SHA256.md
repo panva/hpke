@@ -7,7 +7,7 @@ HKDF-SHA256 key derivation function.
 A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-256 as the
 hash function with an output length (Nh) of 32 bytes.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - HMAC with SHA-256
 

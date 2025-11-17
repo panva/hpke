@@ -7,7 +7,7 @@ Diffie-Hellman Key Encapsulation Mechanism using Curve448 and HKDF-SHA512.
 A Diffie-Hellman based KEM using the X448 elliptic curve (Curve448 for ECDH) with HKDF-SHA512 for
 key derivation.
 
-Depends on the following Web API algorithms being supported in the runtime:
+Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - X448 key agreement
 - HMAC with SHA-512 (for HKDF)

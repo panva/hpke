@@ -2371,7 +2371,7 @@ function HKDF_SHARED(): KDF_BASE {
  * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-256 as the
  * hash function with an output length (Nh) of 32 bytes.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - HMAC with SHA-256
  *
@@ -2396,7 +2396,7 @@ export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
  * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-384 as the
  * hash function with an output length (Nh) of 48 bytes.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - HMAC with SHA-384
  *
@@ -2421,7 +2421,7 @@ export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
  * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-512 as the
  * hash function with an output length (Nh) of 64 bytes.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - HMAC with SHA-512
  *
@@ -2482,7 +2482,7 @@ function SHAKE_SHARED(): KDF_BASE {
  * A one-stage KDF using the SHAKE128 extendable-output function (XOF) with an output length (Nh) of
  * 32 bytes.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - SHAKE128 (cSHAKE128 without any parameters) digest
  *
@@ -2507,7 +2507,7 @@ export const KDF_SHAKE128: KDFFactory = function (): SHAKE {
  * A one-stage KDF using the SHAKE256 extendable-output function (XOF) with an output length (Nh) of
  * 64 bytes.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - SHAKE256 (cSHAKE256 without any parameters) digest
  *
@@ -2906,7 +2906,7 @@ async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean
  * A Diffie-Hellman based KEM using the NIST P-256 elliptic curve (also known as secp256r1) with
  * HKDF-SHA256 for key derivation.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ECDH with P-256 curve
  * - HMAC with SHA-256 (for HKDF)
@@ -2947,7 +2947,7 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM {
  * A Diffie-Hellman based KEM using the NIST P-384 elliptic curve (also known as secp384r1) with
  * HKDF-SHA384 for key derivation.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ECDH with P-384 curve
  * - HMAC with SHA-384 (for HKDF)
@@ -2988,7 +2988,7 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM {
  * A Diffie-Hellman based KEM using the NIST P-521 elliptic curve (also known as secp521r1) with
  * HKDF-SHA512 for key derivation.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ECDH with P-521 curve
  * - HMAC with SHA-512 (for HKDF)
@@ -3033,7 +3033,7 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM {
  * A Diffie-Hellman based KEM using the X25519 elliptic curve (Curve25519 for ECDH) with HKDF-SHA256
  * for key derivation.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - X25519 key agreement
  * - HMAC with SHA-256 (for HKDF)
@@ -3072,7 +3072,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM {
  * A Diffie-Hellman based KEM using the X448 elliptic curve (Curve448 for ECDH) with HKDF-SHA512 for
  * key derivation.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - X448 key agreement
  * - HMAC with SHA-512 (for HKDF)
@@ -3217,7 +3217,7 @@ function MLKEM_SHARED(): KEM_BASE {
  *
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-512 key encapsulation
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
@@ -3252,7 +3252,7 @@ export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
  *
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-768 key encapsulation
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
@@ -3287,7 +3287,7 @@ export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
  *
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-1024 key encapsulation
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
@@ -3384,7 +3384,7 @@ function AEAD_SHARED(): AEAD_BASE {
  *
  * Uses AES in Galois/Counter Mode with 128-bit keys.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - AES-GCM encryption and decryption
  *
@@ -3411,7 +3411,7 @@ export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
  *
  * Uses AES in Galois/Counter Mode with 256-bit keys.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - AES-GCM encryption and decryption
  *
@@ -3438,7 +3438,7 @@ export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
  *
  * Uses ChaCha20 stream cipher with Poly1305 MAC.
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ChaCha20-Poly1305 encryption and decryption
  *
@@ -3860,7 +3860,7 @@ function PQTKEM_SHARED(): KEM_BASE {
 /**
  * Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519 aka X-Wing).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-768 key encapsulation
  * - X25519 key agreement
@@ -3911,7 +3911,7 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
 /**
  * Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-768 key encapsulation
  * - ECDH with P-256 curve
@@ -3967,7 +3967,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
 /**
  * Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
  *
- * Depends on the following Web API algorithms being supported in the runtime:
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
  *
  * - ML-KEM-1024 key encapsulation
  * - ECDH with P-384 curve
