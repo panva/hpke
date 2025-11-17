@@ -8,7 +8,7 @@ Support from the community to continue maintaining and improving this module is 
 
 ## Dependencies: 0
 
-`@panva/hpke` has no dependencies and it exports tree-shakeable ESM[^cjs].
+`@panva/hpke` has no dependencies and it exports tree-shakeable ESM.
 
 ## [API Reference](docs/README.md)
 
