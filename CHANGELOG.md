@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/panva/hpke/compare/v0.1.0...v0.2.0) (2025-11-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* options.psk_id is now options.pskId
+* encapsulated_key is now encapsulatedKey
+
+### Refactor
+
+* the snakeCase apocalypse ([5b2e675](https://github.com/panva/hpke/commit/5b2e67539fcdb2af08a8fc04e240e181e380ed7a))
+
 ## 0.1.0 (2025-11-17)
 
 
