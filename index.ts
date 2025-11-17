@@ -2282,7 +2282,7 @@ interface HKDF extends KDF {
 type KDF_BASE = Pick<KDF, 'Expand' | 'Extract' | 'Derive' | 'stages'>
 
 function sab(input: ArrayBufferLike): input is SharedArrayBuffer {
-  return typeof SharedArrayBuffer === 'undefined' || input instanceof SharedArrayBuffer
+  return typeof SharedArrayBuffer !== 'undefined' && input instanceof SharedArrayBuffer
 }
 
 function ab(input: Uint8Array): ArrayBuffer {
