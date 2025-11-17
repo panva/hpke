@@ -183,19 +183,19 @@ for (const vector of vectors) {
       enc: hex(vector.enc),
       info: hex(vector.info),
       psk: vector.psk ? hex(vector.psk) : undefined,
-      psk_id: vector.psk_id ? hex(vector.psk_id) : undefined,
+      pskId: vector.psk_id ? hex(vector.psk_id) : undefined,
     })
 
     // Helper for testing Open operation with different key types
     const testOpen = (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
       await waitFor(keys, { interval: 0 })
       const encryptions0 = vector.encryptions[0]!
-      const { enc, info, psk, psk_id } = getTestData()
+      const { enc, info, psk, pskId } = getTestData()
       const aad = hex(encryptions0.aad)
       const ct = hex(encryptions0.ct)
       const pt = hex(encryptions0.pt)
       const key = keyType === 'privateKey' ? skR : kpR
-      t.assert.deepStrictEqual(await suite.Open(key, enc, ct, aad, { info, psk, psk_id }), pt)
+      t.assert.deepStrictEqual(await suite.Open(key, enc, ct, aad, { info, psk, pskId }), pt)
     }
 
     // Helper for testing ReceiveExport operation with different key types
@@ -203,13 +203,13 @@ for (const vector of vectors) {
       (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
         await waitFor(keys, { interval: 0 })
         const exports0 = vector.exports[0]!
-        const { enc, info, psk, psk_id } = getTestData()
+        const { enc, info, psk, pskId } = getTestData()
         const exporter_context = hex(exports0.exporter_context)
         const exported_value = hex(exports0.exported_value)
         const L = exports0.L
         const key = keyType === 'privateKey' ? skR : kpR
         t.assert.deepStrictEqual(
-          await suite.ReceiveExport(key, enc, exporter_context, L, { info, psk, psk_id }),
+          await suite.ReceiveExport(key, enc, exporter_context, L, { info, psk, pskId }),
           exported_value,
         )
       }
@@ -218,10 +218,10 @@ for (const vector of vectors) {
     const testSetupRecipient =
       (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
         await waitFor(keys, { interval: 0 })
-        const { enc, info, psk, psk_id } = getTestData()
+        const { enc, info, psk, pskId } = getTestData()
         const key = keyType === 'privateKey' ? skR : kpR
 
-        const ctx = await suite.SetupRecipient(key, enc, { info, psk, psk_id })
+        const ctx = await suite.SetupRecipient(key, enc, { info, psk, pskId })
 
         // Test all encryptions in sequence
         for (const encryption of vector.encryptions) {

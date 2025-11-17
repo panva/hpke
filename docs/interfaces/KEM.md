@@ -66,27 +66,27 @@ const customKEM: HPKE.KEMFactory = (): HPKE.KEM => ({
   },
   async SerializePublicKey(key) {
     // perform SerializePublicKey
-    let public_key!: Uint8Array
+    let publicKey!: Uint8Array
 
-    return public_key
+    return publicKey
   },
   async DeserializePublicKey(key) {
     // perform DeserializePublicKey
-    let public_key!: HPKE.Key
+    let publicKey!: HPKE.Key
 
-    return public_key
+    return publicKey
   },
   async SerializePrivateKey(key) {
     // perform SerializePrivateKey
-    let private_key!: Uint8Array
+    let privateKey!: Uint8Array
 
-    return private_key
+    return privateKey
   },
   async DeserializePrivateKey(key, extractable) {
     // perform DeserializePrivateKey
-    let private_key!: HPKE.Key
+    let privateKey!: HPKE.Key
 
-    return private_key
+    return privateKey
   },
   async Encap(pkR) {
     // perform Encap

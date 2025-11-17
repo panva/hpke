@@ -30,10 +30,10 @@
  *
  * // 3. Encrypt a message
  * const plaintext = new TextEncoder().encode('Hello, World!')
- * const { encapsulated_key, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
+ * const { encapsulatedKey, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
  *
  * // 4. Decrypt the message
- * const decrypted = await suite.Open(recipient.privateKey, encapsulated_key, ciphertext)
+ * const decrypted = await suite.Open(recipient.privateKey, encapsulatedKey, ciphertext)
  * console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
  * ```
  */
@@ -59,22 +59,22 @@ function IncrementSeq(seq: number): number {
 
 async function ContextExport(
   suite: Triple,
-  exporter_secret: Uint8Array,
-  exporter_context: Uint8Array,
+  exporterSecret: Uint8Array,
+  exporterContext: Uint8Array,
   L: number,
 ) {
   /* c8 ignore next 3 */
   if (suite.KDF.stages !== 1 && suite.KDF.stages !== 2) {
     throw new Error('unreachable')
   }
-  if (!(exporter_context instanceof Uint8Array)) {
-    throw new TypeError('"exporter_context" must be a Uint8Array')
+  if (!(exporterContext instanceof Uint8Array)) {
+    throw new TypeError('"exporterContext" must be a Uint8Array')
   }
   if (!Number.isInteger(L) || L <= 0 || L > 0xffff) {
     throw new TypeError('"L" must be a positive integer not exceeding 65535')
   }
   const Export = suite.KDF.stages === 1 ? ExportOneStage : ExportTwoStage
-  return await Export(suite.KDF, suite.id, exporter_secret, exporter_context, L)
+  return await Export(suite.KDF, suite.id, exporterSecret, exporterContext, L)
 }
 
 class Mutex {
@@ -104,9 +104,9 @@ class Mutex {
  *
  * ```ts
  * let suite!: HPKE.CipherSuite
- * let public_key!: HPKE.Key // recipient's public key
+ * let publicKey!: HPKE.Key // recipient's public key
  *
- * const { encapsulated_key, ctx } = await suite.SetupSender(public_key)
+ * const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
  * ```
  *
  * @group Core
@@ -213,19 +213,19 @@ class SenderContext {
    * let ctx!: HPKE.SenderContext
    *
    * // Export a 32-byte secret
-   * const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
-   * const exported_secret: Uint8Array = await ctx.Export(exporter_context, 32)
+   * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
+   * const exportedSecret: Uint8Array = await ctx.Export(exporterContext, 32)
    *
-   * // The recipient can derive the same secret using the same exporter_context
+   * // The recipient can derive the same secret using the same exporterContext
    * ```
    *
-   * @param exporter_context - Context for domain separation
+   * @param exporterContext - Context for domain separation
    * @param L - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
    */
-  async Export(exporter_context: Uint8Array, L: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporter_context, L)
+  async Export(exporterContext: Uint8Array, L: number): Promise<Uint8Array> {
+    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, L)
   }
 
   /**
@@ -247,12 +247,12 @@ export type { SenderContext }
  *
  * ```ts
  * let suite!: HPKE.CipherSuite
- * let private_key!: HPKE.Key | HPKE.KeyPair
+ * let privateKey!: HPKE.Key | HPKE.KeyPair
  *
  * // ... receive enc from sender
- * let encapsulated_key!: Uint8Array
+ * let encapsulatedKey!: Uint8Array
  *
- * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(private_key, encapsulated_key)
+ * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
  * ```
  *
  * @group Core
@@ -390,19 +390,19 @@ class RecipientContext {
    * let ctx!: HPKE.RecipientContext
    *
    * // Export a 32-byte secret
-   * const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
-   * const exported: Uint8Array = await ctx.Export(exporter_context, 32)
+   * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
+   * const exported: Uint8Array = await ctx.Export(exporterContext, 32)
    *
-   * // The sender can derive the same secret using the same exporter_context
+   * // The sender can derive the same secret using the same exporterContext
    * ```
    *
-   * @param exporter_context - Context for domain separation
+   * @param exporterContext - Context for domain separation
    * @param L - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
    */
-  async Export(exporter_context: Uint8Array, L: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporter_context, L)
+  async Export(exporterContext: Uint8Array, L: number): Promise<Uint8Array> {
+    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, L)
   }
 }
 export type { RecipientContext }
@@ -683,18 +683,18 @@ export class CipherSuite {
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let private_key!: HPKE.Key
-   * const serialized: Uint8Array = await suite.SerializePrivateKey(private_key)
+   * let privateKey!: HPKE.Key
+   * const serialized: Uint8Array = await suite.SerializePrivateKey(privateKey)
    * ```
    *
-   * @param private_key - Private key to serialize
+   * @param privateKey - Private key to serialize
    *
    * @returns A Promise that resolves to the serialized private key.
    */
-  async SerializePrivateKey(private_key: Key): Promise<Uint8Array> {
-    isKey(private_key, 'private', true)
+  async SerializePrivateKey(privateKey: Key): Promise<Uint8Array> {
+    isKey(privateKey, 'private', true)
 
-    return await this.#suite.KEM.SerializePrivateKey(private_key)
+    return await this.#suite.KEM.SerializePrivateKey(privateKey)
   }
 
   /**
@@ -705,18 +705,18 @@ export class CipherSuite {
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let public_key!: HPKE.Key
-   * const serialized: Uint8Array = await suite.SerializePublicKey(public_key)
+   * let publicKey!: HPKE.Key
+   * const serialized: Uint8Array = await suite.SerializePublicKey(publicKey)
    * ```
    *
-   * @param public_key - Public key to serialize
+   * @param publicKey - Public key to serialize
    *
    * @returns A Promise that resolves to the serialized public key.
    */
-  async SerializePublicKey(public_key: Key): Promise<Uint8Array> {
-    isKey(public_key, 'public', true)
+  async SerializePublicKey(publicKey: Key): Promise<Uint8Array> {
+    isKey(publicKey, 'public', true)
 
-    return await this.#suite.KEM.SerializePublicKey(public_key)
+    return await this.#suite.KEM.SerializePublicKey(publicKey)
   }
 
   /**
@@ -729,29 +729,29 @@ export class CipherSuite {
    * ```ts
    * let suite!: HPKE.CipherSuite
    * let serialized!: Uint8Array // ... previously serialized key of suite.KEM.Nsk length
-   * const private_key: HPKE.Key = await suite.DeserializePrivateKey(serialized)
+   * const privateKey: HPKE.Key = await suite.DeserializePrivateKey(serialized)
    * ```
    *
-   * @param private_key - Serialized private key
+   * @param privateKey - Serialized private key
    * @param extractable - Whether the deserialized private key should be extractable (e.g. by
    *   {@link SerializePrivateKey}) (default: false)
    *
    * @returns A Promise that resolves to the deserialized private key.
    */
-  async DeserializePrivateKey(private_key: Uint8Array, extractable?: boolean): Promise<Key> {
+  async DeserializePrivateKey(privateKey: Uint8Array, extractable?: boolean): Promise<Key> {
     extractable ??= false
-    if (!(private_key instanceof Uint8Array)) {
-      throw new TypeError('"private_key" must be an Uint8Array')
+    if (!(privateKey instanceof Uint8Array)) {
+      throw new TypeError('"privateKey" must be an Uint8Array')
     }
     if (typeof extractable !== 'boolean') {
       throw new TypeError('"extractable" must be a boolean')
     }
 
     try {
-      if (private_key.byteLength !== this.KEM.Nsk) {
-        throw new Error('Invalid "private_key" length')
+      if (privateKey.byteLength !== this.KEM.Nsk) {
+        throw new Error('Invalid "privateKey" length')
       }
-      return await this.#suite.KEM.DeserializePrivateKey(private_key, extractable)
+      return await this.#suite.KEM.DeserializePrivateKey(privateKey, extractable)
     } catch (cause) {
       if (cause instanceof NotSupportedError) {
         throw cause
@@ -770,23 +770,23 @@ export class CipherSuite {
    * ```ts
    * let suite!: HPKE.CipherSuite
    * let serialized!: Uint8Array // ... previously serialized key of suite.KEM.Npk length
-   * const public_key: HPKE.Key = await suite.DeserializePublicKey(serialized)
+   * const publicKey: HPKE.Key = await suite.DeserializePublicKey(serialized)
    * ```
    *
-   * @param public_key - Serialized public key
+   * @param publicKey - Serialized public key
    *
    * @returns A Promise that resolves to the deserialized public key.
    */
-  async DeserializePublicKey(public_key: Uint8Array): Promise<Key> {
-    if (!(public_key instanceof Uint8Array)) {
-      throw new TypeError('"public_key" must be an Uint8Array')
+  async DeserializePublicKey(publicKey: Uint8Array): Promise<Key> {
+    if (!(publicKey instanceof Uint8Array)) {
+      throw new TypeError('"publicKey" must be an Uint8Array')
     }
 
     try {
-      if (public_key.byteLength !== this.KEM.Npk) {
-        throw new Error('Invalid "public_key" length')
+      if (publicKey.byteLength !== this.KEM.Npk) {
+        throw new Error('Invalid "publicKey" length')
       }
-      return await this.#suite.KEM.DeserializePublicKey(public_key)
+      return await this.#suite.KEM.DeserializePublicKey(publicKey)
     } catch (cause) {
       if (cause instanceof NotSupportedError) {
         throw cause
@@ -807,50 +807,50 @@ export class CipherSuite {
    *
    * Mode selection:
    *
-   * - If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
    *
    * @category Single-Shot APIs
    * @example
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let public_key!: HPKE.Key // recipient's public key
+   * let publicKey!: HPKE.Key // recipient's public key
    * let aad!: Uint8Array | undefined
    *
    * const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
    *
-   * const { encapsulated_key, ciphertext } = await suite.Seal(public_key, plaintext, aad)
+   * const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext, aad)
    * ```
    *
-   * @param public_key - Recipient's public key
+   * @param publicKey - Recipient's public key
    * @param plaintext - Plaintext to encrypt
    * @param aad - Additional authenticated data passed to the AEAD
    * @param options - Options
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK modes)
-   * @param options.psk_id - Pre-shared key identifier (for PSK modes)
+   * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
    * @returns A Promise that resolves to an object containing the encapsulated key and ciphertext.
    *   The ciphertext is {@link CipherSuite.AEAD Nt} bytes longer than the plaintext. The
    *   encapsulated key is {@link CipherSuite.KEM Nenc} bytes.
    */
   async Seal(
-    public_key: Key,
+    publicKey: Key,
     plaintext: Uint8Array,
     aad?: Uint8Array,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
-  ): Promise<{ encapsulated_key: Uint8Array; ciphertext: Uint8Array }> {
+  ): Promise<{ encapsulatedKey: Uint8Array; ciphertext: Uint8Array }> {
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
     }
-    const { encapsulated_key, ctx } = await this.SetupSender(public_key, options)
+    const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
     const ciphertext = await ctx.Seal(plaintext, aad)
-    return { encapsulated_key, ciphertext }
+    return { encapsulatedKey, ciphertext }
   }
 
   /**
@@ -860,56 +860,56 @@ export class CipherSuite {
    *
    * Mode selection:
    *
-   * - If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
    *
    * @category Single-Shot APIs
    * @example
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let private_key!: HPKE.Key | HPKE.KeyPair
+   * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * // ... receive encapsulated_key, ciphertext, and possibly aad from sender
-   * let encapsulated_key!: Uint8Array
+   * // ... receive encapsulatedKey, ciphertext, and possibly aad from sender
+   * let encapsulatedKey!: Uint8Array
    * let ciphertext!: Uint8Array
    * let aad!: Uint8Array | undefined
    *
    * const plaintext: Uint8Array = await suite.Open(
-   *   private_key,
-   *   encapsulated_key,
+   *   privateKey,
+   *   encapsulatedKey,
    *   ciphertext,
    *   aad,
    * )
    * ```
    *
-   * @param private_key - Recipient's private key or key pair
-   * @param encapsulated_key - Encapsulated key from the sender
+   * @param privateKey - Recipient's private key or key pair
+   * @param encapsulatedKey - Encapsulated key from the sender
    * @param ciphertext - Ciphertext to decrypt
    * @param aad - Additional authenticated data (must match sender's `aad`)
    * @param options - Options
    * @param options.info - Application-supplied information (must match sender's `info`)
    * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.psk_id - Pre-shared key identifier (for PSK mode, must match sender's `psk_id`)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
    *
    * @returns A Promise that resolves to the decrypted plaintext.
    */
   async Open(
-    private_key: Key | KeyPair,
-    encapsulated_key: Uint8Array,
+    privateKey: Key | KeyPair,
+    encapsulatedKey: Uint8Array,
     ciphertext: Uint8Array,
     aad?: Uint8Array,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulated_key)
+    this.#validateEncLength(encapsulatedKey)
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
     }
-    const ctx = await this.SetupRecipient(private_key, encapsulated_key, options)
+    const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
     return await ctx.Open(ciphertext, aad)
   }
 
@@ -925,41 +925,41 @@ export class CipherSuite {
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let public_key!: HPKE.Key // recipient's public key
+   * let publicKey!: HPKE.Key // recipient's public key
    *
-   * const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
+   * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
    *
-   * const { encapsulated_key, exported_secret } = await suite.SendExport(
-   *   public_key,
-   *   exporter_context,
+   * const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+   *   publicKey,
+   *   exporterContext,
    *   32,
    * )
    * ```
    *
-   * @param public_key - Recipient's public key
-   * @param exporter_context - Context of the export operation
+   * @param publicKey - Recipient's public key
+   * @param exporterContext - Context of the export operation
    * @param L - Desired length of exported secret in bytes
    * @param options - Options
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK modes)
-   * @param options.psk_id - Pre-shared key identifier (for PSK modes)
+   * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
    * @returns A Promise that resolves to an object containing the encapsulated key and the exported
    *   secret.
    */
   async SendExport(
-    public_key: Key,
-    exporter_context: Uint8Array,
+    publicKey: Key,
+    exporterContext: Uint8Array,
     L: number,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
-  ): Promise<{ encapsulated_key: Uint8Array; exported_secret: Uint8Array }> {
-    const { encapsulated_key, ctx } = await this.SetupSender(public_key, options)
-    const exported_secret = await ctx.Export(exporter_context, L)
-    return { encapsulated_key, exported_secret }
+  ): Promise<{ encapsulatedKey: Uint8Array; exportedSecret: Uint8Array }> {
+    const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
+    const exportedSecret = await ctx.Export(exporterContext, L)
+    return { encapsulatedKey, exportedSecret }
   }
 
   /**
@@ -972,47 +972,47 @@ export class CipherSuite {
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let private_key!: HPKE.Key | HPKE.KeyPair
+   * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
+   * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
    *
-   * // ... receive encapsulated_key from sender
-   * let encapsulated_key!: Uint8Array
+   * // ... receive encapsulatedKey from sender
+   * let encapsulatedKey!: Uint8Array
    *
    * const exported: Uint8Array = await suite.ReceiveExport(
-   *   private_key,
-   *   encapsulated_key,
-   *   exporter_context,
+   *   privateKey,
+   *   encapsulatedKey,
+   *   exporterContext,
    *   32,
    * )
    * ```
    *
-   * @param private_key - Recipient's private key or key pair
-   * @param encapsulated_key - Encapsulated key from the sender
-   * @param exporter_context - Context of the export operation (must match sender's
-   *   `exporter_context`)
+   * @param privateKey - Recipient's private key or key pair
+   * @param encapsulatedKey - Encapsulated key from the sender
+   * @param exporterContext - Context of the export operation (must match sender's
+   *   `exporterContext`)
    * @param L - Desired length of exported secret in bytes (must match sender's `L`)
    * @param options - Options
    * @param options.info - Application-supplied information (must match sender's `info`)
    * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.psk_id - Pre-shared key identifier (for PSK mode, must match sender's `psk_id`)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
    *
    * @returns A Promise that resolves to the exported secret.
    */
   async ReceiveExport(
-    private_key: Key | KeyPair,
-    encapsulated_key: Uint8Array,
-    exporter_context: Uint8Array,
+    privateKey: Key | KeyPair,
+    encapsulatedKey: Uint8Array,
+    exporterContext: Uint8Array,
     L: number,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulated_key)
-    const ctx = await this.SetupRecipient(private_key, encapsulated_key, options)
-    return await ctx.Export(exporter_context, L)
+    this.#validateEncLength(encapsulatedKey)
+    const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
+    return await ctx.Export(exporterContext, L)
   }
 
   /**
@@ -1023,8 +1023,8 @@ export class CipherSuite {
    *
    * Mode selection:
    *
-   * - If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
    *
    * The returned context maintains a sequence number that increments with each encryption, ensuring
    * nonce uniqueness.
@@ -1034,9 +1034,9 @@ export class CipherSuite {
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let public_key!: HPKE.Key // recipient's public key
+   * let publicKey!: HPKE.Key // recipient's public key
    *
-   * const { encapsulated_key, ctx } = await suite.SetupSender(public_key)
+   * const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
    *
    * // Encrypt multiple messages with the same context
    * const aad1: Uint8Array = new TextEncoder().encode('message 1 aad')
@@ -1048,29 +1048,29 @@ export class CipherSuite {
    * const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
    * ```
    *
-   * @param public_key - Recipient's public key
+   * @param publicKey - Recipient's public key
    * @param options - Options
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK modes)
-   * @param options.psk_id - Pre-shared key identifier (for PSK modes)
+   * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
    * @returns A Promise that resolves to an object containing the encapsulated key and the sender
    *   context (`ctx`). The encapsulated key is {@link CipherSuite.KEM Nenc} bytes.
    */
   async SetupSender(
-    public_key: Key,
+    publicKey: Key,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
-  ): Promise<{ encapsulated_key: Uint8Array; ctx: SenderContext }> {
-    isKey(public_key, 'public')
+  ): Promise<{ encapsulatedKey: Uint8Array; ctx: SenderContext }> {
+    isKey(publicKey, 'public')
 
     let shared_secret: Uint8Array
     let enc: Uint8Array
     try {
-      const result = await this.#suite.KEM.Encap(public_key)
+      const result = await this.#suite.KEM.Encap(publicKey)
       shared_secret = result.shared_secret
       enc = result.enc
     } catch (cause) {
@@ -1087,11 +1087,11 @@ export class CipherSuite {
       shared_secret,
       options?.info,
       options?.psk,
-      options?.psk_id,
+      options?.pskId,
     )
 
     const ctx = new SenderContext(this.#suite, mode, key, base_nonce, exporter_secret)
-    return { encapsulated_key: enc, ctx }
+    return { encapsulatedKey: enc, ctx }
   }
 
   /**
@@ -1101,23 +1101,20 @@ export class CipherSuite {
    *
    * Mode selection:
    *
-   * - If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
    *
    * @category Encryption Context
    * @example
    *
    * ```ts
    * let suite!: HPKE.CipherSuite
-   * let private_key!: HPKE.Key | HPKE.KeyPair
+   * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * // ... receive encapsulated_key from sender
-   * let encapsulated_key!: Uint8Array
+   * // ... receive encapsulatedKey from sender
+   * let encapsulatedKey!: Uint8Array
    *
-   * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(
-   *   private_key,
-   *   encapsulated_key,
-   * )
+   * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
    *
    * // ... receive messages from sender
    *
@@ -1132,30 +1129,30 @@ export class CipherSuite {
    * const pt2: Uint8Array = await ctx.Open(ct2, aad2)
    * ```
    *
-   * @param private_key - Recipient's private key or key pair
-   * @param encapsulated_key - Encapsulated key from the sender
+   * @param privateKey - Recipient's private key or key pair
+   * @param encapsulatedKey - Encapsulated key from the sender
    * @param options - Options
    * @param options.info - Application-supplied information (must match sender's `info`)
    * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.psk_id - Pre-shared key identifier (for PSK mode, must match sender's `psk_id`)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
    *
    * @returns A Promise that resolves to the recipient context.
    */
   async SetupRecipient(
-    private_key: Key | KeyPair,
-    encapsulated_key: Uint8Array,
+    privateKey: Key | KeyPair,
+    encapsulatedKey: Uint8Array,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
-      psk_id?: Uint8Array
+      pskId?: Uint8Array
     },
   ): Promise<RecipientContext> {
-    const { skR, pkR } = this.#extractRecipientKeys(private_key)
-    this.#validateEncLength(encapsulated_key)
+    const { skR, pkR } = this.#extractRecipientKeys(privateKey)
+    this.#validateEncLength(encapsulatedKey)
 
     let shared_secret: Uint8Array
     try {
-      shared_secret = await this.#suite.KEM.Decap(encapsulated_key, skR, pkR)
+      shared_secret = await this.#suite.KEM.Decap(encapsulatedKey, skR, pkR)
     } catch (cause) {
       if (cause instanceof ValidationError || cause instanceof NotSupportedError) {
         throw cause
@@ -1170,7 +1167,7 @@ export class CipherSuite {
       shared_secret,
       options?.info,
       options?.psk,
-      options?.psk_id,
+      options?.pskId,
     )
 
     return new RecipientContext(this.#suite, mode, key, base_nonce, exporter_secret)
@@ -1872,27 +1869,27 @@ export async function LabeledExpand(
  *   },
  *   async SerializePublicKey(key) {
  *     // perform SerializePublicKey
- *     let public_key!: Uint8Array
+ *     let publicKey!: Uint8Array
  *
- *     return public_key
+ *     return publicKey
  *   },
  *   async DeserializePublicKey(key) {
  *     // perform DeserializePublicKey
- *     let public_key!: HPKE.Key
+ *     let publicKey!: HPKE.Key
  *
- *     return public_key
+ *     return publicKey
  *   },
  *   async SerializePrivateKey(key) {
  *     // perform SerializePrivateKey
- *     let private_key!: Uint8Array
+ *     let privateKey!: Uint8Array
  *
- *     return private_key
+ *     return privateKey
  *   },
  *   async DeserializePrivateKey(key, extractable) {
  *     // perform DeserializePrivateKey
- *     let private_key!: HPKE.Key
+ *     let privateKey!: HPKE.Key
  *
- *     return private_key
+ *     return privateKey
  *   },
  *   async Encap(pkR) {
  *     // perform Encap
@@ -2037,7 +2034,7 @@ function isKeyPair(skR: unknown): skR is KeyPair {
         throw new TypeError('key pair algorithms do not match')
       }
     } catch (cause) {
-      throw new TypeError('Invalid "private_key"', { cause })
+      throw new TypeError('Invalid "privateKey"', { cause })
     }
     return true
   }
@@ -2053,11 +2050,11 @@ function isKey(key: unknown, type: string, extractable?: boolean): asserts key i
     typeof k.type !== 'string' ||
     k.type !== type
   ) {
-    throw new TypeError(`Invalid "${type}_key"`)
+    throw new TypeError(`Invalid "${type}Key"`)
   }
 
   if (extractable && k.extractable !== true) {
-    throw new TypeError(`"${type}_key" must be extractable`)
+    throw new TypeError(`"${type}Key" must be extractable`)
   }
 }
 
@@ -2191,7 +2188,7 @@ async function KeySchedule(
   shared_secret: Uint8Array,
   info?: Uint8Array,
   psk?: Uint8Array,
-  psk_id?: Uint8Array,
+  pskId?: Uint8Array,
 ) {
   if (info != null && !(info instanceof Uint8Array)) {
     throw new TypeError('"info" must be an Uint8Array')
@@ -2199,14 +2196,14 @@ async function KeySchedule(
   if (psk != null && !(psk instanceof Uint8Array)) {
     throw new TypeError('"psk" must be an Uint8Array')
   }
-  if (psk_id != null && !(psk_id instanceof Uint8Array)) {
-    throw new TypeError('"psk_id" must be an Uint8Array')
+  if (pskId != null && !(pskId instanceof Uint8Array)) {
+    throw new TypeError('"pskId" must be an Uint8Array')
   }
-  VerifyPSKInputs(psk, psk_id)
+  VerifyPSKInputs(psk, pskId)
 
   info ??= new Uint8Array()
   psk ??= new Uint8Array()
-  psk_id ??= new Uint8Array()
+  pskId ??= new Uint8Array()
 
   /* c8 ignore next 3 */
   if (suite.KDF.stages !== 1 && suite.KDF.stages !== 2) {
@@ -2214,7 +2211,7 @@ async function KeySchedule(
   }
   const CombineSecrets = suite.KDF.stages === 1 ? CombineSecretsOneStage : CombineSecretsTwoStage
 
-  return await CombineSecrets(suite, mode, shared_secret, info, psk, psk_id)
+  return await CombineSecrets(suite, mode, shared_secret, info, psk, pskId)
 }
 
 function VerifyPSKInputs(psk?: Uint8Array, psk_id?: Uint8Array) {
@@ -2532,7 +2529,7 @@ async function getPublicKeyByExport(
   usages: KeyUsage[],
 ): Promise<CryptoKey> {
   if (!key.extractable) {
-    throw new TypeError('"private_key" must be extractable in this runtime')
+    throw new TypeError('"privateKey" must be extractable in this runtime')
   }
 
   return await subtle(async () => {

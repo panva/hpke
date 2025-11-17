@@ -115,7 +115,7 @@ const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
 
 ### SetupRecipient()
 
-> **SetupRecipient**(`private_key`, `encapsulated_key`, `options?`): `Promise`<[`RecipientContext`](../interfaces/RecipientContext.md)>
+> **SetupRecipient**(`privateKey`, `encapsulatedKey`, `options?`): `Promise`<[`RecipientContext`](../interfaces/RecipientContext.md)>
 
 Establishes a recipient decryption context.
 
@@ -123,19 +123,19 @@ Creates a context that can be used to decrypt multiple messages from the same se
 
 Mode selection:
 
-- If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
 
 #### Parameters
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `private_key` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulated_key` | `Uint8Array` | Encapsulated key from the sender |
+| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `psk_id`) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
 
 #### Returns
 
@@ -147,15 +147,12 @@ A Promise that resolves to the recipient context.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let private_key!: HPKE.Key | HPKE.KeyPair
+let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulated_key from sender
-let encapsulated_key!: Uint8Array
+// ... receive encapsulatedKey from sender
+let encapsulatedKey!: Uint8Array
 
-const ctx: HPKE.RecipientContext = await suite.SetupRecipient(
-  private_key,
-  encapsulated_key,
-)
+const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
 
 // ... receive messages from sender
 
@@ -174,7 +171,7 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 ### SetupSender()
 
-> **SetupSender**(`public_key`, `options?`): `Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulated_key`: `Uint8Array`; }>
+> **SetupSender**(`publicKey`, `options?`): `Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedKey`: `Uint8Array`; }>
 
 Establishes a sender encryption context.
 
@@ -183,8 +180,8 @@ amortizing the cost of the public key operations.
 
 Mode selection:
 
-- If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
 
 The returned context maintains a sequence number that increments with each encryption, ensuring
 nonce uniqueness.
@@ -193,15 +190,15 @@ nonce uniqueness.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `public_key` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
 
 #### Returns
 
-`Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulated_key`: `Uint8Array`; }>
+`Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedKey`: `Uint8Array`; }>
 
 A Promise that resolves to an object containing the encapsulated key and the sender
 context (`ctx`). The encapsulated key is [Nenc](#kem) bytes.
@@ -210,9 +207,9 @@ context (`ctx`). The encapsulated key is [Nenc](#kem) bytes.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let public_key!: HPKE.Key // recipient's public key
+let publicKey!: HPKE.Key // recipient's public key
 
-const { encapsulated_key, ctx } = await suite.SetupSender(public_key)
+const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
 
 // Encrypt multiple messages with the same context
 const aad1: Uint8Array = new TextEncoder().encode('message 1 aad')
@@ -261,7 +258,7 @@ const keyPair: HPKE.KeyPair = await suite.DeriveKeyPair(ikm)
 
 ### DeserializePrivateKey()
 
-> **DeserializePrivateKey**(`private_key`, `extractable?`): `Promise`<[`Key`](../interfaces/Key.md)>
+> **DeserializePrivateKey**(`privateKey`, `extractable?`): `Promise`<[`Key`](../interfaces/Key.md)>
 
 Deserializes a private key from bytes. By default, private keys are deserialized as
 non-extractable (their value cannot be exported).
@@ -270,7 +267,7 @@ non-extractable (their value cannot be exported).
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `private_key` | `Uint8Array` | Serialized private key |
+| `privateKey` | `Uint8Array` | Serialized private key |
 | `extractable?` | `boolean` | Whether the deserialized private key should be extractable (e.g. by [SerializePrivateKey](#serializeprivatekey)) (default: false) |
 
 #### Returns
@@ -284,14 +281,14 @@ A Promise that resolves to the deserialized private key.
 ```ts
 let suite!: HPKE.CipherSuite
 let serialized!: Uint8Array // ... previously serialized key of suite.KEM.Nsk length
-const private_key: HPKE.Key = await suite.DeserializePrivateKey(serialized)
+const privateKey: HPKE.Key = await suite.DeserializePrivateKey(serialized)
 ```
 
 ***
 
 ### DeserializePublicKey()
 
-> **DeserializePublicKey**(`public_key`): `Promise`<[`Key`](../interfaces/Key.md)>
+> **DeserializePublicKey**(`publicKey`): `Promise`<[`Key`](../interfaces/Key.md)>
 
 Deserializes a public key from bytes. Public keys are always deserialized as extractable (their
 value can be exported, e.g. by [SerializePublicKey](#serializepublickey)).
@@ -300,7 +297,7 @@ value can be exported, e.g. by [SerializePublicKey](#serializepublickey)).
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `public_key` | `Uint8Array` | Serialized public key |
+| `publicKey` | `Uint8Array` | Serialized public key |
 
 #### Returns
 
@@ -313,7 +310,7 @@ A Promise that resolves to the deserialized public key.
 ```ts
 let suite!: HPKE.CipherSuite
 let serialized!: Uint8Array // ... previously serialized key of suite.KEM.Npk length
-const public_key: HPKE.Key = await suite.DeserializePublicKey(serialized)
+const publicKey: HPKE.Key = await suite.DeserializePublicKey(serialized)
 ```
 
 ***
@@ -348,7 +345,7 @@ const keyPair: HPKE.KeyPair = await suite.GenerateKeyPair()
 
 ### SerializePrivateKey()
 
-> **SerializePrivateKey**(`private_key`): `Promise`<`Uint8Array`>
+> **SerializePrivateKey**(`privateKey`): `Promise`<`Uint8Array`>
 
 Serializes an extractable private key to bytes.
 
@@ -356,7 +353,7 @@ Serializes an extractable private key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `private_key` | [`Key`](../interfaces/Key.md) | Private key to serialize |
+| `privateKey` | [`Key`](../interfaces/Key.md) | Private key to serialize |
 
 #### Returns
 
@@ -368,15 +365,15 @@ A Promise that resolves to the serialized private key.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let private_key!: HPKE.Key
-const serialized: Uint8Array = await suite.SerializePrivateKey(private_key)
+let privateKey!: HPKE.Key
+const serialized: Uint8Array = await suite.SerializePrivateKey(privateKey)
 ```
 
 ***
 
 ### SerializePublicKey()
 
-> **SerializePublicKey**(`public_key`): `Promise`<`Uint8Array`>
+> **SerializePublicKey**(`publicKey`): `Promise`<`Uint8Array`>
 
 Serializes a public key to bytes.
 
@@ -384,7 +381,7 @@ Serializes a public key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `public_key` | [`Key`](../interfaces/Key.md) | Public key to serialize |
+| `publicKey` | [`Key`](../interfaces/Key.md) | Public key to serialize |
 
 #### Returns
 
@@ -396,15 +393,15 @@ A Promise that resolves to the serialized public key.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let public_key!: HPKE.Key
-const serialized: Uint8Array = await suite.SerializePublicKey(public_key)
+let publicKey!: HPKE.Key
+const serialized: Uint8Array = await suite.SerializePublicKey(publicKey)
 ```
 
 ## Single-Shot APIs
 
 ### Open()
 
-> **Open**(`private_key`, `encapsulated_key`, `ciphertext`, `aad?`, `options?`): `Promise`<`Uint8Array`>
+> **Open**(`privateKey`, `encapsulatedKey`, `ciphertext`, `aad?`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for decrypting a single message.
 
@@ -412,21 +409,21 @@ It combines context setup and decryption in one call.
 
 Mode selection:
 
-- If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
 
 #### Parameters
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `private_key` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulated_key` | `Uint8Array` | Encapsulated key from the sender |
+| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
 | `aad?` | `Uint8Array` | Additional authenticated data (must match sender's `aad`) |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `psk_id`) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
 
 #### Returns
 
@@ -438,16 +435,16 @@ A Promise that resolves to the decrypted plaintext.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let private_key!: HPKE.Key | HPKE.KeyPair
+let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulated_key, ciphertext, and possibly aad from sender
-let encapsulated_key!: Uint8Array
+// ... receive encapsulatedKey, ciphertext, and possibly aad from sender
+let encapsulatedKey!: Uint8Array
 let ciphertext!: Uint8Array
 let aad!: Uint8Array | undefined
 
 const plaintext: Uint8Array = await suite.Open(
-  private_key,
-  encapsulated_key,
+  privateKey,
+  encapsulatedKey,
   ciphertext,
   aad,
 )
@@ -457,7 +454,7 @@ const plaintext: Uint8Array = await suite.Open(
 
 ### ReceiveExport()
 
-> **ReceiveExport**(`private_key`, `encapsulated_key`, `exporter_context`, `L`, `options?`): `Promise`<`Uint8Array`>
+> **ReceiveExport**(`privateKey`, `encapsulatedKey`, `exporterContext`, `L`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for receiving an exported secret.
 
@@ -467,14 +464,14 @@ It combines context setup and secret export in one call.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `private_key` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulated_key` | `Uint8Array` | Encapsulated key from the sender |
-| `exporter_context` | `Uint8Array` | Context of the export operation (must match sender's `exporter_context`) |
+| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
+| `exporterContext` | `Uint8Array` | Context of the export operation (must match sender's `exporterContext`) |
 | `L` | `number` | Desired length of exported secret in bytes (must match sender's `L`) |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `psk_id`) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
 
 #### Returns
 
@@ -486,17 +483,17 @@ A Promise that resolves to the exported secret.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let private_key!: HPKE.Key | HPKE.KeyPair
+let privateKey!: HPKE.Key | HPKE.KeyPair
 
-const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
+const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
 
-// ... receive encapsulated_key from sender
-let encapsulated_key!: Uint8Array
+// ... receive encapsulatedKey from sender
+let encapsulatedKey!: Uint8Array
 
 const exported: Uint8Array = await suite.ReceiveExport(
-  private_key,
-  encapsulated_key,
-  exporter_context,
+  privateKey,
+  encapsulatedKey,
+  exporterContext,
   32,
 )
 ```
@@ -505,31 +502,31 @@ const exported: Uint8Array = await suite.ReceiveExport(
 
 ### Seal()
 
-> **Seal**(`public_key`, `plaintext`, `aad?`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulated_key`: `Uint8Array`; }>
+> **Seal**(`publicKey`, `plaintext`, `aad?`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
 
 Single-shot API for encrypting a single message. It combines context setup and encryption in
 one call.
 
 Mode selection:
 
-- If the options `psk` and `psk_id` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `psk_id` are provided: PSK mode (authenticated with pre-shared key)
+- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
+- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
 
 #### Parameters
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `public_key` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
 | `plaintext` | `Uint8Array` | Plaintext to encrypt |
 | `aad?` | `Uint8Array` | Additional authenticated data passed to the AEAD |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
 
 #### Returns
 
-`Promise`<{ `ciphertext`: `Uint8Array`; `encapsulated_key`: `Uint8Array`; }>
+`Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
 
 A Promise that resolves to an object containing the encapsulated key and ciphertext.
 The ciphertext is [Nt](#aead) bytes longer than the plaintext. The
@@ -539,19 +536,19 @@ encapsulated key is [Nenc](#kem) bytes.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let public_key!: HPKE.Key // recipient's public key
+let publicKey!: HPKE.Key // recipient's public key
 let aad!: Uint8Array | undefined
 
 const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
 
-const { encapsulated_key, ciphertext } = await suite.Seal(public_key, plaintext, aad)
+const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext, aad)
 ```
 
 ***
 
 ### SendExport()
 
-> **SendExport**(`public_key`, `exporter_context`, `L`, `options?`): `Promise`<{ `encapsulated_key`: `Uint8Array`; `exported_secret`: `Uint8Array`; }>
+> **SendExport**(`publicKey`, `exporterContext`, `L`, `options?`): `Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
 
 Single-shot API for deriving a secret known only to sender and recipient.
 
@@ -563,17 +560,17 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `public_key` | [`Key`](../interfaces/Key.md) | Recipient's public key |
-| `exporter_context` | `Uint8Array` | Context of the export operation |
+| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `exporterContext` | `Uint8Array` | Context of the export operation |
 | `L` | `number` | Desired length of exported secret in bytes |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
-| `options.psk_id?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
 
 #### Returns
 
-`Promise`<{ `encapsulated_key`: `Uint8Array`; `exported_secret`: `Uint8Array`; }>
+`Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
 
 A Promise that resolves to an object containing the encapsulated key and the exported
 secret.
@@ -582,13 +579,13 @@ secret.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let public_key!: HPKE.Key // recipient's public key
+let publicKey!: HPKE.Key // recipient's public key
 
-const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
+const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
 
-const { encapsulated_key, exported_secret } = await suite.SendExport(
-  public_key,
-  exporter_context,
+const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+  publicKey,
+  exporterContext,
   32,
 )
 ```

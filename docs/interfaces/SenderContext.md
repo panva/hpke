@@ -21,16 +21,16 @@ operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
 
 ```ts
 let suite!: HPKE.CipherSuite
-let public_key!: HPKE.Key // recipient's public key
+let publicKey!: HPKE.Key // recipient's public key
 
-const { encapsulated_key, ctx } = await suite.SetupSender(public_key)
+const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
 ```
 
 ## Methods
 
 ### Export()
 
-> **Export**(`exporter_context`, `L`): `Promise`<`Uint8Array`>
+> **Export**(`exporterContext`, `L`): `Promise`<`Uint8Array`>
 
 Exports a secret using a variable-length pseudorandom function (PRF).
 
@@ -40,7 +40,7 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `exporter_context` | `Uint8Array` | Context for domain separation |
+| `exporterContext` | `Uint8Array` | Context for domain separation |
 | `L` | `number` | Desired length of exported secret in bytes |
 
 #### Returns
@@ -55,10 +55,10 @@ A Promise that resolves to the exported secret.
 let ctx!: HPKE.SenderContext
 
 // Export a 32-byte secret
-const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
-const exported_secret: Uint8Array = await ctx.Export(exporter_context, 32)
+const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
+const exportedSecret: Uint8Array = await ctx.Export(exporterContext, 32)
 
-// The recipient can derive the same secret using the same exporter_context
+// The recipient can derive the same secret using the same exporterContext
 ```
 
 ***

@@ -19,7 +19,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Check that seq is 0 before first message
@@ -46,7 +46,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Send and receive first message
@@ -80,7 +80,7 @@ test.describe('IncrementSeq', () => {
     const kp = await suite.DeriveKeyPair(new Uint8Array(suite.KEM.Nsk))
     const pkR = kp.publicKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(kp, enc)
 
     const aad = new Uint8Array([1, 2, 3])
@@ -124,7 +124,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     const aad = new Uint8Array([1, 2, 3])
@@ -161,7 +161,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Verify initial sequence is 0
@@ -193,7 +193,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Should accept MAX_SAFE_INTEGER as a number
@@ -211,7 +211,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Reject float values
@@ -272,7 +272,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Should accept small number values
@@ -322,7 +322,7 @@ test.describe('IncrementSeq', () => {
     const pkR = kp.publicKey
     const skR = kp.privateKey
 
-    const { encapsulated_key: enc, ctx: contextS } = await suite.SetupSender(pkR)
+    const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR)
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Would need to set seq to MAX_SAFE_INTEGER - 1 and then call Seal()

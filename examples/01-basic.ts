@@ -22,12 +22,12 @@ const recipientPublicKeySerialized = await suite.SerializePublicKey(recipientKey
 const recipientPublicKey = await suite.DeserializePublicKey(recipientPublicKeySerialized)
 
 // Sender: Setup sender context
-const { encapsulated_key, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey)
+const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey)
 
 // Sender → Recipient: Send encapsulated key (enc)
 
 // Recipient: Setup recipient context using encapsulated key
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulated_key)
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey)
 
 // Sender: Encrypt first message with AAD
 const aad1 = encoder.encode('message-id-1')

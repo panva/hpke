@@ -17,19 +17,19 @@ Context for decrypting multiple messages and exporting secrets on the recipient 
 
 ```ts
 let suite!: HPKE.CipherSuite
-let private_key!: HPKE.Key | HPKE.KeyPair
+let privateKey!: HPKE.Key | HPKE.KeyPair
 
 // ... receive enc from sender
-let encapsulated_key!: Uint8Array
+let encapsulatedKey!: Uint8Array
 
-const ctx: HPKE.RecipientContext = await suite.SetupRecipient(private_key, encapsulated_key)
+const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
 ```
 
 ## Methods
 
 ### Export()
 
-> **Export**(`exporter_context`, `L`): `Promise`<`Uint8Array`>
+> **Export**(`exporterContext`, `L`): `Promise`<`Uint8Array`>
 
 Exports a secret using a variable-length pseudorandom function (PRF).
 
@@ -39,7 +39,7 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `exporter_context` | `Uint8Array` | Context for domain separation |
+| `exporterContext` | `Uint8Array` | Context for domain separation |
 | `L` | `number` | Desired length of exported secret in bytes |
 
 #### Returns
@@ -54,10 +54,10 @@ A Promise that resolves to the exported secret.
 let ctx!: HPKE.RecipientContext
 
 // Export a 32-byte secret
-const exporter_context: Uint8Array = new TextEncoder().encode('exporter context')
-const exported: Uint8Array = await ctx.Export(exporter_context, 32)
+const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
+const exported: Uint8Array = await ctx.Export(exporterContext, 32)
 
-// The sender can derive the same secret using the same exporter_context
+// The sender can derive the same secret using the same exporterContext
 ```
 
 ***

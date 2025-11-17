@@ -12,7 +12,7 @@ const suite = new HPKE.CipherSuite(
 
 // Pre-shared key and identifier (agreed upon by both sender and recipient upfront)
 const psk = crypto.getRandomValues(new Uint8Array(32))
-const psk_id = encoder.encode('shared-key-id-2024')
+const pskId = encoder.encode('shared-key-id-2024')
 
 // Recipient: Generate a key pair
 const recipientKeyPair = await suite.GenerateKeyPair()
@@ -26,17 +26,17 @@ const recipientPublicKeySerialized = await suite.SerializePublicKey(recipientKey
 const recipientPublicKey = await suite.DeserializePublicKey(recipientPublicKeySerialized)
 
 // Sender: Setup sender context with PSK mode
-const { encapsulated_key, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey, {
+const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey, {
   psk,
-  psk_id,
+  pskId,
 })
 
 // Sender → Recipient: Send encapsulated key (enc)
 
 // Recipient: Setup recipient context with PSK mode
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulated_key, {
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey, {
   psk,
-  psk_id,
+  pskId,
 })
 
 // Sender: Encrypt message with AAD
