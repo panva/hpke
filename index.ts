@@ -2585,9 +2585,6 @@ interface DHKEM extends KEM {
   readonly Ndh: number
   readonly kdf: KDF
   readonly algorithm: Readonly<KeyAlgorithm | EcKeyAlgorithm>
-  readonly pkcs8: Uint8Array
-  readonly order?: bigint
-  readonly bitmask?: number
 }
 
 function fromBase64(input: string) {
@@ -2598,6 +2595,19 @@ function fromBase64(input: string) {
     bytes[i] = binary.charCodeAt(i)
   }
   return bytes
+}
+
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]!)
+  }
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '')
+}
+
+function toB64u(input: Uint8Array) {
+  // @ts-ignore
+  return input.toBase64?.({ alphabet: 'base64url', omitPadding: true }) || toBase64Url(input)
 }
 
 function b64u(input: string): Uint8Array {
@@ -2678,7 +2688,7 @@ function assertCryptoKey(key: Key): asserts key is CryptoKey {
 // KEM (Key Encapsulation Mechanism) - DHKEM Shared Implementation
 // ============================================================================
 
-function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair'>> {
+function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializePrivateKey'>> {
   return {
     async GenerateKeyPair(this: DHKEM, extractable) {
       return (await subtle(
@@ -2703,9 +2713,6 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair'>> {
       assertCryptoKey(key)
       const { d } = await subtle(() => crypto.subtle.exportKey('jwk', key), this.name)
       return b64u(d!)
-    },
-    async DeserializePrivateKey(this: DHKEM, key, extractable) {
-      return await CurveKeyFromD(this, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
     },
     async Encap(this: DHKEM, pkR) {
       assertKeyAlgorithm(pkR, this.algorithm)
@@ -2850,8 +2857,140 @@ async function CurveKeyFromD(
 // KEM (Key Encapsulation Mechanism) - DHKEM NIST Curve Implementations
 // ============================================================================
 
+interface ECPoint {
+  x: bigint
+  y: bigint
+}
+
+// Modular inverse using Extended Euclidean Algorithm
+function modInverse(a: bigint, m: bigint): bigint {
+  a = ((a % m) + m) % m
+  let [t, newT] = [0n, 1n]
+  let [r, newR] = [m, a]
+
+  while (newR !== 0n) {
+    const quotient = r / newR
+    ;[t, newT] = [newT, t - quotient * newT]
+    ;[r, newR] = [newR, r - quotient * newR]
+  }
+
+  if (r > 1n) throw new Error('a is not invertible')
+  if (t < 0n) t = t + m
+  return t
+}
+
+// Point doubling: 2P
+function pointDouble(p: ECPoint, prime: bigint, a: bigint): ECPoint {
+  const { x, y } = p
+
+  // Slope: s = (3x² + a) / (2y) mod prime
+  const numerator = (((3n * x * x) % prime) + a) % prime
+  const denominator = (2n * y) % prime
+  const s = (numerator * modInverse(denominator, prime)) % prime
+
+  // x₃ = s² - 2x mod prime
+  const x3 = (((s * s) % prime) - ((2n * x) % prime) + prime) % prime
+
+  // y₃ = s(x - x₃) - y mod prime
+  const y3 = (((s * ((x - x3 + prime) % prime)) % prime) - y + prime) % prime
+
+  return { x: x3, y: y3 }
+}
+
+// Point addition: P + Q
+function pointAdd(p: ECPoint, q: ECPoint, prime: bigint, a: bigint): ECPoint {
+  if (p.x === q.x && p.y === q.y) {
+    return pointDouble(p, prime, a)
+  }
+
+  const { x: x1, y: y1 } = p
+  const { x: x2, y: y2 } = q
+
+  // Slope: s = (y₂ - y₁) / (x₂ - x₁) mod prime
+  const numerator = (y2 - y1 + prime) % prime
+  const denominator = (x2 - x1 + prime) % prime
+  const s = (numerator * modInverse(denominator, prime)) % prime
+
+  // x₃ = s² - x₁ - x₂ mod prime
+  const x3 = (((s * s) % prime) - x1 - x2 + prime + prime) % prime
+
+  // y₃ = s(x₁ - x₃) - y₁ mod prime
+  const y3 = (((s * ((x1 - x3 + prime) % prime)) % prime) - y1 + prime) % prime
+
+  return { x: x3, y: y3 }
+}
+
+// Scalar multiplication using double-and-add algorithm: k * G
+function scalarMult(k: bigint, G: ECPoint, prime: bigint, a: bigint, order: bigint): ECPoint {
+  if (k === 0n || k >= order) {
+    throw new Error('Invalid scalar')
+  }
+
+  let result: ECPoint | null = null
+  let addend = G
+  let scalar = k
+
+  while (scalar > 0n) {
+    if (scalar & 1n) {
+      result = result === null ? addend : pointAdd(result, addend, prime, a)
+    }
+    addend = pointDouble(addend, prime, a)
+    scalar = scalar >> 1n
+  }
+
+  if (result === null) throw new Error('Invalid result')
+  return result
+}
+
+interface NistCurveConfig {
+  order: bigint
+  bitmask: number
+  prime: bigint
+  a: bigint
+  Gx: bigint
+  Gy: bigint
+  algorithm: EcKeyAlgorithm
+}
+
+// Helper function to compute public key and create JWK for NIST curves
+function getPrivateJwkNist(DHKEM: DHKEM & NistCurveConfig, d: bigint): JsonWebKey {
+  // Perform scalar multiplication: publicKey = d * G
+  const G: ECPoint = { x: DHKEM.Gx, y: DHKEM.Gy }
+  const publicPoint = scalarMult(d, G, DHKEM.prime, DHKEM.a, DHKEM.order)
+
+  const coordSize = (DHKEM.Npk - 1) / 2
+  const xBytes = bigIntToUint8Array(publicPoint.x, coordSize)
+  const yBytes = bigIntToUint8Array(publicPoint.y, coordSize)
+  const dBytes = bigIntToUint8Array(d, DHKEM.Nsk)
+
+  // Create JWK for private key import (browsers need x, y, d for private key import)
+  return {
+    kty: 'EC',
+    crv: DHKEM.algorithm.namedCurve,
+    x: toB64u(xBytes),
+    y: toB64u(yBytes),
+    d: toB64u(dBytes),
+  }
+}
+
+async function DeserializePrivateKeyNist(
+  this: DHKEM & NistCurveConfig,
+  key: Uint8Array,
+  extractable: boolean,
+) {
+  const d = OS2IP(key)
+  const jwk = getPrivateJwkNist(this, d)
+
+  const privateKey = await subtle(
+    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
+    this.name,
+  )
+
+  return privateKey
+}
+
 async function DeriveKeyPairNist(
-  this: DHKEM & { order: bigint; bitmask: number },
+  this: DHKEM & NistCurveConfig,
   ikm: Uint8Array,
   extractable: boolean,
 ) {
@@ -2866,8 +3005,21 @@ async function DeriveKeyPairNist(
     sk = OS2IP(bytes)
     counter = counter + 1
   }
-  const key = bigIntToUint8Array(sk, this.Nsk)
-  return await createKeyPairFromPrivateKey(this, key, extractable)
+
+  const jwk = getPrivateJwkNist(this, sk)
+
+  const privateKey = await subtle(
+    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
+    this.name,
+  )
+
+  delete jwk.d
+  const publicKey = await subtle(
+    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, true, []),
+    this.name,
+  )
+
+  return { privateKey, publicKey }
 }
 
 // ============================================================================
@@ -2912,7 +3064,7 @@ async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean
  *
  * @group KEM Algorithms
  */
-export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM {
+export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistCurveConfig {
   const id = 0x0010
   const name = 'DHKEM(P-256, HKDF-SHA256)'
   const kdf = KDF_HKDF_SHA256()
@@ -2930,10 +3082,14 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM {
     Nsk: 32,
     Ndh: 32,
     algorithm: { name: 'ECDH', namedCurve: 'P-256' },
-    order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'),
+    order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'), // prettier-ignore
     bitmask: 0xff,
-    pkcs8: Uint8Array.of(0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20), // prettier-ignore
+    prime: BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff'), // prettier-ignore
+    a: BigInt('0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc'), // prettier-ignore
+    Gx: BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'), // prettier-ignore
+    Gy: BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
   }
 }
@@ -2953,7 +3109,7 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM {
  *
  * @group KEM Algorithms
  */
-export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM {
+export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistCurveConfig {
   const id = 0x0011
   const name = 'DHKEM(P-384, HKDF-SHA384)'
   const kdf = KDF_HKDF_SHA384()
@@ -2973,8 +3129,12 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM {
     algorithm: { name: 'ECDH', namedCurve: 'P-384' },
     order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
     bitmask: 0xff,
-    pkcs8: Uint8Array.of(0x30, 0x4e, 0x02, 0x01, 0x00, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22, 0x04, 0x37, 0x30, 0x35, 0x02, 0x01, 0x01, 0x04, 0x30), // prettier-ignore
+    prime: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff'), // prettier-ignore
+    a: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000fffffffc'), // prettier-ignore
+    Gx: BigInt('0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7'), // prettier-ignore
+    Gy: BigInt('0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f'), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
   }
 }
@@ -2994,7 +3154,7 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM {
  *
  * @group KEM Algorithms
  */
-export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM {
+export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistCurveConfig {
   const id = 0x0012
   const name = 'DHKEM(P-521, HKDF-SHA512)'
   const kdf = KDF_HKDF_SHA512()
@@ -3014,8 +3174,12 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM {
     algorithm: { name: 'ECDH', namedCurve: 'P-521' },
     order: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409'), // prettier-ignore
     bitmask: 0x01,
-    pkcs8: Uint8Array.of(0x30, 0x60, 0x02, 0x01, 0x00, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23, 0x04, 0x49, 0x30, 0x47, 0x02, 0x01, 0x01, 0x04, 0x42), // prettier-ignore
+    prime: BigInt('0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'), // prettier-ignore
+    a: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc'), // prettier-ignore
+    Gx: BigInt('0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66'), // prettier-ignore
+    Gy: BigInt('0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650'), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
   }
 }
@@ -3039,7 +3203,7 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM {
  *
  * @group KEM Algorithms
  */
-export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM {
+export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { pkcs8: Uint8Array } {
   const id = 0x0020
   const name = 'DHKEM(X25519, HKDF-SHA256)'
   const kdf = KDF_HKDF_SHA256()
@@ -3059,6 +3223,9 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM {
     algorithm: { name: 'X25519' },
     pkcs8: Uint8Array.of(0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e, 0x04, 0x22, 0x04, 0x20), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairX,
+    async DeserializePrivateKey(key, extractable) {
+      return await CurveKeyFromD(this, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
+    },
     ...DHKEM_SHARED(),
   }
 }
@@ -3078,7 +3245,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM {
  *
  * @group KEM Algorithms
  */
-export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM {
+export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM & { pkcs8: Uint8Array } {
   const id = 0x0021
   const name = 'DHKEM(X448, HKDF-SHA512)'
   const kdf = KDF_HKDF_SHA512()
@@ -3098,6 +3265,9 @@ export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM {
     algorithm: { name: 'X448' },
     pkcs8: Uint8Array.of(0x30, 0x46, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6f, 0x04, 0x3a, 0x04, 0x38), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairX,
+    async DeserializePrivateKey(key, extractable) {
+      return await CurveKeyFromD(this, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
+    },
     ...DHKEM_SHARED(),
   }
 }
