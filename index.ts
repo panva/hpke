@@ -2836,7 +2836,7 @@ async function createKeyPairFromPrivateKey(
 }
 
 async function CurveKeyFromD(
-  KEM: KEM,
+  name: string,
   Nsk: number,
   template: Uint8Array,
   algorithm: KeyAlgorithm,
@@ -2849,7 +2849,7 @@ async function CurveKeyFromD(
   pkcs8.set(key, tmpl.byteLength)
   return await subtle(
     () => crypto.subtle.importKey('pkcs8', pkcs8, algorithm, extractable, ['deriveBits']),
-    KEM.name,
+    name,
   )
 }
 
@@ -2946,17 +2946,18 @@ interface NistCurveConfig {
   order: bigint
   bitmask: number
   prime: bigint
-  a: bigint
   Gx: bigint
   Gy: bigint
   algorithm: EcKeyAlgorithm
+  Npk: number
+  Nsk: number
 }
 
 // Helper function to compute public key and create JWK for NIST curves
-function getPrivateJwkNist(DHKEM: DHKEM & NistCurveConfig, d: bigint): JsonWebKey {
+function getPrivateJwkNist(DHKEM: NistCurveConfig, d: bigint): JsonWebKey {
   // Perform scalar multiplication: publicKey = d * G
   const G: ECPoint = { x: DHKEM.Gx, y: DHKEM.Gy }
-  const publicPoint = scalarMult(d, G, DHKEM.prime, DHKEM.a, DHKEM.order)
+  const publicPoint = scalarMult(d, G, DHKEM.prime, DHKEM.prime - 3n, DHKEM.order)
 
   const coordSize = (DHKEM.Npk - 1) / 2
   const xBytes = bigIntToUint8Array(publicPoint.x, coordSize)
@@ -2996,27 +2997,37 @@ async function DeriveKeyPairNist(
 ) {
   let sk = 0n
   let counter = 0
+  let bytes: Uint8Array
   while (sk === 0n || sk >= this.order) {
     if (counter > 255) {
       throw new DeriveKeyPairError('Key derivation exceeded maximum iterations')
     }
-    const bytes = await DeriveCandidate(this, this.suite_id, ikm, counter)
+    bytes = await DeriveCandidate(this, this.suite_id, ikm, counter)
     bytes[0] = bytes[0]! & this.bitmask
     sk = OS2IP(bytes)
     counter = counter + 1
   }
 
-  const jwk = getPrivateJwkNist(this, sk)
+  return GetKeyPairNist(this, bytes!, extractable, this.name)
+}
+
+async function GetKeyPairNist(
+  curveConfig: typeof P256 | typeof P384,
+  sk: Uint8Array,
+  extractable: boolean,
+  name: string,
+) {
+  const jwk = getPrivateJwkNist(curveConfig, OS2IP(sk))
 
   const privateKey = await subtle(
-    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
-    this.name,
+    () => crypto.subtle.importKey('jwk', jwk, curveConfig.algorithm, extractable, ['deriveBits']),
+    name,
   )
 
   delete jwk.d
   const publicKey = await subtle(
-    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, true, []),
-    this.name,
+    () => crypto.subtle.importKey('jwk', jwk, curveConfig.algorithm, true, []),
+    name,
   )
 
   return { privateKey, publicKey }
@@ -3049,6 +3060,17 @@ async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean
 // KEM (Key Encapsulation Mechanism) - DHKEM Suite Exports (P-256, P-384, P-521)
 // ============================================================================
 
+const P256: NistCurveConfig = {
+  algorithm: { name: 'ECDH', namedCurve: 'P-256' },
+  Npk: 65,
+  Nsk: 32,
+  order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'), // prettier-ignore
+  bitmask: 0xff,
+  prime: BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff'), // prettier-ignore
+  Gx: BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'), // prettier-ignore
+  Gy: BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'), // prettier-ignore
+}
+
 /**
  * Diffie-Hellman Key Encapsulation Mechanism using NIST P-256 curve and HKDF-SHA256.
  *
@@ -3078,20 +3100,23 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistC
     kdf,
     Nsecret: 32,
     Nenc: 65,
-    Npk: 65,
-    Nsk: 32,
     Ndh: 32,
-    algorithm: { name: 'ECDH', namedCurve: 'P-256' },
-    order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'), // prettier-ignore
-    bitmask: 0xff,
-    prime: BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff'), // prettier-ignore
-    a: BigInt('0xffffffff00000001000000000000000000000000fffffffffffffffffffffffc'), // prettier-ignore
-    Gx: BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'), // prettier-ignore
-    Gy: BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'), // prettier-ignore
+    ...P256,
     DeriveKeyPair: DeriveKeyPairNist,
     DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
   }
+}
+
+const P384: NistCurveConfig = {
+  algorithm: { name: 'ECDH', namedCurve: 'P-384' },
+  Npk: 97,
+  Nsk: 48,
+  order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
+  bitmask: 0xff,
+  prime: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff'), // prettier-ignore
+  Gx: BigInt('0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7'), // prettier-ignore
+  Gy: BigInt('0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f'), // prettier-ignore
 }
 
 /**
@@ -3123,20 +3148,23 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistC
     kdf,
     Nsecret: 48,
     Nenc: 97,
-    Npk: 97,
-    Nsk: 48,
     Ndh: 48,
-    algorithm: { name: 'ECDH', namedCurve: 'P-384' },
-    order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
-    bitmask: 0xff,
-    prime: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff'), // prettier-ignore
-    a: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000fffffffc'), // prettier-ignore
-    Gx: BigInt('0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7'), // prettier-ignore
-    Gy: BigInt('0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f'), // prettier-ignore
+    ...P384,
     DeriveKeyPair: DeriveKeyPairNist,
     DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
   }
+}
+
+const P521: NistCurveConfig = {
+  Npk: 133,
+  Nsk: 66,
+  algorithm: { name: 'ECDH', namedCurve: 'P-521' },
+  order: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409'), // prettier-ignore
+  bitmask: 0x01,
+  prime: BigInt('0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'), // prettier-ignore
+  Gx: BigInt('0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66'), // prettier-ignore
+  Gy: BigInt('0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650'), // prettier-ignore
 }
 
 /**
@@ -3168,16 +3196,8 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistC
     kdf,
     Nsecret: 64,
     Nenc: 133,
-    Npk: 133,
-    Nsk: 66,
     Ndh: 66,
-    algorithm: { name: 'ECDH', namedCurve: 'P-521' },
-    order: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409'), // prettier-ignore
-    bitmask: 0x01,
-    prime: BigInt('0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'), // prettier-ignore
-    a: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffc'), // prettier-ignore
-    Gx: BigInt('0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66'), // prettier-ignore
-    Gy: BigInt('0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650'), // prettier-ignore
+    ...P521,
     DeriveKeyPair: DeriveKeyPairNist,
     DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
@@ -3224,7 +3244,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { p
     pkcs8: Uint8Array.of(0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e, 0x04, 0x22, 0x04, 0x20), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairX,
     async DeserializePrivateKey(key, extractable) {
-      return await CurveKeyFromD(this, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
+      return await CurveKeyFromD(name, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
     },
     ...DHKEM_SHARED(),
   }
@@ -3266,7 +3286,7 @@ export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM & { pkc
     pkcs8: Uint8Array.of(0x30, 0x46, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6f, 0x04, 0x3a, 0x04, 0x38), // prettier-ignore
     DeriveKeyPair: DeriveKeyPairX,
     async DeserializePrivateKey(key, extractable) {
-      return await CurveKeyFromD(this, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
+      return await CurveKeyFromD(name, this.Nsk, this.pkcs8, this.algorithm, key, extractable)
     },
     ...DHKEM_SHARED(),
   }
@@ -3758,17 +3778,9 @@ async function expandDecapsKeyG(PQTKEM: HybridKEM, _seed: Uint8Array) {
     PQTKEM.name,
   )
   const ek_PQ = await getPublicKey(PQTKEM.name, dk_PQ, [usages[1]])
-  const sk = PQTKEM.t.RandomScalar?.(seed_T) ?? seed_T
 
-  const dk_T = await CurveKeyFromD(
-    PQTKEM,
-    PQTKEM.t.Nsk,
-    PQTKEM.t.pkcs8,
-    PQTKEM.t.algorithm,
-    sk,
-    true,
-  )
-  const ek_T = await getPublicKey(PQTKEM.name, dk_T, [])
+  const sk = PQTKEM.t.RandomScalar?.(seed_T) ?? seed_T
+  const { privateKey: dk_T, publicKey: ek_T } = await PQTKEM.t.GetKeyPair(sk)
 
   return { ek_PQ, ek_T, dk_PQ, dk_T }
 }
@@ -3890,12 +3902,15 @@ interface HybridKEM extends KEM {
   readonly t: {
     readonly algorithm: KeyAlgorithm | EcKeyAlgorithm
     readonly Nseed: number
-    readonly Npk: number
     readonly Nct: number
     readonly Nss: number
+    readonly Npk: number
     readonly Nsk: number
-    readonly pkcs8: Uint8Array
     readonly Nscalar?: number
+    readonly GetKeyPair: (
+      this: HybridKEM['t'],
+      sk: Uint8Array,
+    ) => Promise<{ privateKey: CryptoKey; publicKey: CryptoKey }>
     readonly order?: bigint
     readonly RandomScalar?: (this: HybridKEM['t'], seed: Uint8Array) => Uint8Array
   }
@@ -4042,6 +4057,7 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
   const id = 0x647a
   const name = 'MLKEM768-X25519'
   const kdf = KDF_SHAKE256()
+  const pkcs8 = Uint8Array.of(0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e, 0x04, 0x22, 0x04, 0x20); // prettier-ignore
   // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
   kdf.name = name
   return {
@@ -4068,7 +4084,12 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
       Nss: 32,
       Nsk: 32,
       Nct: 32,
-      pkcs8: Uint8Array.of(0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e, 0x04, 0x22, 0x04, 0x20), // prettier-ignore
+      async GetKeyPair(sk) {
+        const privateKey = await CurveKeyFromD(name, this.Nsk, pkcs8, this.algorithm, sk, true)
+        const publicKey = await getPublicKey(name, privateKey, [])
+
+        return { privateKey, publicKey }
+      },
     },
     label: Uint8Array.of(0x5c, 0x2e, 0x2f, 0x2f, 0x5e, 0x5c), // prettier-ignore
     ...PQTKEM_SHARED(),
@@ -4113,17 +4134,17 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
       Nct: 1088,
     },
     t: {
-      algorithm: { name: 'ECDH', namedCurve: 'P-256' },
+      ...P256,
       Nseed: 32,
-      Npk: 65,
       Nss: 32,
-      Nsk: 32,
       Nct: 65,
-      pkcs8: Uint8Array.of(0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20), // prettier-ignore
       Nscalar: 32,
       order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'),
       RandomScalar(seed) {
         return RandomScalarNist(this, seed)
+      },
+      GetKeyPair(sk) {
+        return GetKeyPairNist(P256, sk, true, name)
       },
     },
     label: Uint8Array.of(0x4d, 0x4c, 0x4b, 0x45, 0x4d, 0x37, 0x36, 0x38, 0x2d, 0x50, 0x32, 0x35, 0x36), // prettier-ignore
@@ -4169,17 +4190,17 @@ export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
       Nct: 1568,
     },
     t: {
-      algorithm: { name: 'ECDH', namedCurve: 'P-384' },
+      ...P384,
       Nseed: 48,
-      Npk: 65,
       Nss: 48,
-      Nsk: 48,
       Nct: 97,
-      pkcs8: Uint8Array.of(0x30, 0x4e, 0x02, 0x01, 0x00, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22, 0x04, 0x37, 0x30, 0x35, 0x02, 0x01, 0x01, 0x04, 0x30), // prettier-ignore
       Nscalar: 48,
       order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
       RandomScalar(seed) {
         return RandomScalarNist(this, seed)
+      },
+      GetKeyPair(sk) {
+        return GetKeyPairNist(P384, sk, true, name)
       },
     },
     label: Uint8Array.of(0x4d, 0x4c, 0x4b, 0x45, 0x4d, 0x31, 0x30, 0x32, 0x34, 0x2d, 0x50, 0x33, 0x38, 0x34), // prettier-ignore
