@@ -2529,7 +2529,9 @@ async function getPublicKeyByExport(
   usages: KeyUsage[],
 ): Promise<CryptoKey> {
   if (!key.extractable) {
-    throw new TypeError('"privateKey" must be extractable in this runtime')
+    throw new TypeError(
+      '"privateKey" must be extractable or a Key Pair must be used in this runtime',
+    )
   }
 
   return await subtle(async () => {
