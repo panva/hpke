@@ -4032,7 +4032,7 @@ function PQTKEM_SHARED(): KEM_BASE {
  * - ML-KEM-768 key encapsulation
  * - X25519 key agreement
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion to
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
@@ -4083,7 +4083,7 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
  * - ML-KEM-768 key encapsulation
  * - ECDH with P-256 curve
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion to
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
@@ -4139,7 +4139,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
  * - ML-KEM-1024 key encapsulation
  * - ECDH with P-384 curve
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion to
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
