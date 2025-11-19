@@ -28,8 +28,6 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: npm clean-install
-        working-directory: ./examples/noble-suite
       - run: node --run build
       - run: node --run build:other
       - run: node --run format
@@ -45,8 +43,6 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: npm clean-install
-        working-directory: ./examples/noble-suite
       - run: node --run docs
       - run: git diff --exit-code
       - uses: r-lib/actions/setup-pandoc@v2
@@ -71,8 +67,6 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: npm clean-install
-        working-directory: ./examples/noble-suite
       - run: node --run test
 
   deno:
@@ -83,8 +77,6 @@ jobs:
         with:
           deno-version: latest
       - run: npm clean-install
-      - run: npm clean-install
-        working-directory: ./examples/noble-suite
       - run: deno run test:deno
 
   bun:
@@ -95,6 +87,4 @@ jobs:
         with:
           bun-version: latest
       - run: npm clean-install
-      - run: npm clean-install
-        working-directory: ./examples/noble-suite
       - run: bun run test:bun

@@ -50,6 +50,9 @@
     "test:docs": "node --run docs && npx tsc -p tsconfig.docs.json && ./check-examples.sh"
   },
   "devDependencies": {
+    "@noble/ciphers": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@noble/post-quantum": "^0.5.2",
     "@types/node": "^24.10.1",
     "@types/web": "^0.0.294",
     "amaro": "^1.1.5",
