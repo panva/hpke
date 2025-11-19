@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.3](https://github.com/panva/hpke/compare/v0.2.2...v0.2.3) (2025-11-19)
+
+
+### Refactor
+
+* apply workarounds for pkcs8 imports to hybrids ([9a07460](https://github.com/panva/hpke/commit/9a0746078e0433f42a7927840cfe7761aa46dbe7))
+
 ## [0.2.2](https://github.com/panva/hpke/compare/v0.2.1...v0.2.2) (2025-11-17)
 
 
