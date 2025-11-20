@@ -220,12 +220,12 @@ class SenderContext {
    * ```
    *
    * @param exporterContext - Context for domain separation
-   * @param L - Desired length of exported secret in bytes
+   * @param length - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
    */
-  async Export(exporterContext: Uint8Array, L: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, L)
+  async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
+    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, length)
   }
 
   /**
@@ -397,12 +397,12 @@ class RecipientContext {
    * ```
    *
    * @param exporterContext - Context for domain separation
-   * @param L - Desired length of exported secret in bytes
+   * @param length - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
    */
-  async Export(exporterContext: Uint8Array, L: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, L)
+  async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
+    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, length)
   }
 }
 export type { RecipientContext }
@@ -938,7 +938,7 @@ export class CipherSuite {
    *
    * @param publicKey - Recipient's public key
    * @param exporterContext - Context of the export operation
-   * @param L - Desired length of exported secret in bytes
+   * @param length - Desired length of exported secret in bytes
    * @param options - Options
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK modes)
@@ -950,7 +950,7 @@ export class CipherSuite {
   async SendExport(
     publicKey: Key,
     exporterContext: Uint8Array,
-    L: number,
+    length: number,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
@@ -958,7 +958,7 @@ export class CipherSuite {
     },
   ): Promise<{ encapsulatedKey: Uint8Array; exportedSecret: Uint8Array }> {
     const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
-    const exportedSecret = await ctx.Export(exporterContext, L)
+    const exportedSecret = await ctx.Export(exporterContext, length)
     return { encapsulatedKey, exportedSecret }
   }
 
@@ -991,7 +991,7 @@ export class CipherSuite {
    * @param encapsulatedKey - Encapsulated key from the sender
    * @param exporterContext - Context of the export operation (must match sender's
    *   `exporterContext`)
-   * @param L - Desired length of exported secret in bytes (must match sender's `L`)
+   * @param length - Desired length of exported secret in bytes (must match sender's `L`)
    * @param options - Options
    * @param options.info - Application-supplied information (must match sender's `info`)
    * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
@@ -1003,7 +1003,7 @@ export class CipherSuite {
     privateKey: Key | KeyPair,
     encapsulatedKey: Uint8Array,
     exporterContext: Uint8Array,
-    L: number,
+    length: number,
     options?: {
       info?: Uint8Array
       psk?: Uint8Array
@@ -1012,7 +1012,7 @@ export class CipherSuite {
   ): Promise<Uint8Array> {
     this.#validateEncLength(encapsulatedKey)
     const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
-    return await ctx.Export(exporterContext, L)
+    return await ctx.Export(exporterContext, length)
   }
 
   /**

@@ -30,7 +30,7 @@ const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
 
 ### Export()
 
-> **Export**(`exporterContext`, `L`): `Promise`<`Uint8Array`>
+> **Export**(`exporterContext`, `length`): `Promise`<`Uint8Array`>
 
 Exports a secret using a variable-length pseudorandom function (PRF).
 
@@ -41,7 +41,7 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `exporterContext` | `Uint8Array` | Context for domain separation |
-| `L` | `number` | Desired length of exported secret in bytes |
+| `length` | `number` | Desired length of exported secret in bytes |
 
 #### Returns
 

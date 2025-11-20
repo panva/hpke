@@ -454,7 +454,7 @@ const plaintext: Uint8Array = await suite.Open(
 
 ### ReceiveExport()
 
-> **ReceiveExport**(`privateKey`, `encapsulatedKey`, `exporterContext`, `L`, `options?`): `Promise`<`Uint8Array`>
+> **ReceiveExport**(`privateKey`, `encapsulatedKey`, `exporterContext`, `length`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for receiving an exported secret.
 
@@ -467,7 +467,7 @@ It combines context setup and secret export in one call.
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
 | `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `exporterContext` | `Uint8Array` | Context of the export operation (must match sender's `exporterContext`) |
-| `L` | `number` | Desired length of exported secret in bytes (must match sender's `L`) |
+| `length` | `number` | Desired length of exported secret in bytes (must match sender's `L`) |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
@@ -548,7 +548,7 @@ const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext, a
 
 ### SendExport()
 
-> **SendExport**(`publicKey`, `exporterContext`, `L`, `options?`): `Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
+> **SendExport**(`publicKey`, `exporterContext`, `length`, `options?`): `Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
 
 Single-shot API for deriving a secret known only to sender and recipient.
 
@@ -562,7 +562,7 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 | :------ | :------ | :------ |
 | `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
 | `exporterContext` | `Uint8Array` | Context of the export operation |
-| `L` | `number` | Desired length of exported secret in bytes |
+| `length` | `number` | Desired length of exported secret in bytes |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
