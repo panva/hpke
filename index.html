@@ -1,938 +1,1023 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>@panva/hpke Browser Test Suite</title>
-  <script type="importmap">
-  {
-    "imports": {
-      "@panva/hpke": "./index.js",
-      "@panva/hpke-noble": "./examples/noble-suite/index.js",
-      "@noble/": "./node_modules/@noble/",
-      "./examples/noble-suite/kem.ts": "./examples/noble-suite/kem.js",
-      "./examples/noble-suite/aead.ts": "./examples/noble-suite/aead.js",
-      "./examples/noble-suite/kdf.ts": "./examples/noble-suite/kdf.js",
-      "./index.ts": "./index.js"
-    }
-  }
-  </script>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@panva/hpke Browser Test Suite</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "@panva/hpke": "./index.js",
+          "@panva/hpke-noble": "./examples/noble-suite/index.js",
+          "@noble/": "./node_modules/@noble/",
+          "./examples/noble-suite/kem.ts": "./examples/noble-suite/kem.js",
+          "./examples/noble-suite/aead.ts": "./examples/noble-suite/aead.js",
+          "./examples/noble-suite/kdf.ts": "./examples/noble-suite/kdf.js",
+          "./index.ts": "./index.js",
+          "bowser": "https://cdn.jsdelivr.net/npm/bowser@2/+esm"
+        }
+      }
+    </script>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      padding: 20px;
-      background: rgb(13, 17, 23);
-      min-height: 100vh;
-    }
-
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-      background: rgb(22, 27, 34);
-      border-radius: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      padding: 30px;
-    }
-
-    h1 {
-      color: #e6edf3;
-      margin-bottom: 10px;
-      font-size: 32px;
-    }
-
-    .subtitle {
-      color: #8b949e;
-      margin-bottom: 30px;
-      font-size: 16px;
-    }
-
-    .summary {
-      margin-bottom: 30px;
-    }
-
-    .algorithm-section {
-      margin-bottom: 25px;
-    }
-
-    .algorithm-section h3 {
-      font-size: 18px;
-      color: #e6edf3;
-      margin-bottom: 12px;
-      font-weight: 600;
-    }
-
-    .algorithm-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 10px;
-    }
-
-    .algo-card {
-      padding: 12px;
-      border-radius: 6px;
-      border: 2px solid;
-      font-size: 13px;
-      font-family: 'Monaco', 'Courier New', monospace;
-      transition: all 0.2s ease;
-    }
-
-    .algo-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .algo-card.native {
-      background: rgba(46, 160, 67, 0.15);
-      border-color: #3fb950;
-      color: #7ee787;
-    }
-
-    .algo-card.noble {
-      background: rgba(56, 139, 253, 0.15);
-      border-color: #388bfd;
-      color: #79c0ff;
-    }
-
-    .algo-card.unsupported {
-      background: rgba(248, 81, 73, 0.15);
-      border-color: #f85149;
-      color: #ff7b72;
-    }
-
-    .algo-card.pending {
-      background: rgba(110, 118, 129, 0.1);
-      border-color: #30363d;
-      color: #8b949e;
-    }
-
-    .algo-card.testing {
-      background: rgba(187, 128, 9, 0.15);
-      border-color: #bb8009;
-      color: #f0b72f;
-    }
-
-    .algo-card {
-      position: relative;
-    }
-
-    .algo-card .algo-name {
-      font-weight: 600;
-      margin-bottom: 4px;
-      word-break: break-word;
-    }
-
-    .algo-card .algo-status {
-      font-size: 11px;
-      opacity: 0.8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .algo-card .checkmark {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #3fb950;
-      color: white;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      font-weight: bold;
-      line-height: 1;
-    }
-
-    .test-grid {
-      display: grid;
-      gap: 15px;
-    }
-
-    .test-item {
-      border: 2px solid #30363d;
-      border-radius: 8px;
-      padding: 15px;
-      transition: all 0.3s ease;
-      background: rgb(13, 17, 23);
-    }
-
-    .test-item.running {
-      border-color: #bb8009;
-      background: rgba(187, 128, 9, 0.1);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-
-    .test-item.passed {
-      border-color: #3fb950;
-      background: rgba(46, 160, 67, 0.1);
-    }
-
-    .test-item.failed {
-      border-color: #f85149;
-      background: rgba(248, 81, 73, 0.1);
-    }
-
-    .test-item.expected {
-      border-color: #6e7681;
-      background: rgba(110, 118, 129, 0.1);
-    }
-
-    .test-item.passed-unexpected {
-      border-color: #58a6ff;
-      background: rgba(56, 139, 253, 0.1);
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
-    }
-
-    .test-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-
-    .test-name {
-      font-weight: 600;
-      font-size: 16px;
-      color: #e6edf3;
-      font-family: 'Monaco', 'Courier New', monospace;
-      word-break: break-word;
-      overflow-wrap: break-word;
-      flex: 1;
-      min-width: 0;
-    }
-
-    .test-status {
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .test-status.pending {
-      background: #e0e0e0;
-      color: #666;
-    }
-
-    .test-status.running {
-      background: #ffc107;
-      color: #000;
-    }
-
-    .test-status.passed {
-      background: #28a745;
-      color: white;
-    }
-
-    .test-status.failed {
-      background: #dc3545;
-      color: white;
-    }
-
-    .test-status.expected {
-      background: #6c757d;
-      color: white;
-    }
-
-    .test-status.passed-unexpected {
-      background: #17a2b8;
-      color: white;
-    }
-
-    .test-details {
-      font-size: 13px;
-      color: #8b949e;
-      margin-bottom: 8px;
-      font-family: 'Monaco', 'Courier New', monospace;
-    }
-
-    .test-error {
-      margin-top: 10px;
-      padding: 10px;
-      background: rgba(248, 81, 73, 0.15);
-      border-left: 4px solid #f85149;
-      border-radius: 4px;
-      font-size: 13px;
-      color: #ff7b72;
-      font-family: 'Monaco', 'Courier New', monospace;
-      overflow-x: auto;
-    }
-
-    .test-duration {
-      font-size: 12px;
-      color: #6e7681;
-      margin-top: 5px;
-    }
-
-    .expected-failure {
-      display: inline-block;
-      margin-left: 8px;
-      padding: 2px 8px;
-      background: #6c757d;
-      color: white;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-
-    .loader {
-      display: inline-block;
-      width: 14px;
-      height: 14px;
-      border: 2px solid #f3f3f3;
-      border-top: 2px solid #ffc107;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-right: 8px;
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-
-    .filter-buttons {
-      margin-bottom: 20px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 8px 16px;
-      border: 2px solid #30363d;
-      background: rgb(13, 17, 23);
-      color: #e6edf3;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      font-weight: 600;
-      transition: all 0.2s ease;
-    }
-
-    .filter-btn:hover {
-      background: #30363d;
-      border-color: #6e7681;
-    }
-
-    .filter-btn.active {
-      background: #388bfd;
-      color: white;
-      border-color: #388bfd;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    @media (max-width: 768px) {
       body {
-        padding: 10px;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
+          sans-serif;
+        padding: 20px;
+        background: rgb(13, 17, 23);
+        min-height: 100vh;
       }
 
       .container {
-        padding: 15px;
+        max-width: 1400px;
+        margin: 0 auto;
+        background: rgb(22, 27, 34);
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        padding: 30px;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>@panva/hpke Browser Test Suite <a href="https://github.com/panva/hpke" target="_blank" style="color: #8b949e; text-decoration: none; font-family: 'Monaco', 'Courier New', monospace;">🔗</a></h1>
-    <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
 
-    <div class="summary" id="summary"></div>
+      h1 {
+        color: #e6edf3;
+        margin-bottom: 10px;
+        font-size: 32px;
+      }
 
-    <div class="filter-buttons hidden">
-      <button class="filter-btn active" data-filter="all">All</button>
-      <button class="filter-btn" data-filter="native">Native</button>
-      <button class="filter-btn" data-filter="noble">extensibility</button>
-      <button class="filter-btn" data-filter="passed">Passed</button>
-      <button class="filter-btn" data-filter="passed-unexpected">Passed (Unexpected)</button>
-      <button class="filter-btn" data-filter="failed-expected">Failed (Expected)</button>
-      <button class="filter-btn" data-filter="failed-unexpected">Failed (Unexpected)</button>
-      <button class="filter-btn" data-filter="pending">Pending</button>
+      h1 a {
+        color: #8b949e;
+        text-decoration: none;
+        font-family: 'Monaco', 'Courier New', monospace;
+      }
+
+      .subtitle {
+        color: #8b949e;
+        margin-bottom: 30px;
+        font-size: 16px;
+      }
+
+      .summary {
+        margin-bottom: 30px;
+      }
+
+      .algorithm-section {
+        margin-bottom: 25px;
+      }
+
+      .algorithm-section h3 {
+        font-size: 18px;
+        color: #e6edf3;
+        margin-bottom: 12px;
+        font-weight: 600;
+      }
+
+      .algorithm-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 10px;
+      }
+
+      .algo-card {
+        padding: 12px;
+        border-radius: 6px;
+        border: 2px solid;
+        font-size: 13px;
+        font-family: 'Monaco', 'Courier New', monospace;
+        transition: all 0.2s ease;
+      }
+
+      .algo-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .algo-card.native {
+        background: rgba(46, 160, 67, 0.15);
+        border-color: #3fb950;
+        color: #7ee787;
+      }
+
+      .algo-card.noble {
+        background: rgba(56, 139, 253, 0.15);
+        border-color: #388bfd;
+        color: #79c0ff;
+      }
+
+      .algo-card.unsupported {
+        background: rgba(248, 81, 73, 0.15);
+        border-color: #f85149;
+        color: #ff7b72;
+      }
+
+      .algo-card.pending {
+        background: rgba(110, 118, 129, 0.1);
+        border-color: #30363d;
+        color: #8b949e;
+      }
+
+      .algo-card.testing {
+        background: rgba(187, 128, 9, 0.15);
+        border-color: #bb8009;
+        color: #f0b72f;
+      }
+
+      .algo-card {
+        position: relative;
+      }
+
+      .algo-card .algo-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+        word-break: break-word;
+      }
+
+      .algo-card .algo-status {
+        font-size: 11px;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .algo-card .checkmark {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: #3fb950;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        line-height: 1;
+      }
+
+      .test-grid {
+        display: grid;
+        gap: 15px;
+      }
+
+      .test-item {
+        border: 2px solid #30363d;
+        border-radius: 8px;
+        padding: 15px;
+        transition: all 0.3s ease;
+        background: rgb(13, 17, 23);
+      }
+
+      .test-item.running {
+        border-color: #bb8009;
+        background: rgba(187, 128, 9, 0.1);
+        animation: pulse 1.5s ease-in-out infinite;
+      }
+
+      .test-item.passed {
+        border-color: #3fb950;
+        background: rgba(46, 160, 67, 0.1);
+      }
+
+      .test-item.failed {
+        border-color: #f85149;
+        background: rgba(248, 81, 73, 0.1);
+      }
+
+      .test-item.expected {
+        border-color: #6e7681;
+        background: rgba(110, 118, 129, 0.1);
+      }
+
+      .test-item.passed-unexpected {
+        border-color: #58a6ff;
+        background: rgba(56, 139, 253, 0.1);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .test-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+        flex-wrap: wrap;
+      }
+
+      .test-name {
+        font-weight: 600;
+        font-size: 16px;
+        color: #e6edf3;
+        font-family: 'Monaco', 'Courier New', monospace;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .test-status {
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .test-status.pending {
+        background: #e0e0e0;
+        color: #666;
+      }
+
+      .test-status.running {
+        background: #ffc107;
+        color: #000;
+      }
+
+      .test-status.passed {
+        background: #28a745;
+        color: white;
+      }
+
+      .test-status.failed {
+        background: #dc3545;
+        color: white;
+      }
+
+      .test-status.expected {
+        background: #6c757d;
+        color: white;
+      }
+
+      .test-status.passed-unexpected {
+        background: #17a2b8;
+        color: white;
+      }
+
+      .test-details {
+        font-size: 13px;
+        color: #8b949e;
+        margin-bottom: 8px;
+        font-family: 'Monaco', 'Courier New', monospace;
+      }
+
+      .test-error {
+        margin-top: 10px;
+        padding: 10px;
+        background: rgba(248, 81, 73, 0.15);
+        border-left: 4px solid #f85149;
+        border-radius: 4px;
+        font-size: 13px;
+        color: #ff7b72;
+        font-family: 'Monaco', 'Courier New', monospace;
+        overflow-x: auto;
+      }
+
+      .test-duration {
+        font-size: 12px;
+        color: #6e7681;
+        margin-top: 5px;
+      }
+
+      .expected-failure {
+        display: inline-block;
+        margin-left: 8px;
+        padding: 2px 8px;
+        background: #6c757d;
+        color: white;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .loader {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #ffc107;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+        vertical-align: middle;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .filter-buttons {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .filter-btn {
+        padding: 8px 16px;
+        border: 2px solid #30363d;
+        background: rgb(13, 17, 23);
+        color: #e6edf3;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+      }
+
+      .filter-btn:hover {
+        background: #30363d;
+        border-color: #6e7681;
+      }
+
+      .filter-btn.active {
+        background: #388bfd;
+        color: white;
+        border-color: #388bfd;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+
+        .container {
+          padding: 15px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>
+        @panva/hpke Browser Test Suite
+        <a href="https://github.com/panva/hpke" target="_blank">🔗</a>
+      </h1>
+      <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
+
+      <div class="summary" id="summary"></div>
+
+      <div class="filter-buttons hidden">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="native">Native</button>
+        <button class="filter-btn" data-filter="noble">extensibility</button>
+        <button class="filter-btn" data-filter="passed">Passed</button>
+        <button class="filter-btn" data-filter="passed-unexpected">Passed (Unexpected)</button>
+        <button class="filter-btn" data-filter="failed-expected">Failed (Expected)</button>
+        <button class="filter-btn" data-filter="failed-unexpected">Failed (Unexpected)</button>
+        <button class="filter-btn" data-filter="pending">Pending</button>
+      </div>
+
+      <div class="test-grid hidden" id="testGrid"></div>
     </div>
 
-    <div class="test-grid hidden" id="testGrid"></div>
-  </div>
+    <script type="module">
+      import * as HPKE from '@panva/hpke'
+      import * as Noble from '@panva/hpke-noble'
+      import Bowser from 'bowser'
 
-  <script type="module">
-    import * as HPKE from '@panva/hpke';
-    import * as Noble from '@panva/hpke-noble'
+      // ============================================================================
+      // ALGORITHM DISCOVERY
+      // ============================================================================
+      // Dynamically extract all algorithms from HPKE and Noble libraries based on
+      // name prefixes (KEM_, KDF_, AEAD_)
 
-    // Dynamically extract all algorithms from HPKE library based on name prefixes
-    const KEMS = Object.keys(HPKE)
-      .filter(key => key.startsWith('KEM_'))
-      .map(name => ({ name, displayName: `[native] ${name}`, factory: HPKE[name] }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const KDFS = Object.keys(HPKE)
-      .filter(key => key.startsWith('KDF_'))
-      .map(name => ({ name, displayName: `[native] ${name}`, factory: HPKE[name] }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const AEADS = Object.keys(HPKE)
-      .filter(key => key.startsWith('AEAD_'))
-      .map(name => ({ name, displayName: `[native] ${name}`, factory: HPKE[name] }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // Add Noble implementations
-    const NOBLE_KEMS = Object.keys(Noble)
-      .filter(key => key.startsWith('KEM_'))
-      .map(name => ({ name, displayName: `[extensibility] ${name}`, factory: Noble[name], isNoble: true }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const NOBLE_KDFS = Object.keys(Noble)
-      .filter(key => key.startsWith('KDF_'))
-      .map(name => ({ name, displayName: `[extensibility] ${name}`, factory: Noble[name], isNoble: true }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    const NOBLE_AEADS = Object.keys(Noble)
-      .filter(key => key.startsWith('AEAD_'))
-      .map(name => ({ name, displayName: `[extensibility] ${name}`, factory: Noble[name], isNoble: true }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    // Combine HPKE and Noble implementations
-    const ALL_KEMS = [...KEMS, ...NOBLE_KEMS];
-    const ALL_KDFS = [...KDFS, ...NOBLE_KDFS];
-    const ALL_AEADS = [...AEADS, ...NOBLE_AEADS];
-
-    // Baseline algorithms for individual component testing
-    const baselineKEM = KEMS.find(k => k.name === 'KEM_DHKEM_X25519_HKDF_SHA256');
-    const baselineKDF = KDFS.find(k => k.name === 'KDF_HKDF_SHA256');
-    const baselineAEAD = AEADS.find(a => a.name === 'AEAD_AES_128_GCM');
-
-    const browserUnsupportedAlgos = {
-      kem: [
-        'KEM_DHKEM_X448_HKDF_SHA512',
-        'KEM_ML_KEM_512',
-        'KEM_ML_KEM_768',
-        'KEM_ML_KEM_1024',
-        'KEM_MLKEM768_X25519',
-        'KEM_MLKEM768_P256',
-        'KEM_MLKEM1024_P384',
-      ],
-      kdf: [
-        'KDF_SHAKE128',
-        'KDF_SHAKE256',
-      ],
-      aead: [
-        'AEAD_ChaCha20Poly1305',
-      ]
-    };
-
-    function isExpectedToFail(test) {
-      // Noble implementations are always expected to pass
-      if (test.testingComponent === 'kem' && test.kem.isNoble) return false;
-      if (test.testingComponent === 'kdf' && test.kdf.isNoble) return false;
-      if (test.testingComponent === 'aead' && test.aead.isNoble) return false;
-
-      // Check only the component being tested
-      if (test.testingComponent === 'kem') {
-        return browserUnsupportedAlgos.kem.includes(test.kem.name);
-      } else if (test.testingComponent === 'kdf') {
-        return browserUnsupportedAlgos.kdf.includes(test.kdf.name);
-      } else if (test.testingComponent === 'aead') {
-        return browserUnsupportedAlgos.aead.includes(test.aead.name);
-      }
-      return false;
-    }
-
-    // State management
-    let tests = [];
-    let currentFilter = 'all';
-
-    // Generate tests: one for each KEM, KDF, and AEAD (not every combination)
-    function generateTests() {
-      const testList = [];
-
-      // Test each KEM with baseline KDF and AEAD
-      for (const kem of ALL_KEMS) {
-        const test = {
-          id: testList.length,
-          kem,
-          kdf: baselineKDF,
-          aead: baselineAEAD,
-          testingComponent: 'kem',
-          status: 'pending',
-          error: null
-        };
-        test.expectedToFail = isExpectedToFail(test);
-        testList.push(test);
+      /** Extracts algorithms from a library object by prefix */
+      function extractAlgorithms(library, prefix, label, isNoble = false) {
+        return Object.keys(library)
+          .filter((key) => key.startsWith(prefix))
+          .map((name) => ({
+            name,
+            displayName: `[${label}] ${name}`,
+            factory: library[name],
+            isNoble,
+          }))
+          .sort((a, b) => a.name.localeCompare(b.name))
       }
 
-      // Test each KDF with baseline KEM and AEAD
-      for (const kdf of ALL_KDFS) {
-        const test = {
-          id: testList.length,
-          kem: baselineKEM,
-          kdf,
-          aead: baselineAEAD,
-          testingComponent: 'kdf',
-          status: 'pending',
-          error: null
-        };
-        test.expectedToFail = isExpectedToFail(test);
-        testList.push(test);
+      // Extract native HPKE algorithms
+      const KEMS = extractAlgorithms(HPKE, 'KEM_', 'native')
+      const KDFS = extractAlgorithms(HPKE, 'KDF_', 'native')
+      const AEADS = extractAlgorithms(HPKE, 'AEAD_', 'native')
+
+      // Extract Noble (extensibility) algorithms
+      const NOBLE_KEMS = extractAlgorithms(Noble, 'KEM_', 'extensibility', true)
+      const NOBLE_KDFS = extractAlgorithms(Noble, 'KDF_', 'extensibility', true)
+      const NOBLE_AEADS = extractAlgorithms(Noble, 'AEAD_', 'extensibility', true)
+
+      // Combine native and Noble implementations
+      const ALL_KEMS = [...KEMS, ...NOBLE_KEMS]
+      const ALL_KDFS = [...KDFS, ...NOBLE_KDFS]
+      const ALL_AEADS = [...AEADS, ...NOBLE_AEADS]
+
+      // ============================================================================
+      // BASELINE CONFIGURATION
+      // ============================================================================
+      // When testing a specific component (e.g., a KEM), we pair it with baseline
+      // KDF and AEAD to isolate the test. These are the baseline algorithms.
+
+      const baselineKEM = KEMS.find((k) => k.name === 'KEM_DHKEM_X25519_HKDF_SHA256')
+      const baselineKDF = KDFS.find((k) => k.name === 'KDF_HKDF_SHA256')
+      const baselineAEAD = AEADS.find((a) => a.name === 'AEAD_AES_128_GCM')
+
+      // ============================================================================
+      // BROWSER COMPATIBILITY
+      // ============================================================================
+      // Some algorithms are not supported in browsers due to missing Web Crypto APIs
+      // Noble implementations provide fallbacks for these
+      // Browser-specific unsupported algorithms based on Web Crypto API availability
+
+      const status = {
+        kem: [
+          'KEM_DHKEM_X448_HKDF_SHA512',
+          'KEM_ML_KEM_512',
+          'KEM_ML_KEM_768',
+          'KEM_ML_KEM_1024',
+          'KEM_MLKEM768_X25519',
+          'KEM_MLKEM768_P256',
+          'KEM_MLKEM1024_P384',
+        ],
+        kdf: ['KDF_SHAKE128', 'KDF_SHAKE256'],
+        aead: ['AEAD_ChaCha20Poly1305'],
       }
 
-      // Test each AEAD with baseline KEM and KDF
-      for (const aead of ALL_AEADS) {
-        const test = {
-          id: testList.length,
-          kem: baselineKEM,
-          kdf: baselineKDF,
-          aead,
-          testingComponent: 'aead',
-          status: 'pending',
-          error: null
-        };
-        test.expectedToFail = isExpectedToFail(test);
-        testList.push(test);
+      const browserUnsupportedAlgos = {
+        Blink: status,
+        Gecko: status,
+        WebKit: status,
       }
 
-      return testList;
-    }
-
-    // UI update functions
-    function getAlgorithmStatus(algoName, algoType) {
-      // Find ALL tests for this algorithm (native and extensibility)
-      const relatedTests = tests.filter(t => {
-        const component = t.testingComponent === 'kem' ? t.kem :
-                         t.testingComponent === 'kdf' ? t.kdf : t.aead;
-        return component.name === algoName && t.testingComponent === algoType;
-      });
-
-      if (relatedTests.length === 0) {
-        return 'pending';
+      /** Detects the current browser engine */
+      function detectBrowserEngine() {
+        const browser = Bowser.getParser(navigator.userAgent)
+        return browser.getEngineName()
       }
 
-      // Check if any test is running
-      if (relatedTests.some(t => t.status === 'running')) {
-        return 'testing';
+      const currentBrowser = detectBrowserEngine()
+      const unsupportedAlgos = browserUnsupportedAlgos[currentBrowser]
+      if (!unsupportedAlgos) {
+        throw new Error(`Unknown browser engine: ${engine} (${navigator.userAgent})`)
       }
 
-      // Check if any test is still pending
-      if (relatedTests.some(t => t.status === 'pending')) {
-        return 'pending';
+      /**
+       * Determines if a test is expected to fail based on browser support Noble implementations are
+       * always expected to work (they provide fallbacks)
+       */
+      function isExpectedToFail(test) {
+        // Noble implementations are always expected to pass (they provide fallbacks)
+        if (test.testingComponent === 'kem' && test.kem.isNoble) return false
+        if (test.testingComponent === 'kdf' && test.kdf.isNoble) return false
+        if (test.testingComponent === 'aead' && test.aead.isNoble) return false
+
+        // Check if the component being tested is unsupported in current browser
+        const componentName = test[test.testingComponent].name
+        return unsupportedAlgos[test.testingComponent].includes(componentName)
       }
 
-      // Priority: native passed > noble passed > unsupported
-      const nativeTest = relatedTests.find(t => {
-        const component = t.testingComponent === 'kem' ? t.kem :
-                         t.testingComponent === 'kdf' ? t.kdf : t.aead;
-        return !component.isNoble;
-      });
+      // ============================================================================
+      // STATE MANAGEMENT
+      // ============================================================================
 
-      const nobleTest = relatedTests.find(t => {
-        const component = t.testingComponent === 'kem' ? t.kem :
-                         t.testingComponent === 'kdf' ? t.kdf : t.aead;
-        return component.isNoble;
-      });
+      let tests = []
+      let currentFilter = 'all'
 
-      // If native test passed, show as native
-      if (nativeTest && nativeTest.status === 'passed') {
-        return 'native';
+      // ============================================================================
+      // TEST GENERATION
+      // ============================================================================
+
+      /**
+       * Generates the full test suite Strategy: Test each component individually with baseline
+       * values for others This avoids testing every combination (which would be thousands of
+       * tests)
+       */
+      function generateTests() {
+        const testList = []
+
+        // Test each KEM with baseline KDF and AEAD
+        for (const kem of ALL_KEMS) {
+          const test = {
+            id: testList.length,
+            kem,
+            kdf: baselineKDF,
+            aead: baselineAEAD,
+            testingComponent: 'kem',
+            status: 'pending',
+            error: null,
+          }
+          test.expectedToFail = isExpectedToFail(test)
+          testList.push(test)
+        }
+
+        // Test each KDF with baseline KEM and AEAD
+        for (const kdf of ALL_KDFS) {
+          const test = {
+            id: testList.length,
+            kem: baselineKEM,
+            kdf,
+            aead: baselineAEAD,
+            testingComponent: 'kdf',
+            status: 'pending',
+            error: null,
+          }
+          test.expectedToFail = isExpectedToFail(test)
+          testList.push(test)
+        }
+
+        // Test each AEAD with baseline KEM and KDF
+        for (const aead of ALL_AEADS) {
+          const test = {
+            id: testList.length,
+            kem: baselineKEM,
+            kdf: baselineKDF,
+            aead,
+            testingComponent: 'aead',
+            status: 'pending',
+            error: null,
+          }
+          test.expectedToFail = isExpectedToFail(test)
+          testList.push(test)
+        }
+
+        return testList
       }
 
-      // If noble test passed, show as noble
-      if (nobleTest && nobleTest.status === 'passed') {
-        return 'noble';
+      // ============================================================================
+      // UI RENDERING FUNCTIONS
+      // ============================================================================
+
+      /** Gets the component object from a test based on the test's component type */
+      function getTestComponent(test) {
+        return test.testingComponent === 'kem'
+          ? test.kem
+          : test.testingComponent === 'kdf'
+            ? test.kdf
+            : test.aead
       }
 
-      // Both failed or no passing tests
-      return 'unsupported';
-    }
+      /** Determines the display status for an algorithm card */
+      function getAlgorithmStatus(algoName, algoType) {
+        // Find ALL tests for this algorithm (native and extensibility)
+        const relatedTests = tests.filter((t) => {
+          const component = getTestComponent(t)
+          return component.name === algoName && t.testingComponent === algoType
+        })
 
-    function renderAlgorithmSummary() {
-      const summaryDiv = document.getElementById('summary');
+        if (relatedTests.length === 0) {
+          return 'pending'
+        }
 
-      // Get unique algorithm names
-      const kemNames = [...new Set(ALL_KEMS.map(k => k.name))].sort();
-      const kdfNames = [...new Set(ALL_KDFS.map(k => k.name))].sort();
-      const aeadNames = [...new Set(ALL_AEADS.map(a => a.name))].sort();
+        // Check if any test is running
+        if (relatedTests.some((t) => t.status === 'running')) {
+          return 'testing'
+        }
 
-      const sections = [
-        { title: 'Key Encapsulation Mechanisms (KEM)', algos: kemNames, type: 'kem' },
-        { title: 'Key Derivation Functions (KDF)', algos: kdfNames, type: 'kdf' },
-        { title: 'Authenticated Encryption (AEAD)', algos: aeadNames, type: 'aead' }
-      ];
+        // Check if any test is still pending
+        if (relatedTests.some((t) => t.status === 'pending')) {
+          return 'pending'
+        }
 
-      summaryDiv.innerHTML = sections.map(section => `
+        // Priority: native passed > noble passed > unsupported
+        const nativeTest = relatedTests.find((t) => !getTestComponent(t).isNoble)
+        const nobleTest = relatedTests.find((t) => getTestComponent(t).isNoble)
+
+        // If native test passed, show as native
+        if (nativeTest && nativeTest.status === 'passed') {
+          return 'native'
+        }
+
+        // If noble test passed, show as noble
+        if (nobleTest && nobleTest.status === 'passed') {
+          return 'noble'
+        }
+
+        // Both failed or no passing tests
+        return 'unsupported'
+      }
+
+      /**
+       * Renders the algorithm summary cards at the top of the page Shows the status of each KEM,
+       * KDF, and AEAD algorithm
+       */
+      function renderAlgorithmSummary() {
+        const summaryDiv = document.getElementById('summary')
+
+        // Get unique algorithm names
+        const kemNames = [...new Set(ALL_KEMS.map((k) => k.name))].sort()
+        const kdfNames = [...new Set(ALL_KDFS.map((k) => k.name))].sort()
+        const aeadNames = [...new Set(ALL_AEADS.map((a) => a.name))].sort()
+
+        const sections = [
+          { title: 'Key Encapsulation Mechanisms (KEM)', algos: kemNames, type: 'kem' },
+          { title: 'Key Derivation Functions (KDF)', algos: kdfNames, type: 'kdf' },
+          { title: 'Authenticated Encryption (AEAD)', algos: aeadNames, type: 'aead' },
+        ]
+
+        summaryDiv.innerHTML = sections
+          .map(
+            (section) => `
         <div class="algorithm-section">
           <h3>${section.title}</h3>
           <div class="algorithm-grid">
-            ${section.algos.map(algoName => {
-              const status = getAlgorithmStatus(algoName, section.type);
-              const statusText = status === 'native' ? 'Native' :
-                                status === 'noble' ? 'extensibility' :
-                                status === 'pending' ? 'Pending' :
-                                status === 'testing' ? 'Testing...' :
-                                'Unsupported';
-              const displayName = algoName.replace(/^(KEM_|KDF_|AEAD_)/, '');
-              const showCheckmark = status === 'native' || status === 'noble';
+            ${section.algos
+              .map((algoName) => {
+                const status = getAlgorithmStatus(algoName, section.type)
+                const statusText =
+                  status === 'native'
+                    ? 'Native'
+                    : status === 'noble'
+                      ? 'extensibility'
+                      : status === 'pending'
+                        ? 'Pending'
+                        : status === 'testing'
+                          ? 'Testing...'
+                          : 'Unsupported'
+                const displayName = algoName.replace(/^(KEM_|KDF_|AEAD_)/, '')
+                const showCheckmark = status === 'native' || status === 'noble'
 
-              return `
+                return `
                 <div class="algo-card ${status}" data-algo="${algoName}" data-type="${section.type}">
                   <div class="algo-name">${displayName}</div>
                   <div class="algo-status">${statusText}</div>
                   ${showCheckmark ? '<div class="checkmark">✓</div>' : ''}
                 </div>
-              `;
-            }).join('')}
+              `
+              })
+              .join('')}
           </div>
         </div>
-      `).join('');
-    }
+      `,
+          )
+          .join('')
+      }
 
-    function updateSummary() {
-      const total = tests.length;
-      const running = tests.filter(t => t.status === 'running').length;
-      const passed = tests.filter(t => t.status === 'passed').length;
-      const failed = tests.filter(t => t.status === 'failed').length;
+      /** Updates the filter button counts and visibility Called whenever test statuses change */
+      function updateSummary() {
+        const total = tests.length
+        const running = tests.filter((t) => t.status === 'running').length
+        const passed = tests.filter((t) => t.status === 'passed').length
+        const failed = tests.filter((t) => t.status === 'failed').length
 
-      // Calculate counts for all filter buttons
-      const nativeCount = tests.filter(t => {
-        const component = t.testingComponent === 'kem' ? t.kem :
-                         t.testingComponent === 'kdf' ? t.kdf : t.aead;
-        return !component.isNoble;
-      }).length;
+        // Calculate counts for all filter buttons
+        const nativeCount = tests.filter((t) => !getTestComponent(t).isNoble).length
+        const nobleCount = tests.filter((t) => getTestComponent(t).isNoble).length
 
-      const nobleCount = tests.filter(t => {
-        const component = t.testingComponent === 'kem' ? t.kem :
-                         t.testingComponent === 'kdf' ? t.kdf : t.aead;
-        return component.isNoble;
-      }).length;
+        const expectedFailures = tests.filter(
+          (t) => t.status === 'failed' && t.expectedToFail,
+        ).length
+        const unexpectedPasses = tests.filter(
+          (t) => t.status === 'passed' && t.expectedToFail,
+        ).length
+        const unexpectedFailures = tests.filter(
+          (t) => t.status === 'failed' && !t.expectedToFail,
+        ).length
+        const pending = tests.filter((t) => t.status === 'pending').length
 
-      const expectedFailures = tests.filter(t => t.status === 'failed' && t.expectedToFail).length;
-      const unexpectedPasses = tests.filter(t => t.status === 'passed' && t.expectedToFail).length;
-      const unexpectedFailures = tests.filter(t => t.status === 'failed' && !t.expectedToFail).length;
-      const pending = tests.filter(t => t.status === 'pending').length;
+        // Update all filter buttons with counts
+        const allBtn = document.querySelector('[data-filter="all"]')
+        const nativeBtn = document.querySelector('[data-filter="native"]')
+        const nobleBtn = document.querySelector('[data-filter="noble"]')
+        const passedBtn = document.querySelector('[data-filter="passed"]')
+        const passedUnexpectedBtn = document.querySelector('[data-filter="passed-unexpected"]')
+        const failedExpectedBtn = document.querySelector('[data-filter="failed-expected"]')
+        const failedUnexpectedBtn = document.querySelector('[data-filter="failed-unexpected"]')
+        const pendingBtn = document.querySelector('[data-filter="pending"]')
 
-      // Update all filter buttons with counts
-      const allBtn = document.querySelector('[data-filter="all"]');
-      const nativeBtn = document.querySelector('[data-filter="native"]');
-      const nobleBtn = document.querySelector('[data-filter="noble"]');
-      const passedBtn = document.querySelector('[data-filter="passed"]');
-      const passedUnexpectedBtn = document.querySelector('[data-filter="passed-unexpected"]');
-      const failedExpectedBtn = document.querySelector('[data-filter="failed-expected"]');
-      const failedUnexpectedBtn = document.querySelector('[data-filter="failed-unexpected"]');
-      const pendingBtn = document.querySelector('[data-filter="pending"]');
+        if (allBtn) allBtn.textContent = `All (${total})`
+        if (nativeBtn) nativeBtn.textContent = `Native (${nativeCount})`
+        if (nobleBtn) nobleBtn.textContent = `Extensibility (${nobleCount})`
+        if (passedBtn) passedBtn.textContent = `Passed (${passed})`
+        if (failedExpectedBtn)
+          failedExpectedBtn.textContent = `Failed (Expected) (${expectedFailures})`
 
-      if (allBtn) allBtn.textContent = `All (${total})`;
-      if (nativeBtn) nativeBtn.textContent = `Native (${nativeCount})`;
-      if (nobleBtn) nobleBtn.textContent = `Extensibility (${nobleCount})`;
-      if (passedBtn) passedBtn.textContent = `Passed (${passed})`;
-      if (failedExpectedBtn) failedExpectedBtn.textContent = `Failed (Expected) (${expectedFailures})`;
-
-      if (passedUnexpectedBtn) {
-        if (unexpectedPasses > 0) {
-          passedUnexpectedBtn.style.display = '';
-          passedUnexpectedBtn.textContent = `Passed (Unexpected) ⚠️ (${unexpectedPasses})`;
-        } else {
-          passedUnexpectedBtn.style.display = 'none';
+        if (passedUnexpectedBtn) {
+          if (unexpectedPasses > 0) {
+            passedUnexpectedBtn.style.display = ''
+            passedUnexpectedBtn.textContent = `Passed (Unexpected) ⚠️ (${unexpectedPasses})`
+          } else {
+            passedUnexpectedBtn.style.display = 'none'
+          }
+        }
+        if (failedUnexpectedBtn) {
+          if (unexpectedFailures > 0) {
+            failedUnexpectedBtn.style.display = ''
+            failedUnexpectedBtn.textContent = `Failed (Unexpected) ⚠️ (${unexpectedFailures})`
+          } else {
+            failedUnexpectedBtn.style.display = 'none'
+          }
+        }
+        if (pendingBtn) {
+          if (pending > 0) {
+            pendingBtn.style.display = ''
+            pendingBtn.textContent = `Pending (${pending})`
+          } else {
+            pendingBtn.style.display = 'none'
+          }
         }
       }
-      if (failedUnexpectedBtn) {
-        if (unexpectedFailures > 0) {
-          failedUnexpectedBtn.style.display = '';
-          failedUnexpectedBtn.textContent = `Failed (Unexpected) ⚠️ (${unexpectedFailures})`;
-        } else {
-          failedUnexpectedBtn.style.display = 'none';
+
+      /** Gets the display name for a test (shows the component being tested) */
+      function getTestDisplayName(test) {
+        const component = getTestComponent(test)
+        return component.displayName || component.name
+      }
+
+      /** Renders a single test item as HTML */
+      function renderTest(test) {
+        const testName = getTestDisplayName(test)
+
+        // Determine status display
+        let statusClass = test.status
+        let statusText = test.status
+        let showStatus = true
+
+        if (test.expectedToFail && test.status === 'failed') {
+          // Expected failure - don't show status pill
+          statusClass = 'expected'
+          statusText = 'expected'
+          showStatus = false
+        } else if (test.expectedToFail && test.status === 'passed') {
+          // Unexpected pass
+          statusClass = 'passed-unexpected'
+          statusText = 'unexpected pass'
         }
-      }
-      if (pendingBtn) {
-        if (pending > 0) {
-          pendingBtn.style.display = '';
-          pendingBtn.textContent = `Pending (${pending})`;
-        } else {
-          pendingBtn.style.display = 'none';
-        }
-      }
-    }
 
-    function renderTest(test) {
-      // Show only the component being tested
-      let testName;
-      if (test.testingComponent === 'kem') {
-        testName = test.kem.displayName || test.kem.name;
-      } else if (test.testingComponent === 'kdf') {
-        testName = test.kdf.displayName || test.kdf.name;
-      } else if (test.testingComponent === 'aead') {
-        testName = test.aead.displayName || test.aead.name;
-      } else {
-        testName = `${test.kem.displayName || test.kem.name} + ${test.kdf.displayName || test.kdf.name} + ${test.aead.displayName || test.aead.name}`;
-      }
-
-      // Determine status display
-      let statusClass = test.status;
-      let statusText = test.status;
-      let showStatus = true;
-
-      if (test.expectedToFail && test.status === 'failed') {
-        // Expected failure - don't show status pill
-        statusClass = 'expected';
-        statusText = 'expected';
-        showStatus = false;
-      } else if (test.expectedToFail && test.status === 'passed') {
-        // Unexpected pass
-        statusClass = 'passed-unexpected';
-        statusText = 'unexpected pass';
-      }
-
-      return `
+        return `
         <div class="test-item ${statusClass}" data-id="${test.id}" data-status="${test.status}">
           <div class="test-header">
             <div class="test-name">${testName}</div>
-            ${showStatus ? `<div class="test-status ${statusClass}">
+            ${
+              showStatus
+                ? `<div class="test-status ${statusClass}">
               ${test.status === 'running' ? '<span class="loader"></span>' : ''}
               ${statusText}
-            </div>` : ''}
+            </div>`
+                : ''
+            }
           </div>
           ${test.error ? `<div class="test-error">${escapeHtml(test.error)}</div>` : ''}
         </div>
-      `;
-    }
-
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function renderTests() {
-      const grid = document.getElementById('testGrid');
-      let filteredTests;
-
-      if (currentFilter === 'all') {
-        filteredTests = tests;
-      } else if (currentFilter === 'native') {
-        filteredTests = tests.filter(t => {
-          const component = t.testingComponent === 'kem' ? t.kem :
-                           t.testingComponent === 'kdf' ? t.kdf : t.aead;
-          return !component.isNoble;
-        });
-      } else if (currentFilter === 'noble') {
-        filteredTests = tests.filter(t => {
-          const component = t.testingComponent === 'kem' ? t.kem :
-                           t.testingComponent === 'kdf' ? t.kdf : t.aead;
-          return component.isNoble;
-        });
-      } else if (currentFilter === 'failed-expected') {
-        filteredTests = tests.filter(t => t.status === 'failed' && t.expectedToFail);
-      } else if (currentFilter === 'failed-unexpected') {
-        filteredTests = tests.filter(t => t.status === 'failed' && !t.expectedToFail);
-      } else if (currentFilter === 'passed-unexpected') {
-        filteredTests = tests.filter(t => t.status === 'passed' && t.expectedToFail);
-      } else {
-        filteredTests = tests.filter(t => t.status === currentFilter);
+      `
       }
 
-      grid.innerHTML = filteredTests.map(renderTest).join('');
-    }
+      /** Escapes HTML characters in text to prevent XSS */
+      function escapeHtml(text) {
+        const div = document.createElement('div')
+        div.textContent = text
+        return div.innerHTML
+      }
 
-    // Test execution
-    async function runTest(test) {
-      test.status = 'running';
-      renderTests();
-      updateSummary();
-      renderAlgorithmSummary(); // Update algorithm cards
-
-      try {
-        // Create cipher suite
-        const suite = new HPKE.CipherSuite(
-          test.kem.factory,
-          test.kdf.factory,
-          test.aead.factory
-        );
-
-        await suite.GenerateKeyPair()
-
-        const ikm = crypto.getRandomValues(new Uint8Array(suite.KEM.Nsk))
-
-        const keyPair = await suite.DeriveKeyPair(ikm, true);
-
-        const serializedPublicKey = await suite.SerializePublicKey(keyPair.publicKey);
-
-        const serializedPrivateKey = await suite.SerializePrivateKey(keyPair.privateKey);
-
-        const recipientPrivateKey = await suite.DeserializePrivateKey(serializedPrivateKey, true);
-
-        const recipientPublicKey = await suite.DeserializePublicKey(serializedPublicKey);
-
-        const recipientKeyPair = { publicKey: recipientPublicKey, privateKey: recipientPrivateKey }
-
-        if (test.aead.name === 'AEAD_EXPORT_ONLY') {
-          // Use export APIs for EXPORT_ONLY mode
-          const exporterContext = new TextEncoder().encode('test context');
-          const L = 32;
-
-          // Sender exports secret using recipient's public key
-          const { encapsulatedKey, exportedSecret } = await suite.SendExport(
-            recipientPublicKey,
-            exporterContext,
-            L
-          );
-
-          // Recipient receives exported secret using their private key
-          const receivedSecret = await suite.ReceiveExport(
-            recipientKeyPair,
-            encapsulatedKey,
-            exporterContext,
-            L
-          );
-
-          // Verify the secrets match
-          if (exportedSecret.length !== receivedSecret.length) {
-            throw new Error('Exported secret length mismatch');
-          }
-          for (let i = 0; i < exportedSecret.length; i++) {
-            if (exportedSecret[i] !== receivedSecret[i]) {
-              throw new Error('Exported secret mismatch');
-            }
-          }
+      /** Filters tests based on the current filter setting */
+      function getFilteredTests() {
+        if (currentFilter === 'all') {
+          return tests
+        } else if (currentFilter === 'native') {
+          return tests.filter((t) => !getTestComponent(t).isNoble)
+        } else if (currentFilter === 'noble') {
+          return tests.filter((t) => getTestComponent(t).isNoble)
+        } else if (currentFilter === 'failed-expected') {
+          return tests.filter((t) => t.status === 'failed' && t.expectedToFail)
+        } else if (currentFilter === 'failed-unexpected') {
+          return tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
+        } else if (currentFilter === 'passed-unexpected') {
+          return tests.filter((t) => t.status === 'passed' && t.expectedToFail)
         } else {
-          // Use Seal/Open APIs for regular AEADs
-          const plaintext = new TextEncoder().encode('Hello, HPKE!');
-          const aad = new TextEncoder().encode('additional data');
+          return tests.filter((t) => t.status === currentFilter)
+        }
+      }
 
-          // Sender seals using recipient's public key
-          const { encapsulatedKey, ciphertext } = await suite.Seal(
-            recipientPublicKey,
-            plaintext,
-            aad
-          );
+      /** Renders the test grid with filtered tests */
+      function renderTests() {
+        const grid = document.getElementById('testGrid')
+        const filteredTests = getFilteredTests()
+        grid.innerHTML = filteredTests.map(renderTest).join('')
+      }
 
-          // Recipient opens using their private key
-          const decrypted = await suite.Open(
-            recipientKeyPair,
-            encapsulatedKey,
-            ciphertext,
-            aad
-          );
+      // ============================================================================
+      // TEST EXECUTION
+      // ============================================================================
 
-          // Verify decrypted matches plaintext
-          const decryptedText = new TextDecoder().decode(decrypted);
-          if (decryptedText !== 'Hello, HPKE!') {
-            throw new Error(`Decryption mismatch: expected "Hello, HPKE!", got "${decryptedText}"`);
+      /** Performs encryption/decryption test for regular AEAD modes */
+      async function testRegularAEAD(suite, recipientKeyPair) {
+        const plaintext = new TextEncoder().encode('Hello, HPKE!')
+        const aad = new TextEncoder().encode('additional data')
+
+        // Sender seals using recipient's public key
+        const { encapsulatedKey, ciphertext } = await suite.Seal(
+          recipientKeyPair.publicKey,
+          plaintext,
+          aad,
+        )
+
+        // Recipient opens using their private key
+        const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext, aad)
+
+        // Verify decrypted matches plaintext
+        const decryptedText = new TextDecoder().decode(decrypted)
+        if (decryptedText !== 'Hello, HPKE!') {
+          throw new Error(`Decryption mismatch: expected "Hello, HPKE!", got "${decryptedText}"`)
+        }
+      }
+
+      /** Performs export-only mode test */
+      async function testExportOnlyMode(suite, recipientKeyPair) {
+        const exporterContext = new TextEncoder().encode('test context')
+        const L = 32
+
+        // Sender exports secret using recipient's public key
+        const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+          recipientKeyPair.publicKey,
+          exporterContext,
+          L,
+        )
+
+        // Recipient receives exported secret using their private key
+        const receivedSecret = await suite.ReceiveExport(
+          recipientKeyPair,
+          encapsulatedKey,
+          exporterContext,
+          L,
+        )
+
+        // Verify the secrets match
+        if (exportedSecret.length !== receivedSecret.length) {
+          throw new Error('Exported secret length mismatch')
+        }
+        for (let i = 0; i < exportedSecret.length; i++) {
+          if (exportedSecret[i] !== receivedSecret[i]) {
+            throw new Error('Exported secret mismatch')
+          }
+        }
+      }
+
+      /** Runs a single test for a KEM/KDF/AEAD combination */
+      async function runTest(test) {
+        test.status = 'running'
+        renderTests()
+        updateSummary()
+        renderAlgorithmSummary()
+
+        try {
+          // Create cipher suite with the test's KEM, KDF, and AEAD
+          const suite = new HPKE.CipherSuite(test.kem.factory, test.kdf.factory, test.aead.factory)
+
+          // Generate test key pair
+          await suite.GenerateKeyPair()
+          const ikm = crypto.getRandomValues(new Uint8Array(suite.KEM.Nsk))
+          const keyPair = await suite.DeriveKeyPair(ikm, true)
+
+          // Serialize and deserialize keys to test that functionality
+          const serializedPublicKey = await suite.SerializePublicKey(keyPair.publicKey)
+          const serializedPrivateKey = await suite.SerializePrivateKey(keyPair.privateKey)
+          const recipientPrivateKey = await suite.DeserializePrivateKey(serializedPrivateKey, true)
+          const recipientPublicKey = await suite.DeserializePublicKey(serializedPublicKey)
+          const recipientKeyPair = {
+            publicKey: recipientPublicKey,
+            privateKey: recipientPrivateKey,
+          }
+
+          // Test based on AEAD mode
+          if (test.aead.name === 'AEAD_EXPORT_ONLY') {
+            await testExportOnlyMode(suite, recipientKeyPair)
+          } else {
+            await testRegularAEAD(suite, recipientKeyPair)
+          }
+
+          test.status = 'passed'
+          test.error = null
+        } catch (error) {
+          test.status = 'failed'
+          test.error = error.message || String(error)
+
+          // Log unexpected failures to console
+          if (!test.expectedToFail) {
+            console.error(`Unexpected failure: ${getTestDisplayName(test)}`, error)
           }
         }
 
-        test.status = 'passed';
-        test.error = null;
-      } catch (error) {
-        test.status = 'failed';
-        test.error = error.message || String(error);
+        renderTests()
+        updateSummary()
+        renderAlgorithmSummary()
+      }
 
-        // Log unexpected failures to console
-        if (!test.expectedToFail) {
-          const componentName = test.testingComponent === 'kem' ? (test.kem.displayName || test.kem.name) :
-                                test.testingComponent === 'kdf' ? (test.kdf.displayName || test.kdf.name) :
-                                (test.aead.displayName || test.aead.name);
-          console.error(`Unexpected failure: ${componentName}`, error);
+      /** Runs all tests in randomized order */
+      async function runAllTests() {
+        // Randomize test order for variety
+        const randomizedTests = [...tests].sort(() => Math.random() - 0.5)
+
+        for (const test of randomizedTests) {
+          await runTest(test)
+          // Small delay to allow UI updates
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+
+        // Expose results to globalThis after all tests complete
+        updateGlobalResults()
+      }
+
+      // ============================================================================
+      // RESULTS EXPORT
+      // ============================================================================
+
+      /** Exposes test results on globalThis for external access */
+      function updateGlobalResults() {
+        globalThis.hpkeTestResults = {
+          total: tests.length,
+          passed: tests.filter((t) => t.status === 'passed').length,
+          failed: tests.filter((t) => t.status === 'failed').length,
+          expectedFailures: tests.filter((t) => t.status === 'failed' && t.expectedToFail).length,
+          unexpectedFailures: tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
+            .length,
+          unexpectedPasses: tests.filter((t) => t.status === 'passed' && t.expectedToFail).length,
+          tests: tests.map((t) => ({
+            id: t.id,
+            component: t.testingComponent,
+            name:
+              t.testingComponent === 'kem'
+                ? t.kem.displayName || t.kem.name
+                : t.testingComponent === 'kdf'
+                  ? t.kdf.displayName || t.kdf.name
+                  : t.aead.displayName || t.aead.name,
+            suite: {
+              kem: t.kem.displayName || t.kem.name,
+              kdf: t.kdf.displayName || t.kdf.name,
+              aead: t.aead.displayName || t.aead.name,
+            },
+            status: t.status,
+            expectedToFail: t.expectedToFail,
+            error: t.error,
+          })),
         }
       }
 
-      renderTests();
-      updateSummary();
-      renderAlgorithmSummary(); // Update algorithm cards
-    }
+      // ============================================================================
+      // FILTER MANAGEMENT
+      // ============================================================================
 
-    async function runAllTests() {
-      // Randomize test order for fun
-      const randomizedTests = [...tests].sort(() => Math.random() - 0.5);
-
-      for (const test of randomizedTests) {
-        await runTest(test);
-        // Small delay to allow UI updates
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-
-      // Expose results to globalThis after all tests complete
-      updateGlobalResults();
-    }
-
-    // Expose test results on globalThis
-    function updateGlobalResults() {
-      globalThis.hpkeTestResults = {
-        total: tests.length,
-        passed: tests.filter(t => t.status === 'passed').length,
-        failed: tests.filter(t => t.status === 'failed').length,
-        expectedFailures: tests.filter(t => t.status === 'failed' && t.expectedToFail).length,
-        unexpectedFailures: tests.filter(t => t.status === 'failed' && !t.expectedToFail).length,
-        unexpectedPasses: tests.filter(t => t.status === 'passed' && t.expectedToFail).length,
-        tests: tests.map(t => ({
-          id: t.id,
-          component: t.testingComponent,
-          name: t.testingComponent === 'kem' ? (t.kem.displayName || t.kem.name) :
-                t.testingComponent === 'kdf' ? (t.kdf.displayName || t.kdf.name) :
-                (t.aead.displayName || t.aead.name),
-          suite: {
-            kem: t.kem.displayName || t.kem.name,
-            kdf: t.kdf.displayName || t.kdf.name,
-            aead: t.aead.displayName || t.aead.name
-          },
-          status: t.status,
-          expectedToFail: t.expectedToFail,
-          error: t.error
-        }))
-      };
-    }
-
-    // Filter functionality
-    function setupFilters() {
-      // Load saved filter from localStorage
-      const savedFilter = localStorage.getItem('hpkeTestFilter');
-      if (savedFilter) {
-        currentFilter = savedFilter;
-        // Update active button
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        const activeBtn = document.querySelector(`[data-filter="${savedFilter}"]`);
-        if (activeBtn) {
-          activeBtn.classList.add('active');
+      /** Sets up filter buttons and loads saved filter preference */
+      function setupFilters() {
+        // Load saved filter from localStorage
+        const savedFilter = localStorage.getItem('hpkeTestFilter')
+        if (savedFilter) {
+          currentFilter = savedFilter
+          // Update active button
+          document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'))
+          const activeBtn = document.querySelector(`[data-filter="${savedFilter}"]`)
+          if (activeBtn) {
+            activeBtn.classList.add('active')
+          }
         }
+
+        // Add click handlers to filter buttons
+        document.querySelectorAll('.filter-btn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'))
+            e.target.classList.add('active')
+            currentFilter = e.target.dataset.filter
+            // Save filter preference to localStorage
+            localStorage.setItem('hpkeTestFilter', currentFilter)
+            renderTests()
+          })
+        })
       }
 
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-          e.target.classList.add('active');
-          currentFilter = e.target.dataset.filter;
-          // Save filter to localStorage
-          localStorage.setItem('hpkeTestFilter', currentFilter);
-          renderTests();
-        });
-      });
-    }
+      // ============================================================================
+      // INITIALIZATION
+      // ============================================================================
 
-    // Initialize and run
-    async function init() {
-      tests = generateTests();
-      renderAlgorithmSummary(); // Render algorithm cards first
-      setupFilters(); // Setup filters first to load saved filter
-      updateSummary();
-      renderTests();
-      await runAllTests();
-    }
+      /** Initializes the test suite and starts execution */
+      async function init() {
+        tests = generateTests()
+        renderAlgorithmSummary()
+        setupFilters()
+        updateSummary()
+        renderTests()
+        await runAllTests()
+      }
 
-    init();
-  </script>
-</body>
+      init()
+    </script>
+  </body>
 </html>

@@ -43,7 +43,7 @@
     "build": "npx tsc -p tsconfig.json && node build.cjs",
     "build:other": "npx tsc -p tsconfig.test.json && npx tsc -p tsconfig.examples.json",
     "docs": "npx typedoc",
-    "format": "prettier --log-level silent --write ./index.ts test/**/*.ts examples/**/*.ts",
+    "format": "prettier --log-level silent --write ./index.ts test/**/*.ts examples/**/*.ts index.html",
     "test": "node --test --no-warnings test/*.ts",
     "test:bun": "bun test ./test/*.ts",
     "test:deno": "deno test --no-check --allow-read test/*.ts",
