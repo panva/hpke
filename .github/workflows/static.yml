@@ -32,8 +32,9 @@ jobs:
       - run: npm clean-install
       - run: node --run build
       - run: |
-          mkdir -p static/node_modules static/examples/noble-suite
+          mkdir -p static/node_modules static/examples/noble-suite static/test
           cp index.js index.html static/
+          cp test/*.json static/test/
           cp -r node_modules/@noble static/node_modules
           cp examples/noble-suite/*.js static/examples/noble-suite
       - name: Setup Pages

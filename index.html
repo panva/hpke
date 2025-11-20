@@ -399,6 +399,13 @@
       import * as Noble from '@panva/hpke-noble'
       import Bowser from 'bowser'
 
+      import vectors from './test/vectors.json' with { type: 'json' }
+      import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
+      const allVectors = [...vectors, ...vectorsPq].filter((v) => {
+        if (v.mode !== 0x00 && v.mode !== 0x01) return false
+        return true
+      })
+
       // ============================================================================
       // ALGORITHM DISCOVERY
       // ============================================================================
@@ -432,6 +439,41 @@
       const ALL_KEMS = [...KEMS, ...NOBLE_KEMS]
       const ALL_KDFS = [...KDFS, ...NOBLE_KDFS]
       const ALL_AEADS = [...AEADS, ...NOBLE_AEADS]
+
+      // ============================================================================
+      // ALGORITHM ID MAPPINGS
+      // ============================================================================
+      // Static mapping of algorithm names to their IDs from the HPKE specification
+
+      const ALGORITHM_IDS = {
+        // KEMs
+        KEM_DHKEM_P256_HKDF_SHA256: 0x0010,
+        KEM_DHKEM_P384_HKDF_SHA384: 0x0011,
+        KEM_DHKEM_P521_HKDF_SHA512: 0x0012,
+        KEM_DHKEM_X25519_HKDF_SHA256: 0x0020,
+        KEM_DHKEM_X448_HKDF_SHA512: 0x0021,
+        KEM_ML_KEM_512: 0x0040,
+        KEM_ML_KEM_768: 0x0041,
+        KEM_ML_KEM_1024: 0x0042,
+        KEM_MLKEM768_P256: 0x0050,
+        KEM_MLKEM1024_P384: 0x0051,
+        KEM_MLKEM768_X25519: 0x647a,
+
+        // KDFs
+        KDF_HKDF_SHA256: 0x0001,
+        KDF_HKDF_SHA384: 0x0002,
+        KDF_HKDF_SHA512: 0x0003,
+        KDF_SHAKE128: 0x0010,
+        KDF_SHAKE256: 0x0011,
+        KDF_TurboSHAKE128: 0x0012,
+        KDF_TurboSHAKE256: 0x0013,
+
+        // AEADs
+        AEAD_AES_128_GCM: 0x0001,
+        AEAD_AES_256_GCM: 0x0002,
+        AEAD_ChaCha20Poly1305: 0x0003,
+        AEAD_EXPORT_ONLY: 0xffff,
+      }
 
       // ============================================================================
       // BASELINE CONFIGURATION
@@ -862,12 +904,33 @@
         )
 
         // Verify the secrets match
-        if (exportedSecret.length !== receivedSecret.length) {
-          throw new Error('Exported secret length mismatch')
+        assertUint8ArraysEqual(exportedSecret, receivedSecret, 'Exported secret mismatch')
+      }
+
+      /** Helper to find a matching implementation, preferring native over Noble */
+      function findMatchingImplementation(algorithms, algorithmId, unsupportedList) {
+        // Prefer native implementations that are supported
+        return (
+          algorithms.find((a) => {
+            if (ALGORITHM_IDS[a.name] !== algorithmId) return false
+            return !a.isNoble && !unsupportedList.includes(a.name)
+          }) ||
+          // Fall back to Noble implementation
+          algorithms.find((a) => {
+            if (ALGORITHM_IDS[a.name] !== algorithmId) return false
+            return a.isNoble
+          })
+        )
+      }
+
+      /** Helper to verify two Uint8Arrays match */
+      function assertUint8ArraysEqual(actual, expected, errorPrefix) {
+        if (actual.length !== expected.length) {
+          throw new Error(`${errorPrefix}: length mismatch`)
         }
-        for (let i = 0; i < exportedSecret.length; i++) {
-          if (exportedSecret[i] !== receivedSecret[i]) {
-            throw new Error('Exported secret mismatch')
+        for (let i = 0; i < actual.length; i++) {
+          if (actual[i] !== expected[i]) {
+            throw new Error(`${errorPrefix}: content mismatch`)
           }
         }
       }
@@ -880,7 +943,54 @@
         renderAlgorithmSummary()
 
         try {
-          // Create cipher suite with the test's KEM, KDF, and AEAD
+          // Check if a test vector exists where we have implementations of all components
+          let hasVector = false
+          let vectorToUse = null
+
+          if (test.testingComponent === 'kem') {
+            const kemId = ALGORITHM_IDS[test.kem.name]
+
+            // Find a vector with this KEM where we have expected-to-pass implementations for the KDF and AEAD
+            vectorToUse = allVectors.find((v) => {
+              if (v.kem_id !== kemId) return false
+
+              const kdfMatch = findMatchingImplementation(ALL_KDFS, v.kdf_id, unsupported.kdf)
+              const aeadMatch = findMatchingImplementation(ALL_AEADS, v.aead_id, unsupported.aead)
+
+              return kdfMatch && aeadMatch
+            })
+            hasVector = !!vectorToUse
+          } else if (test.testingComponent === 'kdf') {
+            const kdfId = ALGORITHM_IDS[test.kdf.name]
+
+            // Find a vector with this KDF where we have expected-to-pass implementations for the KEM and AEAD
+            vectorToUse = allVectors.find((v) => {
+              if (v.kdf_id !== kdfId) return false
+
+              const kemMatch = findMatchingImplementation(ALL_KEMS, v.kem_id, unsupported.kem)
+              const aeadMatch = findMatchingImplementation(ALL_AEADS, v.aead_id, unsupported.aead)
+
+              return kemMatch && aeadMatch
+            })
+            hasVector = !!vectorToUse
+          } else if (test.testingComponent === 'aead') {
+            const aeadId = ALGORITHM_IDS[test.aead.name]
+
+            // Find a vector with this AEAD where we have expected-to-pass implementations for the KEM and KDF
+            vectorToUse = allVectors.find((v) => {
+              if (v.aead_id !== aeadId) return false
+
+              const kemMatch = findMatchingImplementation(ALL_KEMS, v.kem_id, unsupported.kem)
+              const kdfMatch = findMatchingImplementation(ALL_KDFS, v.kdf_id, unsupported.kdf)
+
+              return kemMatch && kdfMatch
+            })
+            hasVector = !!vectorToUse
+          }
+
+          test.hasVector = hasVector
+
+          // Pass 1: Test with baseline components (existing behavior)
           const suite = new HPKE.CipherSuite(test.kem.factory, test.kdf.factory, test.aead.factory)
 
           // Generate test key pair
@@ -903,6 +1013,92 @@
             await testExportOnlyMode(suite, recipientKeyPair)
           } else {
             await testRegularAEAD(suite, recipientKeyPair)
+          }
+
+          // Pass 2: If we have a vector, test against it
+          if (hasVector && vectorToUse) {
+            // Find the matching components from the vector - prefer native, fallback to Noble
+            const vectorKemMatch = findMatchingImplementation(
+              ALL_KEMS,
+              vectorToUse.kem_id,
+              unsupported.kem,
+            )
+            const vectorKdfMatch = findMatchingImplementation(
+              ALL_KDFS,
+              vectorToUse.kdf_id,
+              unsupported.kdf,
+            )
+            const vectorAeadMatch = findMatchingImplementation(
+              ALL_AEADS,
+              vectorToUse.aead_id,
+              unsupported.aead,
+            )
+
+            if (vectorKemMatch && vectorKdfMatch && vectorAeadMatch) {
+              // Create suite with vector's components
+              const vectorSuite = new HPKE.CipherSuite(
+                vectorKemMatch.factory,
+                vectorKdfMatch.factory,
+                vectorAeadMatch.factory,
+              )
+
+              // Derive recipient key pair from vector's ikmR
+              const ikmR = Uint8Array.fromHex(vectorToUse.ikmR)
+              const vectorRecipientKeyPair = await vectorSuite.DeriveKeyPair(ikmR, true)
+
+              // Verify serialized keys match the vector's skRm and pkRm
+              const serializedPrivateKey = await vectorSuite.SerializePrivateKey(
+                vectorRecipientKeyPair.privateKey,
+              )
+              const expectedPrivateKey = Uint8Array.fromHex(vectorToUse.skRm)
+              assertUint8ArraysEqual(
+                serializedPrivateKey,
+                expectedPrivateKey,
+                'Vector test: Private key mismatch',
+              )
+
+              const serializedPublicKey = await vectorSuite.SerializePublicKey(
+                vectorRecipientKeyPair.publicKey,
+              )
+              const expectedPublicKey = Uint8Array.fromHex(vectorToUse.pkRm)
+              assertUint8ArraysEqual(
+                serializedPublicKey,
+                expectedPublicKey,
+                'Vector test: Public key mismatch',
+              )
+
+              // Test against first encryption in the vector
+              if (vectorToUse.encryptions && vectorToUse.encryptions.length > 0) {
+                const firstEnc = vectorToUse.encryptions[0]
+                const enc = Uint8Array.fromHex(vectorToUse.enc)
+                const ciphertext = Uint8Array.fromHex(firstEnc.ct)
+                const aad = Uint8Array.fromHex(firstEnc.aad)
+                const expectedPlaintext = Uint8Array.fromHex(firstEnc.pt)
+
+                // Build options object based on mode
+                const options = {
+                  info: Uint8Array.fromHex(vectorToUse.info),
+                  psk: vectorToUse.psk ? Uint8Array.fromHex(vectorToUse.psk) : undefined,
+                  pskId: vectorToUse.psk_id ? Uint8Array.fromHex(vectorToUse.psk_id) : undefined,
+                }
+
+                // Use one-shot Open API
+                const decrypted = await vectorSuite.Open(
+                  vectorRecipientKeyPair,
+                  enc,
+                  ciphertext,
+                  aad,
+                  options,
+                )
+
+                // Verify the decrypted plaintext matches
+                assertUint8ArraysEqual(
+                  decrypted,
+                  expectedPlaintext,
+                  'Vector test: Decrypted mismatch',
+                )
+              }
+            }
           }
 
           test.status = 'passed'
