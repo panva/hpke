@@ -133,3 +133,5 @@ tap/.workers.capnp
 index.js
 index.d.ts
 index.d.ts.map
+examples/noble-suite/*.js
+static

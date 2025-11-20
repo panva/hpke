@@ -73,6 +73,20 @@ const indexDtsAfter = getFileSizes('index.d.ts')
 printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
 
 // ============================================================================
+// @noble examples
+// ============================================================================
+
+{
+  const files = fs.globSync('examples/noble-suite/*.ts')
+  for (const file of files) {
+    const outFile = file.replace(/\.ts$/, '.js')
+    fs.writeFileSync(outFile, amaro.transformSync(fs.readFileSync(file), {
+      mode: 'strip-only',
+    }).code)
+  }
+}
+
+// ============================================================================
 // Utils
 // ============================================================================
 
