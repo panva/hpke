@@ -450,16 +450,13 @@
       // Noble implementations provide fallbacks for these
       // Browser-specific unsupported algorithms based on Web Crypto API availability
 
-      /** Detects the current browser engine */
-      function detectBrowserEngine() {
+      /** Detects the current browser engine and version */
+      function detectBrowser() {
         const browser = Bowser.getParser(navigator.userAgent)
-        return browser.getEngineName()
-      }
-
-      /** Detects the current browser engine version */
-      function detectBrowserVersion() {
-        const browser = Bowser.getParser(navigator.userAgent)
-        return browser.getBrowser().version
+        return {
+          engine: browser.getEngineName(),
+          version: parseInt(browser.getBrowserVersion()),
+        }
       }
 
       const unsupported = {
@@ -476,13 +473,13 @@
         aead: ['AEAD_ChaCha20Poly1305'],
       }
 
-      const currentBrowser = detectBrowserEngine()
-      const currentBrowserVersion = detectBrowserVersion()
+      const browser = detectBrowser()
 
-      // Special handling for Gecko versions below 143
-      if (currentBrowser === 'Gecko' && parseFloat(currentBrowserVersion) < 143) {
-        // https://bugzilla.mozilla.org/show_bug.cgi?id=1932396
-        unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
+      switch (true) {
+        case browser.engine === 'Gecko' && browser.version < 143:
+          // https://bugzilla.mozilla.org/show_bug.cgi?id=1932396
+          unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
+          break
       }
 
       /**
