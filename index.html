@@ -479,8 +479,9 @@
       const currentBrowser = detectBrowserEngine()
       const currentBrowserVersion = detectBrowserVersion()
 
-      // Special handling for Gecko versions below 145
-      if (currentBrowser === 'Gecko' && parseFloat(currentBrowserVersion) < 145) {
+      // Special handling for Gecko versions below 143
+      if (currentBrowser === 'Gecko' && parseFloat(currentBrowserVersion) < 143) {
+        // https://bugzilla.mozilla.org/show_bug.cgi?id=1932396
         unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
       }
 
