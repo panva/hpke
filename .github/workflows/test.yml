@@ -34,6 +34,7 @@ jobs:
       - run: git diff --exit-code
 
   docs:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -53,6 +54,7 @@ jobs:
   node:
     needs:
       - node-versions
+      - build
     strategy:
       fail-fast: false
       matrix:
@@ -70,6 +72,7 @@ jobs:
       - run: node --run test
 
   deno:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -80,6 +83,7 @@ jobs:
       - run: deno run test:deno
 
   bun:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -88,3 +92,19 @@ jobs:
           bun-version: latest
       - run: npm clean-install
       - run: bun run test:bun
+
+  browsers:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          cache: 'npm'
+          check-latest: true
+      - run: npm clean-install
+      - run: node --run build
+      - run: npm upgrade playwright
+      - run: npx playwright install --only-shell chromium firefox webkit
+      - run: node --run test:browsers

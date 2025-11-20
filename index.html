@@ -439,7 +439,7 @@
       // When testing a specific component (e.g., a KEM), we pair it with baseline
       // KDF and AEAD to isolate the test. These are the baseline algorithms.
 
-      const baselineKEM = KEMS.find((k) => k.name === 'KEM_DHKEM_X25519_HKDF_SHA256')
+      const baselineKEM = KEMS.find((k) => k.name === 'KEM_DHKEM_P256_HKDF_SHA256')
       const baselineKDF = KDFS.find((k) => k.name === 'KDF_HKDF_SHA256')
       const baselineAEAD = AEADS.find((a) => a.name === 'AEAD_AES_128_GCM')
 
@@ -450,7 +450,19 @@
       // Noble implementations provide fallbacks for these
       // Browser-specific unsupported algorithms based on Web Crypto API availability
 
-      const status = {
+      /** Detects the current browser engine */
+      function detectBrowserEngine() {
+        const browser = Bowser.getParser(navigator.userAgent)
+        return browser.getEngineName()
+      }
+
+      /** Detects the current browser engine version */
+      function detectBrowserVersion() {
+        const browser = Bowser.getParser(navigator.userAgent)
+        return browser.getBrowser().version
+      }
+
+      const unsupported = {
         kem: [
           'KEM_DHKEM_X448_HKDF_SHA512',
           'KEM_ML_KEM_512',
@@ -464,22 +476,12 @@
         aead: ['AEAD_ChaCha20Poly1305'],
       }
 
-      const browserUnsupportedAlgos = {
-        Blink: status,
-        Gecko: status,
-        WebKit: status,
-      }
-
-      /** Detects the current browser engine */
-      function detectBrowserEngine() {
-        const browser = Bowser.getParser(navigator.userAgent)
-        return browser.getEngineName()
-      }
-
       const currentBrowser = detectBrowserEngine()
-      const unsupportedAlgos = browserUnsupportedAlgos[currentBrowser]
-      if (!unsupportedAlgos) {
-        throw new Error(`Unknown browser engine: ${engine} (${navigator.userAgent})`)
+      const currentBrowserVersion = detectBrowserVersion()
+
+      // Special handling for Gecko versions below 145
+      if (currentBrowser === 'Gecko' && parseFloat(currentBrowserVersion) < 145) {
+        unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
       }
 
       /**
@@ -494,7 +496,7 @@
 
         // Check if the component being tested is unsupported in current browser
         const componentName = test[test.testingComponent].name
-        return unsupportedAlgos[test.testingComponent].includes(componentName)
+        return unsupported[test.testingComponent].includes(componentName)
       }
 
       // ============================================================================
