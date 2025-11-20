@@ -411,6 +411,18 @@ export type { RecipientContext }
 // Main CipherSuite Class
 // ============================================================================
 
+const validate = <T extends { type: string }>(factory: () => T, type: string): T => {
+  try {
+    const result = factory()
+    if (result.type !== type) {
+      throw new Error(`Invalid "${type}" return discriminator`)
+    }
+    return result
+  } catch (cause) {
+    throw new TypeError(`Invalid "${type}"`, { cause })
+  }
+}
+
 /**
  * Hybrid Public Key Encryption (HPKE) suite combining a KEM, KDF, and AEAD.
  *
@@ -499,18 +511,9 @@ export class CipherSuite {
    * @see {@link AEADFactory Available AEADs}
    */
   constructor(KEM: KEMFactory, KDF: KDFFactory, AEAD: AEADFactory) {
-    const kem = KEM()
-    if (kem.type !== 'KEM') {
-      throw new TypeError('provided "KEM" is not a KEM')
-    }
-    const kdf = KDF()
-    if (kdf.type !== 'KDF') {
-      throw new TypeError('provided "KDF" is not a KDF')
-    }
-    const aead = AEAD()
-    if (aead.type !== 'AEAD') {
-      throw new TypeError('provided "AEAD" is not an AEAD')
-    }
+    const kem = validate(KEM, 'KEM')
+    const kdf = validate(KDF, 'KDF')
+    const aead = validate(AEAD, 'AEAD')
 
     this.#suite = {
       KEM: kem,
