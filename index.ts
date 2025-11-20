@@ -3069,11 +3069,11 @@ const P256: NistCurveConfig = {
   algorithm: { name: 'ECDH', namedCurve: 'P-256' },
   Npk: 65,
   Nsk: 32,
-  order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'), // prettier-ignore
+  order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
   bitmask: 0xff,
-  prime: BigInt('0xffffffff00000001000000000000000000000000ffffffffffffffffffffffff'), // prettier-ignore
-  Gx: BigInt('0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296'), // prettier-ignore
-  Gy: BigInt('0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5'), // prettier-ignore
+  prime: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+  Gx: 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296n,
+  Gy: 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5n,
 }
 
 /**
@@ -3117,11 +3117,13 @@ const P384: NistCurveConfig = {
   algorithm: { name: 'ECDH', namedCurve: 'P-384' },
   Npk: 97,
   Nsk: 48,
-  order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
+  order:
+    0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
   bitmask: 0xff,
-  prime: BigInt('0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffff'), // prettier-ignore
-  Gx: BigInt('0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7'), // prettier-ignore
-  Gy: BigInt('0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5f'), // prettier-ignore
+  prime:
+    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffffn,
+  Gx: 0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7n,
+  Gy: 0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5fn,
 }
 
 /**
@@ -3165,11 +3167,13 @@ const P521: NistCurveConfig = {
   Npk: 133,
   Nsk: 66,
   algorithm: { name: 'ECDH', namedCurve: 'P-521' },
-  order: BigInt('0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409'), // prettier-ignore
+  order:
+    0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
   bitmask: 0x01,
-  prime: BigInt('0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff'), // prettier-ignore
-  Gx: BigInt('0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66'), // prettier-ignore
-  Gy: BigInt('0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650'), // prettier-ignore
+  prime:
+    0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  Gx: 0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66n,
+  Gy: 0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650n,
 }
 
 /**
@@ -4144,7 +4148,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
       Nss: 32,
       Nct: 65,
       Nscalar: 32,
-      order: BigInt('0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551'),
+      order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
       RandomScalar(seed) {
         return RandomScalarNist(this, seed)
       },
@@ -4200,7 +4204,8 @@ export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
       Nss: 48,
       Nct: 97,
       Nscalar: 48,
-      order: BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973'), // prettier-ignore
+      order:
+        0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
       RandomScalar(seed) {
         return RandomScalarNist(this, seed)
       },
