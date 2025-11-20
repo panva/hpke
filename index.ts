@@ -63,17 +63,14 @@ async function ContextExport(
   exporterContext: Uint8Array,
   L: number,
 ) {
-  /* c8 ignore next 3 */
-  if (suite.KDF.stages !== 1 && suite.KDF.stages !== 2) {
-    throw new Error('unreachable')
-  }
+  const stages = KDFStages(suite.KDF)
   if (!(exporterContext instanceof Uint8Array)) {
     throw new TypeError('"exporterContext" must be a Uint8Array')
   }
   if (!Number.isInteger(L) || L <= 0 || L > 0xffff) {
     throw new TypeError('"L" must be a positive integer not exceeding 65535')
   }
-  const Export = suite.KDF.stages === 1 ? ExportOneStage : ExportTwoStage
+  const Export = stages === 1 ? ExportOneStage : ExportTwoStage
   return await Export(suite.KDF, suite.id, exporterSecret, exporterContext, L)
 }
 
@@ -2185,6 +2182,14 @@ function I2OSP(n: number, w: number): Uint8Array {
   return ret
 }
 
+function KDFStages(KDF: KDF): 1 | 2 {
+  if (KDF.stages === 1 || KDF.stages === 2) {
+    return KDF.stages
+  }
+  /* c8 ignore next */
+  throw new Error('unreachable')
+}
+
 async function KeySchedule(
   suite: Triple,
   mode: number,
@@ -2208,11 +2213,8 @@ async function KeySchedule(
   psk ??= new Uint8Array()
   pskId ??= new Uint8Array()
 
-  /* c8 ignore next 3 */
-  if (suite.KDF.stages !== 1 && suite.KDF.stages !== 2) {
-    throw new Error('unreachable')
-  }
-  const CombineSecrets = suite.KDF.stages === 1 ? CombineSecretsOneStage : CombineSecretsTwoStage
+  const stages = KDFStages(suite.KDF)
+  const CombineSecrets = stages === 1 ? CombineSecretsOneStage : CombineSecretsTwoStage
 
   return await CombineSecrets(suite, mode, shared_secret, info, psk, pskId)
 }
@@ -3661,6 +3663,12 @@ export const AEAD_ChaCha20Poly1305: AEADFactory = function AEAD_ChaCha20Poly1305
 // KEM (Key Encapsulation Mechanism) - Hybrid KEM Types and Implementation
 // ============================================================================
 
+/* c8 ignore next 5 */
+const InvalidInvocation = (_: typeof priv) => {
+  if (_ !== priv) {
+    throw new Error('invalid invocation')
+  }
+}
 const priv = Symbol()
 class HybridKey implements Key {
   #algorithm: KeyAlgorithm
@@ -3687,9 +3695,7 @@ class HybridKey implements Key {
     seed?: Uint8Array,
     publicKey?: HybridKey,
   ) {
-    if (_ !== priv) {
-      throw new Error('invalid invocation')
-    }
+    InvalidInvocation(_)
     this.#algorithm = algorithm
     this.#type = type
     this.#extractable = extractable
@@ -3712,30 +3718,22 @@ class HybridKey implements Key {
   }
 
   getPublicKey(_: typeof priv) {
-    if (_ !== priv) {
-      throw new Error('invalid invocation')
-    }
+    InvalidInvocation(_)
     return this.#publicKey
   }
 
   getSeed(_: typeof priv) {
-    if (_ !== priv) {
-      throw new Error('invalid invocation')
-    }
+    InvalidInvocation(_)
     return this.#seed!.slice()
   }
 
   getT(_: typeof priv) {
-    if (_ !== priv) {
-      throw new Error('invalid invocation')
-    }
+    InvalidInvocation(_)
     return this.#t
   }
 
   getPq(_: typeof priv) {
-    if (_ !== priv) {
-      throw new Error('invalid invocation')
-    }
+    InvalidInvocation(_)
     return this.#pq
   }
 }

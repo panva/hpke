@@ -138,6 +138,42 @@ test.describe('pummel', () => {
         // Generate a key pair
         const generatedKp = await suite.DeriveKeyPair(ikm, extractable)
 
+        // Validate KeyPair structure
+        t.assert.ok(generatedKp.publicKey, 'KeyPair should have publicKey')
+        t.assert.ok(generatedKp.privateKey, 'KeyPair should have privateKey')
+        t.assert.strictEqual(
+          generatedKp.publicKey.type,
+          'public',
+          'publicKey.type should be "public"',
+        )
+        t.assert.strictEqual(
+          generatedKp.privateKey.type,
+          'private',
+          'privateKey.type should be "private"',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.publicKey.extractable,
+          'boolean',
+          'publicKey.extractable should be boolean',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.privateKey.extractable,
+          'boolean',
+          'privateKey.extractable should be boolean',
+        )
+        t.assert.ok(generatedKp.publicKey.algorithm, 'publicKey should have algorithm')
+        t.assert.ok(generatedKp.privateKey.algorithm, 'privateKey should have algorithm')
+        t.assert.strictEqual(
+          typeof generatedKp.publicKey.algorithm.name,
+          'string',
+          'publicKey.algorithm.name should be string',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.privateKey.algorithm.name,
+          'string',
+          'privateKey.algorithm.name should be string',
+        )
+
         // Serialize both keys
         const serializedPub1 = await suite.SerializePublicKey(generatedKp.publicKey)
         const serializedPriv1 = await suite.SerializePrivateKey(generatedKp.privateKey)
@@ -147,6 +183,18 @@ test.describe('pummel', () => {
         // Deserialize both keys
         const deserializedPub = await suite.DeserializePublicKey(serializedPub1)
         const deserializedPriv = await suite.DeserializePrivateKey(serializedPriv1, extractable)
+
+        // Validate deserialized keys
+        t.assert.strictEqual(
+          deserializedPub.type,
+          'public',
+          'deserializedPub.type should be "public"',
+        )
+        t.assert.strictEqual(
+          deserializedPriv.type,
+          'private',
+          'deserializedPriv.type should be "private"',
+        )
 
         // Serialize again and verify they match
         const serializedPub2 = await suite.SerializePublicKey(deserializedPub)
@@ -164,6 +212,42 @@ test.describe('pummel', () => {
         // Generate a key pair
         const generatedKp = await suite.GenerateKeyPair(extractable)
 
+        // Validate KeyPair structure
+        t.assert.ok(generatedKp.publicKey, 'KeyPair should have publicKey')
+        t.assert.ok(generatedKp.privateKey, 'KeyPair should have privateKey')
+        t.assert.strictEqual(
+          generatedKp.publicKey.type,
+          'public',
+          'publicKey.type should be "public"',
+        )
+        t.assert.strictEqual(
+          generatedKp.privateKey.type,
+          'private',
+          'privateKey.type should be "private"',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.publicKey.extractable,
+          'boolean',
+          'publicKey.extractable should be boolean',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.privateKey.extractable,
+          'boolean',
+          'privateKey.extractable should be boolean',
+        )
+        t.assert.ok(generatedKp.publicKey.algorithm, 'publicKey should have algorithm')
+        t.assert.ok(generatedKp.privateKey.algorithm, 'privateKey should have algorithm')
+        t.assert.strictEqual(
+          typeof generatedKp.publicKey.algorithm.name,
+          'string',
+          'publicKey.algorithm.name should be string',
+        )
+        t.assert.strictEqual(
+          typeof generatedKp.privateKey.algorithm.name,
+          'string',
+          'privateKey.algorithm.name should be string',
+        )
+
         // Serialize both keys
         const serializedPub1 = await suite.SerializePublicKey(generatedKp.publicKey)
         const serializedPriv1 = await suite.SerializePrivateKey(generatedKp.privateKey)
@@ -173,6 +257,18 @@ test.describe('pummel', () => {
         // Deserialize both keys
         const deserializedPub = await suite.DeserializePublicKey(serializedPub1)
         const deserializedPriv = await suite.DeserializePrivateKey(serializedPriv1, extractable)
+
+        // Validate deserialized keys
+        t.assert.strictEqual(
+          deserializedPub.type,
+          'public',
+          'deserializedPub.type should be "public"',
+        )
+        t.assert.strictEqual(
+          deserializedPriv.type,
+          'private',
+          'deserializedPriv.type should be "private"',
+        )
 
         // Serialize again and verify they match
         const serializedPub2 = await suite.SerializePublicKey(deserializedPub)

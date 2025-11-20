@@ -41,6 +41,112 @@ async function getKeyPair(suite: HPKE.CipherSuite) {
 }
 
 test.describe('Validations', () => {
+  test.describe('CipherSuite constructor', () => {
+    const notFactory = [
+      { name: 'null', value: null },
+      { name: 'undefined', value: undefined },
+      { name: 'string', value: 'not a factory' },
+      { name: 'number', value: 42 },
+      { name: 'object', value: {} },
+      { name: 'array', value: [] },
+    ]
+
+    for (const invalid of notFactory) {
+      it(`rejects ${invalid.name} as KEM`, (t: test.TestContext) => {
+        t.assert.throws(
+          // @ts-expect-error
+          () => new HPKE.CipherSuite(invalid.value, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_AES_128_GCM),
+          TypeError,
+        )
+      })
+
+      it(`rejects ${invalid.name} as KDF`, (t: test.TestContext) => {
+        t.assert.throws(
+          () =>
+            new HPKE.CipherSuite(
+              HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+              // @ts-expect-error
+              invalid.value,
+              HPKE.AEAD_AES_128_GCM,
+            ),
+          TypeError,
+        )
+      })
+
+      it(`rejects ${invalid.name} as AEAD`, (t: test.TestContext) => {
+        t.assert.throws(
+          () =>
+            new HPKE.CipherSuite(
+              HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+              HPKE.KDF_HKDF_SHA256,
+              // @ts-expect-error
+              invalid.value,
+            ),
+          TypeError,
+        )
+      })
+    }
+
+    it('rejects factory that returns wrong type discriminator for KEM', (t: test.TestContext) => {
+      const badKEM = () => ({ type: 'WRONG', id: 1, name: 'bad' })
+      t.assert.throws(
+        // @ts-expect-error
+        () => new HPKE.CipherSuite(badKEM, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_AES_128_GCM),
+        { name: 'TypeError', message: 'Invalid "KEM"' },
+      )
+    })
+
+    it('rejects factory that returns wrong type discriminator for KDF', (t: test.TestContext) => {
+      const badKDF = () => ({ type: 'WRONG', id: 1, name: 'bad' })
+      t.assert.throws(
+        // @ts-expect-error
+        () => new HPKE.CipherSuite(HPKE.KEM_DHKEM_P256_HKDF_SHA256, badKDF, HPKE.AEAD_AES_128_GCM),
+        { name: 'TypeError', message: 'Invalid "KDF"' },
+      )
+    })
+
+    it('rejects factory that returns wrong type discriminator for AEAD', (t: test.TestContext) => {
+      const badAEAD = () => ({ type: 'WRONG', id: 1, name: 'bad' })
+      t.assert.throws(
+        // @ts-expect-error
+        () => new HPKE.CipherSuite(HPKE.KEM_DHKEM_P256_HKDF_SHA256, HPKE.KDF_HKDF_SHA256, badAEAD),
+        { name: 'TypeError', message: 'Invalid "AEAD"' },
+      )
+    })
+
+    it('rejects factory that throws for KEM', (t: test.TestContext) => {
+      const throwingKEM = () => {
+        throw new Error('KEM error')
+      }
+      t.assert.throws(
+        () => new HPKE.CipherSuite(throwingKEM, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_AES_128_GCM),
+        { name: 'TypeError', message: 'Invalid "KEM"' },
+      )
+    })
+
+    it('rejects factory that throws for KDF', (t: test.TestContext) => {
+      const throwingKDF = () => {
+        throw new Error('KDF error')
+      }
+      t.assert.throws(
+        () =>
+          new HPKE.CipherSuite(HPKE.KEM_DHKEM_P256_HKDF_SHA256, throwingKDF, HPKE.AEAD_AES_128_GCM),
+        { name: 'TypeError', message: 'Invalid "KDF"' },
+      )
+    })
+
+    it('rejects factory that throws for AEAD', (t: test.TestContext) => {
+      const throwingAEAD = () => {
+        throw new Error('AEAD error')
+      }
+      t.assert.throws(
+        () =>
+          new HPKE.CipherSuite(HPKE.KEM_DHKEM_P256_HKDF_SHA256, HPKE.KDF_HKDF_SHA256, throwingAEAD),
+        { name: 'TypeError', message: 'Invalid "AEAD"' },
+      )
+    })
+  })
+
   for (const KEM of KEMS.values()) {
     if (!KEM.supported) continue
     const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_AES_128_GCM)
