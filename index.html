@@ -38,7 +38,6 @@
         max-width: 1400px;
         margin: 0 auto;
         background: rgb(22, 27, 34);
-        border-radius: 12px;
         box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
         padding: 30px;
       }
@@ -65,6 +64,56 @@
         margin-bottom: 30px;
       }
 
+      .legend {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 12px;
+        background: rgba(110, 118, 129, 0.1);
+        flex-wrap: wrap;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #8b949e;
+      }
+
+      .legend-color {
+        width: 16px;
+        height: 16px;
+        border: 2px solid;
+      }
+
+      .legend-color.native {
+        background: rgba(46, 160, 67, 0.15);
+        border-color: #3fb950;
+      }
+
+      .legend-color.noble {
+        background: rgba(56, 139, 253, 0.15);
+        border-color: #388bfd;
+      }
+
+      .legend-color.both {
+        background: linear-gradient(
+          135deg,
+          rgba(46, 160, 67, 0.15) 0%,
+          rgba(46, 160, 67, 0.15) 50%,
+          rgba(56, 139, 253, 0.15) 50%,
+          rgba(56, 139, 253, 0.15) 100%
+        );
+        border-color: #3fb950;
+        border-image: linear-gradient(135deg, #3fb950 0%, #3fb950 50%, #388bfd 50%, #388bfd 100%) 1;
+      }
+
+      .legend-color.unsupported {
+        background: rgba(248, 81, 73, 0.15);
+        border-color: #f85149;
+      }
+
       .algorithm-section {
         margin-bottom: 25px;
       }
@@ -84,7 +133,6 @@
 
       .algo-card {
         padding: 12px;
-        border-radius: 6px;
         border: 2px solid;
         font-size: 13px;
         font-family: 'Monaco', 'Courier New', monospace;
@@ -99,31 +147,46 @@
       .algo-card.native {
         background: rgba(46, 160, 67, 0.15);
         border-color: #3fb950;
-        color: #7ee787;
+        color: #e6edf3;
       }
 
       .algo-card.noble {
         background: rgba(56, 139, 253, 0.15);
         border-color: #388bfd;
-        color: #79c0ff;
+        color: #e6edf3;
+      }
+
+      .algo-card.both {
+        background: linear-gradient(
+          135deg,
+          rgba(46, 160, 67, 0.15) 0%,
+          rgba(46, 160, 67, 0.15) 50%,
+          rgba(56, 139, 253, 0.15) 50%,
+          rgba(56, 139, 253, 0.15) 100%
+        );
+        border-color: #3fb950;
+        border-width: 2px;
+        border-style: solid;
+        border-image: linear-gradient(135deg, #3fb950 0%, #3fb950 50%, #388bfd 50%, #388bfd 100%) 1;
+        color: #e6edf3;
       }
 
       .algo-card.unsupported {
         background: rgba(248, 81, 73, 0.15);
         border-color: #f85149;
-        color: #ff7b72;
+        color: #e6edf3;
       }
 
       .algo-card.pending {
         background: rgba(110, 118, 129, 0.1);
         border-color: #30363d;
-        color: #8b949e;
+        color: #e6edf3;
       }
 
       .algo-card.testing {
         background: rgba(187, 128, 9, 0.15);
         border-color: #bb8009;
-        color: #f0b72f;
+        color: #e6edf3;
       }
 
       .algo-card {
@@ -141,6 +204,7 @@
         opacity: 0.8;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        display: none;
       }
 
       .algo-card .checkmark {
@@ -149,7 +213,7 @@
         right: 8px;
         width: 24px;
         height: 24px;
-        border-radius: 50%;
+
         background: #3fb950;
         color: white;
         display: flex;
@@ -160,6 +224,14 @@
         line-height: 1;
       }
 
+      .algo-card .checkmarks {
+        position: absolute;
+        bottom: 8px;
+        right: 8px;
+        display: flex;
+        align-items: center;
+      }
+
       .test-grid {
         display: grid;
         gap: 15px;
@@ -167,7 +239,6 @@
 
       .test-item {
         border: 2px solid #30363d;
-        border-radius: 8px;
         padding: 15px;
         transition: all 0.3s ease;
         background: rgb(13, 17, 23);
@@ -231,7 +302,6 @@
 
       .test-status {
         padding: 4px 12px;
-        border-radius: 12px;
         font-size: 12px;
         font-weight: 600;
         text-transform: uppercase;
@@ -279,7 +349,7 @@
         padding: 10px;
         background: rgba(248, 81, 73, 0.15);
         border-left: 4px solid #f85149;
-        border-radius: 4px;
+
         font-size: 13px;
         color: #ff7b72;
         font-family: 'Monaco', 'Courier New', monospace;
@@ -298,7 +368,7 @@
         padding: 2px 8px;
         background: #6c757d;
         color: white;
-        border-radius: 10px;
+
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
@@ -310,7 +380,7 @@
         height: 14px;
         border: 2px solid #f3f3f3;
         border-top: 2px solid #ffc107;
-        border-radius: 50%;
+
         animation: spin 1s linear infinite;
         margin-right: 8px;
         vertical-align: middle;
@@ -337,7 +407,7 @@
         border: 2px solid #30363d;
         background: rgb(13, 17, 23);
         color: #e6edf3;
-        border-radius: 6px;
+
         cursor: pointer;
         font-size: 14px;
         font-weight: 600;
@@ -363,7 +433,7 @@
         margin-bottom: 30px;
         padding: 20px;
         background: rgb(13, 17, 23);
-        border-radius: 8px;
+
         border: 2px solid #30363d;
       }
 
@@ -394,7 +464,7 @@
 
       .progress-bar-container {
         background: rgb(22, 27, 34);
-        border-radius: 6px;
+
         height: 24px;
         overflow: hidden;
         margin-bottom: 10px;
@@ -457,6 +527,25 @@
       </h1>
       <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
 
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-color native"></div>
+          <span>Native (Web Cryptography)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color noble"></div>
+          <span>Extensibility (Noble Cryptography)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color both"></div>
+          <span>Both implementations</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-color unsupported"></div>
+          <span>Unsupported</span>
+        </div>
+      </div>
+
       <div class="summary" id="summary"></div>
 
       <div class="vector-validation" id="vectorValidation">
@@ -495,10 +584,12 @@
 
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
-      const allVectors = [...vectors, ...vectorsPq].filter((v) => {
-        if (v.mode !== 0x00 && v.mode !== 0x01) return false
-        return true
-      })
+      const allVectors = [...vectors, ...vectorsPq]
+        .filter((v) => {
+          if (v.mode !== 0x00 && v.mode !== 0x01) return false
+          return true
+        })
+        .sort(() => Math.random() - 0.5)
 
       // ============================================================================
       // ALGORITHM DISCOVERY
@@ -709,14 +800,13 @@
       }
 
       const STATUS_TEXT = {
-        native: 'Native',
+        native: 'native',
         noble: 'extensibility',
+        both: 'native + extensibility',
         pending: 'Pending',
         testing: 'Testing...',
         unsupported: 'Unsupported',
-      }
-
-      /** Determines the display status for an algorithm card */
+      } /** Determines the display status for an algorithm card */
       function getAlgorithmStatus(algoName, algoType) {
         // Find ALL tests for this algorithm (native and extensibility)
         const relatedTests = tests.filter((t) => {
@@ -742,13 +832,21 @@
         const nativeTest = relatedTests.find((t) => !getTestComponent(t).isNoble)
         const nobleTest = relatedTests.find((t) => getTestComponent(t).isNoble)
 
+        const nativePassed = nativeTest && nativeTest.status === 'passed'
+        const noblePassed = nobleTest && nobleTest.status === 'passed'
+
+        // If both native and noble tests passed, show as both
+        if (nativePassed && noblePassed) {
+          return 'both'
+        }
+
         // If native test passed, show as native
-        if (nativeTest && nativeTest.status === 'passed') {
+        if (nativePassed) {
           return 'native'
         }
 
         // If noble test passed, show as noble
-        if (nobleTest && nobleTest.status === 'passed') {
+        if (noblePassed) {
           return 'noble'
         }
 
@@ -785,15 +883,20 @@
                 const status = getAlgorithmStatus(algoName, section.type)
                 const statusText = STATUS_TEXT[status]
                 const displayName = algoName.replace(/^(KEM_|KDF_|AEAD_)/, '')
-                const showCheckmark = status === 'native' || status === 'noble'
 
-                return `
-                <div class="algo-card ${status}" data-algo="${algoName}" data-type="${section.type}">
-                  <div class="algo-name">${displayName}</div>
-                  <div class="algo-status">${statusText}</div>
-                  ${showCheckmark ? '<div class="checkmark">✓</div>' : ''}
-                </div>
-              `
+                return (
+                  '<div class="algo-card ' +
+                  status +
+                  '" data-algo="' +
+                  algoName +
+                  '" data-type="' +
+                  section.type +
+                  '">' +
+                  '<div class="algo-name">' +
+                  displayName +
+                  '</div>' +
+                  '</div>'
+                )
               })
               .join('')}
           </div>
@@ -1040,12 +1143,7 @@
         renderAlgorithmSummary()
 
         try {
-          // Check if a test vector exists where we have implementations of all components
-          const vectorToUse = findCompatibleVector(test)
-          const hasVector = !!vectorToUse
-          test.hasVector = hasVector
-
-          // Pass 1: Test with baseline components (existing behavior)
+          // Test with baseline components (existing behavior)
           const suite = new HPKE.CipherSuite(test.kem.factory, test.kdf.factory, test.aead.factory)
 
           // Generate test key pair
@@ -1082,7 +1180,10 @@
             if (!passingImplementations[component].has(algoId)) {
               passingImplementations[component].set(algoId, [])
             }
-            passingImplementations[component].get(algoId).push(componentAlgo.factory)
+            passingImplementations[component].get(algoId).push({
+              factory: componentAlgo.factory,
+              isNoble: componentAlgo.isNoble,
+            })
           }
         } catch (error) {
           test.status = 'failed'
@@ -1099,12 +1200,9 @@
         renderAlgorithmSummary()
       }
 
-      /** Runs all tests in randomized order */
+      /** Runs all tests */
       async function runAllTests() {
-        // Randomize test order for variety
-        const randomizedTests = [...tests].sort(() => Math.random() - 0.5)
-
-        for (const test of randomizedTests) {
+        for (const test of tests) {
           await runTest(test)
           // Small delay to allow UI updates
           await new Promise((resolve) => setTimeout(resolve, 10))
@@ -1195,23 +1293,22 @@
         const progressText = document.getElementById('vectorProgressText')
         const progressInfo = document.getElementById('vectorProgressInfo')
 
-        // Count total test operations across all vectors and implementation combinations
-        let totalOps = 0
         let completedOps = 0
         let passedOps = 0
         let failedOps = 0
+        let totalOps = 0
 
+        // Calculate total operations first
         for (const vector of allVectors) {
-          const kemFactories = passingImplementations.kem.get(vector.kem_id) || []
-          const kdfFactories = passingImplementations.kdf.get(vector.kdf_id) || []
-          const aeadFactories = passingImplementations.aead.get(vector.aead_id) || []
+          const kemImpls = passingImplementations.kem.get(vector.kem_id) || []
+          const kdfImpls = passingImplementations.kdf.get(vector.kdf_id) || []
+          const aeadImpls = passingImplementations.aead.get(vector.aead_id) || []
 
-          // Count combinations
-          if (kemFactories.length && kdfFactories.length && aeadFactories.length) {
-            const combinations = kemFactories.length * kdfFactories.length * aeadFactories.length
-            totalOps +=
-              combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0))
-          }
+          if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
+
+          const combinations = kemImpls.length * kdfImpls.length * aeadImpls.length
+          totalOps +=
+            combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0))
         }
 
         if (totalOps === 0) {
@@ -1233,20 +1330,22 @@
 
         updateProgress()
 
-        // Test all vectors with all passing implementation combinations
+        // Process all vectors with their implementations
         for (const vector of allVectors) {
-          const kemFactories = passingImplementations.kem.get(vector.kem_id) || []
-          const kdfFactories = passingImplementations.kdf.get(vector.kdf_id) || []
-          const aeadFactories = passingImplementations.aead.get(vector.aead_id) || []
+          const kemImpls = passingImplementations.kem.get(vector.kem_id) || []
+          const kdfImpls = passingImplementations.kdf.get(vector.kdf_id) || []
+          const aeadImpls = passingImplementations.aead.get(vector.aead_id) || []
 
-          // Skip vectors where we don't have all functional implementations
-          if (!kemFactories.length || !kdfFactories.length || !aeadFactories.length) continue
+          if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
 
-          // Test all combinations of passing implementations
-          for (const kemFactory of kemFactories) {
-            for (const kdfFactory of kdfFactories) {
-              for (const aeadFactory of aeadFactories) {
-                const suite = new HPKE.CipherSuite(kemFactory, kdfFactory, aeadFactory)
+          for (const kemImpl of kemImpls) {
+            for (const kdfImpl of kdfImpls) {
+              for (const aeadImpl of aeadImpls) {
+                const suite = new HPKE.CipherSuite(
+                  kemImpl.factory,
+                  kdfImpl.factory,
+                  aeadImpl.factory,
+                )
                 const ikmR = Uint8Array.fromHex(vector.ikmR)
                 const recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
                 const enc = Uint8Array.fromHex(vector.enc)
@@ -1271,7 +1370,6 @@
                       passedOps++
                     } catch (e) {
                       failedOps++
-                      // console.error('Vector encryption test failed:', e)
                     } finally {
                       completedOps++
                       updateProgress()
@@ -1295,7 +1393,6 @@
                       passedOps++
                     } catch (e) {
                       failedOps++
-                      // console.error('Vector export test failed:', e)
                     } finally {
                       completedOps++
                       updateProgress()
