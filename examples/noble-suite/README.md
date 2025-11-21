@@ -14,30 +14,31 @@ The noble-suite example shows how to integrate alternative cryptographic impleme
 
 ### KEM (Key Encapsulation Mechanisms)
 
-- **DHKEM-X25519-HKDF-SHA256** - Traditional elliptic curve KEM using X25519 (via `@noble/curves`)
-- **DHKEM-X448-HKDF-SHA512** - Traditional elliptic curve KEM using X448 (via `@noble/curves`)
-- **ML-KEM-512** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
-- **ML-KEM-768** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
-- **ML-KEM-1024** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
-- **MLKEM768-X25519** - Hybrid post-quantum/traditional KEM combining ML-KEM-768 with X25519 (aka X-Wing, via `@noble/post-quantum`)
+- **DHKEM-P-256-HKDF-SHA256**
+- **DHKEM-P-384-HKDF-SHA384**
+- **DHKEM-P-521-HKDF-SHA512**
+- **DHKEM-X25519-HKDF-SHA256**
+- **DHKEM-X448-HKDF-SHA512**
+- **ML-KEM-512**
+- **ML-KEM-768**
+- **ML-KEM-1024**
+- **MLKEM768-X25519**
 
 ### KDF (Key Derivation Functions)
 
-- **SHAKE128** - SHA-3 XOF-based KDF (via `@noble/hashes`)
-- **SHAKE256** - SHA-3 XOF-based KDF (via `@noble/hashes`)
-- **TurboSHAKE128** - High-performance SHA-3 variant (via `@noble/hashes`)
-- **TurboSHAKE256** - High-performance SHA-3 variant (via `@noble/hashes`)
+- **HKDF-SHA256**
+- **HKDF-SHA384**
+- **HKDF-SHA512**
+- **SHAKE128**
+- **SHAKE256**
+- **TurboSHAKE128**
+- **TurboSHAKE256**
 
 ### AEAD (Authenticated Encryption with Associated Data)
 
-- **ChaCha20Poly1305** - Modern authenticated encryption (via `@noble/ciphers`)
-
-## File Structure
-
-- `index.ts` - Main entry point that exports all implementations
-- `kem.ts` - Post-quantum and hybrid KEM implementations
-- `kdf.ts` - SHA-3 based KDF implementations
-- `aead.ts` - ChaCha20Poly1305 AEAD implementation
+- **AES-128-GCM**
+- **AES-256-GCM**
+- **ChaCha20Poly1305**
 
 ## Usage Pattern
 
