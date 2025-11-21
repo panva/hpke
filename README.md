@@ -70,8 +70,8 @@ This module is designed to be extensible, you can bring outside-built implementa
 | DHKEM(P-256, HKDF-SHA256)  | `0x0010` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
 | DHKEM(P-384, HKDF-SHA384)  | `0x0011` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
 | DHKEM(P-521, HKDF-SHA512)  | `0x0012` | ✓        |           | ✓         | ✓                  | ✓                 |
-| DHKEM(X25519, HKDF-SHA256) | `0x0020` | ✓        | ✓         |           | ✓                  | ✓                 |
-| DHKEM(X448, HKDF-SHA512)   | `0x0021` | ✓        |           |           |                    |                   |
+| DHKEM(X25519, HKDF-SHA256) | `0x0020` | ✓        | ✓         | ✓[^noble] | ✓                  | ✓                 |
+| DHKEM(X448, HKDF-SHA512)   | `0x0021` | ✓        | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | ML-KEM-512                 | `0x0040` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | ML-KEM-768                 | `0x0041` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | ML-KEM-1024                | `0x0042` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |

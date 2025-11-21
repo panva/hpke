@@ -60,7 +60,11 @@ test.describe('pummel', () => {
     await t.assert.rejects(
       async () => {
         const suite = new HPKE.CipherSuite(kemFactory, kdfFactory, aeadFactory)
-        const kp = await getKeyPair(suite)
+        const kp = await suite.DeriveKeyPair(
+          new Uint8Array(suite.KEM.Nsk),
+          // @ts-expect-error
+          typeof crypto.subtle.getPublicKey !== 'function',
+        )
         const pkR = kp.publicKey
         const skR = kp.privateKey
         const aad = empty

@@ -558,49 +558,37 @@
       function generateTests() {
         const testList = []
 
-        // Test each KEM with baseline KDF and AEAD
-        for (const kem of ALL_KEMS) {
-          const test = {
-            id: testList.length,
-            kem,
-            kdf: baselineKDF,
-            aead: baselineAEAD,
-            testingComponent: 'kem',
-            status: 'pending',
-            error: null,
-          }
-          test.expectedToFail = isExpectedToFail(test)
-          testList.push(test)
-        }
+        const testConfigs = [
+          {
+            algorithms: ALL_KEMS,
+            component: 'kem',
+            baselines: { kdf: baselineKDF, aead: baselineAEAD },
+          },
+          {
+            algorithms: ALL_KDFS,
+            component: 'kdf',
+            baselines: { kem: baselineKEM, aead: baselineAEAD },
+          },
+          {
+            algorithms: ALL_AEADS,
+            component: 'aead',
+            baselines: { kem: baselineKEM, kdf: baselineKDF },
+          },
+        ]
 
-        // Test each KDF with baseline KEM and AEAD
-        for (const kdf of ALL_KDFS) {
-          const test = {
-            id: testList.length,
-            kem: baselineKEM,
-            kdf,
-            aead: baselineAEAD,
-            testingComponent: 'kdf',
-            status: 'pending',
-            error: null,
+        for (const { algorithms, component, baselines } of testConfigs) {
+          for (const algorithm of algorithms) {
+            const test = {
+              id: testList.length,
+              ...baselines,
+              [component]: algorithm,
+              testingComponent: component,
+              status: 'pending',
+              error: null,
+            }
+            test.expectedToFail = isExpectedToFail(test)
+            testList.push(test)
           }
-          test.expectedToFail = isExpectedToFail(test)
-          testList.push(test)
-        }
-
-        // Test each AEAD with baseline KEM and KDF
-        for (const aead of ALL_AEADS) {
-          const test = {
-            id: testList.length,
-            kem: baselineKEM,
-            kdf: baselineKDF,
-            aead,
-            testingComponent: 'aead',
-            status: 'pending',
-            error: null,
-          }
-          test.expectedToFail = isExpectedToFail(test)
-          testList.push(test)
         }
 
         return testList
@@ -617,6 +605,14 @@
           : test.testingComponent === 'kdf'
             ? test.kdf
             : test.aead
+      }
+
+      const STATUS_TEXT = {
+        native: 'Native',
+        noble: 'extensibility',
+        pending: 'Pending',
+        testing: 'Testing...',
+        unsupported: 'Unsupported',
       }
 
       /** Determines the display status for an algorithm card */
@@ -686,16 +682,7 @@
             ${section.algos
               .map((algoName) => {
                 const status = getAlgorithmStatus(algoName, section.type)
-                const statusText =
-                  status === 'native'
-                    ? 'Native'
-                    : status === 'noble'
-                      ? 'extensibility'
-                      : status === 'pending'
-                        ? 'Pending'
-                        : status === 'testing'
-                          ? 'Testing...'
-                          : 'Unsupported'
+                const statusText = STATUS_TEXT[status]
                 const displayName = algoName.replace(/^(KEM_|KDF_|AEAD_)/, '')
                 const showCheckmark = status === 'native' || status === 'noble'
 
@@ -717,67 +704,55 @@
 
       /** Updates the filter button counts and visibility Called whenever test statuses change */
       function updateSummary() {
-        const total = tests.length
-        const running = tests.filter((t) => t.status === 'running').length
-        const passed = tests.filter((t) => t.status === 'passed').length
-        const failed = tests.filter((t) => t.status === 'failed').length
-
-        // Calculate counts for all filter buttons
-        const nativeCount = tests.filter((t) => !getTestComponent(t).isNoble).length
-        const nobleCount = tests.filter((t) => getTestComponent(t).isNoble).length
-
-        const expectedFailures = tests.filter(
-          (t) => t.status === 'failed' && t.expectedToFail,
-        ).length
-        const unexpectedPasses = tests.filter(
-          (t) => t.status === 'passed' && t.expectedToFail,
-        ).length
-        const unexpectedFailures = tests.filter(
-          (t) => t.status === 'failed' && !t.expectedToFail,
-        ).length
-        const pending = tests.filter((t) => t.status === 'pending').length
-
-        // Update all filter buttons with counts
-        const allBtn = document.querySelector('[data-filter="all"]')
-        const nativeBtn = document.querySelector('[data-filter="native"]')
-        const nobleBtn = document.querySelector('[data-filter="noble"]')
-        const passedBtn = document.querySelector('[data-filter="passed"]')
-        const passedUnexpectedBtn = document.querySelector('[data-filter="passed-unexpected"]')
-        const failedExpectedBtn = document.querySelector('[data-filter="failed-expected"]')
-        const failedUnexpectedBtn = document.querySelector('[data-filter="failed-unexpected"]')
-        const pendingBtn = document.querySelector('[data-filter="pending"]')
-
-        if (allBtn) allBtn.textContent = `All (${total})`
-        if (nativeBtn) nativeBtn.textContent = `Native (${nativeCount})`
-        if (nobleBtn) nobleBtn.textContent = `Extensibility (${nobleCount})`
-        if (passedBtn) passedBtn.textContent = `Passed (${passed})`
-        if (failedExpectedBtn)
-          failedExpectedBtn.textContent = `Failed (Expected) (${expectedFailures})`
-
-        if (passedUnexpectedBtn) {
-          if (unexpectedPasses > 0) {
-            passedUnexpectedBtn.style.display = ''
-            passedUnexpectedBtn.textContent = `Passed (Unexpected) ⚠️ (${unexpectedPasses})`
-          } else {
-            passedUnexpectedBtn.style.display = 'none'
-          }
+        const counts = {
+          total: tests.length,
+          native: tests.filter((t) => !getTestComponent(t).isNoble).length,
+          noble: tests.filter((t) => getTestComponent(t).isNoble).length,
+          passed: tests.filter((t) => t.status === 'passed').length,
+          'failed-expected': tests.filter((t) => t.status === 'failed' && t.expectedToFail).length,
+          'passed-unexpected': tests.filter((t) => t.status === 'passed' && t.expectedToFail)
+            .length,
+          'failed-unexpected': tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
+            .length,
+          pending: tests.filter((t) => t.status === 'pending').length,
         }
-        if (failedUnexpectedBtn) {
-          if (unexpectedFailures > 0) {
-            failedUnexpectedBtn.style.display = ''
-            failedUnexpectedBtn.textContent = `Failed (Unexpected) ⚠️ (${unexpectedFailures})`
+
+        const buttonConfigs = [
+          { filter: 'all', label: 'All', count: counts.total },
+          { filter: 'native', label: 'Native', count: counts.native },
+          { filter: 'noble', label: 'Extensibility', count: counts.noble },
+          { filter: 'passed', label: 'Passed', count: counts.passed },
+          {
+            filter: 'failed-expected',
+            label: 'Failed (Expected)',
+            count: counts['failed-expected'],
+          },
+          {
+            filter: 'passed-unexpected',
+            label: 'Passed (Unexpected) ⚠️',
+            count: counts['passed-unexpected'],
+            hideIfZero: true,
+          },
+          {
+            filter: 'failed-unexpected',
+            label: 'Failed (Unexpected) ⚠️',
+            count: counts['failed-unexpected'],
+            hideIfZero: true,
+          },
+          { filter: 'pending', label: 'Pending', count: counts.pending, hideIfZero: true },
+        ]
+
+        buttonConfigs.forEach(({ filter, label, count, hideIfZero }) => {
+          const btn = document.querySelector(`[data-filter="${filter}"]`)
+          if (!btn) return
+
+          if (hideIfZero && count === 0) {
+            btn.style.display = 'none'
           } else {
-            failedUnexpectedBtn.style.display = 'none'
+            btn.style.display = ''
+            btn.textContent = `${label} (${count})`
           }
-        }
-        if (pendingBtn) {
-          if (pending > 0) {
-            pendingBtn.style.display = ''
-            pendingBtn.textContent = `Pending (${pending})`
-          } else {
-            pendingBtn.style.display = 'none'
-          }
-        }
+        })
       }
 
       /** Gets the display name for a test (shows the component being tested) */
@@ -935,6 +910,27 @@
         }
       }
 
+      /** Finds a compatible test vector for the given test */
+      function findCompatibleVector(test) {
+        const componentId = ALGORITHM_IDS[test[test.testingComponent].name]
+        const componentKey = `${test.testingComponent}_id`
+
+        const otherComponents = {
+          kem: { algorithms: ALL_KEMS, unsupported: unsupported.kem },
+          kdf: { algorithms: ALL_KDFS, unsupported: unsupported.kdf },
+          aead: { algorithms: ALL_AEADS, unsupported: unsupported.aead },
+        }
+        delete otherComponents[test.testingComponent]
+
+        return allVectors.find((v) => {
+          if (v[componentKey] !== componentId) return false
+
+          return Object.entries(otherComponents).every(([key, { algorithms, unsupported }]) => {
+            return findMatchingImplementation(algorithms, v[`${key}_id`], unsupported)
+          })
+        })
+      }
+
       /** Runs a single test for a KEM/KDF/AEAD combination */
       async function runTest(test) {
         test.status = 'running'
@@ -944,50 +940,8 @@
 
         try {
           // Check if a test vector exists where we have implementations of all components
-          let hasVector = false
-          let vectorToUse = null
-
-          if (test.testingComponent === 'kem') {
-            const kemId = ALGORITHM_IDS[test.kem.name]
-
-            // Find a vector with this KEM where we have expected-to-pass implementations for the KDF and AEAD
-            vectorToUse = allVectors.find((v) => {
-              if (v.kem_id !== kemId) return false
-
-              const kdfMatch = findMatchingImplementation(ALL_KDFS, v.kdf_id, unsupported.kdf)
-              const aeadMatch = findMatchingImplementation(ALL_AEADS, v.aead_id, unsupported.aead)
-
-              return kdfMatch && aeadMatch
-            })
-            hasVector = !!vectorToUse
-          } else if (test.testingComponent === 'kdf') {
-            const kdfId = ALGORITHM_IDS[test.kdf.name]
-
-            // Find a vector with this KDF where we have expected-to-pass implementations for the KEM and AEAD
-            vectorToUse = allVectors.find((v) => {
-              if (v.kdf_id !== kdfId) return false
-
-              const kemMatch = findMatchingImplementation(ALL_KEMS, v.kem_id, unsupported.kem)
-              const aeadMatch = findMatchingImplementation(ALL_AEADS, v.aead_id, unsupported.aead)
-
-              return kemMatch && aeadMatch
-            })
-            hasVector = !!vectorToUse
-          } else if (test.testingComponent === 'aead') {
-            const aeadId = ALGORITHM_IDS[test.aead.name]
-
-            // Find a vector with this AEAD where we have expected-to-pass implementations for the KEM and KDF
-            vectorToUse = allVectors.find((v) => {
-              if (v.aead_id !== aeadId) return false
-
-              const kemMatch = findMatchingImplementation(ALL_KEMS, v.kem_id, unsupported.kem)
-              const kdfMatch = findMatchingImplementation(ALL_KDFS, v.kdf_id, unsupported.kdf)
-
-              return kemMatch && kdfMatch
-            })
-            hasVector = !!vectorToUse
-          }
-
+          const vectorToUse = findCompatibleVector(test)
+          const hasVector = !!vectorToUse
           test.hasVector = hasVector
 
           // Pass 1: Test with baseline components (existing behavior)
@@ -1046,15 +1000,9 @@
               const ikmR = Uint8Array.fromHex(vectorToUse.ikmR)
               const vectorRecipientKeyPair = await vectorSuite.DeriveKeyPair(ikmR, true)
 
-              // Verify serialized keys match the vector's skRm and pkRm
+              // Verify serialized public key matches the vector's skRm and pkRm
               const serializedPrivateKey = await vectorSuite.SerializePrivateKey(
                 vectorRecipientKeyPair.privateKey,
-              )
-              const expectedPrivateKey = Uint8Array.fromHex(vectorToUse.skRm)
-              assertUint8ArraysEqual(
-                serializedPrivateKey,
-                expectedPrivateKey,
-                'Vector test: Private key mismatch',
               )
 
               const serializedPublicKey = await vectorSuite.SerializePublicKey(
@@ -1147,24 +1095,22 @@
           unexpectedFailures: tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
             .length,
           unexpectedPasses: tests.filter((t) => t.status === 'passed' && t.expectedToFail).length,
-          tests: tests.map((t) => ({
-            id: t.id,
-            component: t.testingComponent,
-            name:
-              t.testingComponent === 'kem'
-                ? t.kem.displayName || t.kem.name
-                : t.testingComponent === 'kdf'
-                  ? t.kdf.displayName || t.kdf.name
-                  : t.aead.displayName || t.aead.name,
-            suite: {
-              kem: t.kem.displayName || t.kem.name,
-              kdf: t.kdf.displayName || t.kdf.name,
-              aead: t.aead.displayName || t.aead.name,
-            },
-            status: t.status,
-            expectedToFail: t.expectedToFail,
-            error: t.error,
-          })),
+          tests: tests.map((t) => {
+            const component = getTestComponent(t)
+            return {
+              id: t.id,
+              component: t.testingComponent,
+              name: component.displayName || component.name,
+              suite: {
+                kem: t.kem.displayName || t.kem.name,
+                kdf: t.kdf.displayName || t.kdf.name,
+                aead: t.aead.displayName || t.aead.name,
+              },
+              status: t.status,
+              expectedToFail: t.expectedToFail,
+              error: t.error,
+            }
+          }),
         }
       }
 

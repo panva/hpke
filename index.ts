@@ -1422,7 +1422,8 @@ export interface Key {
 // Utility Functions
 // ============================================================================
 
-function concat(...buffers: Uint8Array[]): Uint8Array {
+/** @ignore */
+export function concat(...buffers: Uint8Array[]): Uint8Array {
   const size = buffers.reduce((acc, { length }) => acc + length, 0)
   const buf = new Uint8Array(size)
   let i = 0
@@ -1433,7 +1434,8 @@ function concat(...buffers: Uint8Array[]): Uint8Array {
   return buf
 }
 
-function encode(string: string): Uint8Array {
+/** @ignore */
+export function encode(string: string): Uint8Array {
   const bytes = new Uint8Array(string.length)
   for (let i = 0; i < string.length; i++) {
     const code = string.charCodeAt(i)
@@ -2165,7 +2167,8 @@ export interface AEAD {
 // HPKE Core Functions - Key Schedule
 // ============================================================================
 
-function I2OSP(n: number, w: number): Uint8Array {
+/** @ignore */
+export function I2OSP(n: number, w: number): Uint8Array {
   if (w <= 0) {
     throw new Error('w(length) <= 0')
   }
