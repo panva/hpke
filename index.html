@@ -199,39 +199,6 @@
         word-break: break-word;
       }
 
-      .algo-card .algo-status {
-        font-size: 11px;
-        opacity: 0.8;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        display: none;
-      }
-
-      .algo-card .checkmark {
-        position: absolute;
-        bottom: 8px;
-        right: 8px;
-        width: 24px;
-        height: 24px;
-
-        background: #3fb950;
-        color: white;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        font-weight: bold;
-        line-height: 1;
-      }
-
-      .algo-card .checkmarks {
-        position: absolute;
-        bottom: 8px;
-        right: 8px;
-        display: flex;
-        align-items: center;
-      }
-
       .test-grid {
         display: grid;
         gap: 15px;
@@ -584,12 +551,10 @@
 
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
-      const allVectors = [...vectors, ...vectorsPq]
-        .filter((v) => {
-          if (v.mode !== 0x00 && v.mode !== 0x01) return false
-          return true
-        })
-        .sort(() => Math.random() - 0.5)
+      const allVectors = [...vectors, ...vectorsPq].filter((v) => {
+        if (v.mode !== 0x00 && v.mode !== 0x01) return false
+        return true
+      })
 
       // ============================================================================
       // ALGORITHM DISCOVERY
@@ -658,6 +623,69 @@
         AEAD_AES_256_GCM: 0x0002,
         AEAD_ChaCha20Poly1305: 0x0003,
         AEAD_EXPORT_ONLY: 0xffff,
+      }
+
+      // Mapping of algorithm names to their display names
+      const ALGORITHM_NAMES = {
+        // KEMs
+        KEM_DHKEM_P256_HKDF_SHA256: 'DHKEM(P-256, HKDF-SHA256)',
+        KEM_DHKEM_P384_HKDF_SHA384: 'DHKEM(P-384, HKDF-SHA384)',
+        KEM_DHKEM_P521_HKDF_SHA512: 'DHKEM(P-521, HKDF-SHA512)',
+        KEM_DHKEM_X25519_HKDF_SHA256: 'DHKEM(X25519, HKDF-SHA256)',
+        KEM_DHKEM_X448_HKDF_SHA512: 'DHKEM(X448, HKDF-SHA512)',
+        KEM_ML_KEM_512: 'ML-KEM-512',
+        KEM_ML_KEM_768: 'ML-KEM-768',
+        KEM_ML_KEM_1024: 'ML-KEM-1024',
+        KEM_MLKEM768_P256: 'MLKEM768-P256',
+        KEM_MLKEM1024_P384: 'MLKEM1024-P384',
+        KEM_MLKEM768_X25519: 'MLKEM768-X25519',
+
+        // KDFs
+        KDF_HKDF_SHA256: 'HKDF-SHA256',
+        KDF_HKDF_SHA384: 'HKDF-SHA384',
+        KDF_HKDF_SHA512: 'HKDF-SHA512',
+        KDF_SHAKE128: 'SHAKE128',
+        KDF_SHAKE256: 'SHAKE256',
+        KDF_TurboSHAKE128: 'TurboSHAKE128',
+        KDF_TurboSHAKE256: 'TurboSHAKE256',
+
+        // AEADs
+        AEAD_AES_128_GCM: 'AES-128-GCM',
+        AEAD_AES_256_GCM: 'AES-256-GCM',
+        AEAD_ChaCha20Poly1305: 'ChaCha20Poly1305',
+        AEAD_EXPORT_ONLY: 'Export-only',
+      }
+
+      // Validate that all algorithms have IDs and names in the maps
+      const allAlgorithms = [
+        ...KEMS,
+        ...KDFS,
+        ...AEADS,
+        ...NOBLE_KEMS,
+        ...NOBLE_KDFS,
+        ...NOBLE_AEADS,
+      ]
+      const missingIds = []
+      const missingNames = []
+
+      for (const algo of allAlgorithms) {
+        if (!(algo.name in ALGORITHM_IDS)) {
+          missingIds.push(algo.name)
+        }
+        if (!(algo.name in ALGORITHM_NAMES)) {
+          missingNames.push(algo.name)
+        }
+      }
+
+      if (missingIds.length > 0 || missingNames.length > 0) {
+        const errors = []
+        if (missingIds.length > 0) {
+          errors.push(`Missing ALGORITHM_IDS entries: ${missingIds.join(', ')}`)
+        }
+        if (missingNames.length > 0) {
+          errors.push(`Missing ALGORITHM_NAMES entries: ${missingNames.join(', ')}`)
+        }
+        throw new Error(`Configuration Error:\n${errors.join('\n')}`)
       }
 
       // ============================================================================
@@ -799,14 +827,7 @@
             : test.aead
       }
 
-      const STATUS_TEXT = {
-        native: 'native',
-        noble: 'extensibility',
-        both: 'native + extensibility',
-        pending: 'Pending',
-        testing: 'Testing...',
-        unsupported: 'Unsupported',
-      } /** Determines the display status for an algorithm card */
+      /** Determines the display status for an algorithm card */
       function getAlgorithmStatus(algoName, algoType) {
         // Find ALL tests for this algorithm (native and extensibility)
         const relatedTests = tests.filter((t) => {
@@ -866,8 +887,51 @@
         const kdfNames = [...new Set(ALL_KDFS.map((k) => k.name))].sort()
         const aeadNames = [...new Set(ALL_AEADS.map((a) => a.name))].sort()
 
+        // Categorize KEMs
+        const traditionalKEMs = kemNames
+          .filter((name) => name.startsWith('KEM_DHKEM_'))
+          .sort((a, b) => {
+            // Custom sort: P-256, X25519, P-384, P-521, X448
+            const order = [
+              'KEM_DHKEM_P256_HKDF_SHA256',
+              'KEM_DHKEM_X25519_HKDF_SHA256',
+              'KEM_DHKEM_P384_HKDF_SHA384',
+              'KEM_DHKEM_P521_HKDF_SHA512',
+              'KEM_DHKEM_X448_HKDF_SHA512',
+            ]
+            return order.indexOf(a) - order.indexOf(b)
+          })
+        const postQuantumKEMs = kemNames
+          .filter((name) => name.startsWith('KEM_ML_KEM_'))
+          .sort((a, b) => {
+            // Sort ML-KEM by security level: 512, 768, 1024
+            const getLevel = (name) => parseInt(name.match(/\d+$/)?.[0] || '0')
+            return getLevel(a) - getLevel(b)
+          })
+        const hybridKEMs = kemNames
+          .filter((name) => name.startsWith('KEM_MLKEM'))
+          .sort((a, b) => {
+            // Custom sort: MLKEM768-P256, MLKEM768-X25519, MLKEM1024-P384
+            const order = ['KEM_MLKEM768_P256', 'KEM_MLKEM768_X25519', 'KEM_MLKEM1024_P384']
+            return order.indexOf(a) - order.indexOf(b)
+          })
+
         const sections = [
-          { title: 'Key Encapsulation Mechanisms (KEM)', algos: kemNames, type: 'kem' },
+          {
+            title: 'Key Encapsulation Mechanisms (KEM) - Traditional (T)',
+            algos: traditionalKEMs,
+            type: 'kem',
+          },
+          {
+            title: 'Key Encapsulation Mechanisms (KEM) - Hybrid (PQ/T)',
+            algos: hybridKEMs,
+            type: 'kem',
+          },
+          {
+            title: 'Key Encapsulation Mechanisms (KEM) - Post-Quantum (PQ)',
+            algos: postQuantumKEMs,
+            type: 'kem',
+          },
           { title: 'Key Derivation Functions (KDF)', algos: kdfNames, type: 'kdf' },
           { title: 'Authenticated Encryption (AEAD)', algos: aeadNames, type: 'aead' },
         ]
@@ -881,8 +945,7 @@
             ${section.algos
               .map((algoName) => {
                 const status = getAlgorithmStatus(algoName, section.type)
-                const statusText = STATUS_TEXT[status]
-                const displayName = algoName.replace(/^(KEM_|KDF_|AEAD_)/, '')
+                const displayName = ALGORITHM_NAMES[algoName]
 
                 return (
                   '<div class="algo-card ' +
@@ -1112,27 +1175,6 @@
             throw new Error(`${errorPrefix}: content mismatch`)
           }
         }
-      }
-
-      /** Finds a compatible test vector for the given test */
-      function findCompatibleVector(test) {
-        const componentId = ALGORITHM_IDS[test[test.testingComponent].name]
-        const componentKey = `${test.testingComponent}_id`
-
-        const otherComponents = {
-          kem: { algorithms: ALL_KEMS, unsupported: unsupported.kem },
-          kdf: { algorithms: ALL_KDFS, unsupported: unsupported.kdf },
-          aead: { algorithms: ALL_AEADS, unsupported: unsupported.aead },
-        }
-        delete otherComponents[test.testingComponent]
-
-        return allVectors.find((v) => {
-          if (v[componentKey] !== componentId) return false
-
-          return Object.entries(otherComponents).every(([key, { algorithms, unsupported }]) => {
-            return findMatchingImplementation(algorithms, v[`${key}_id`], unsupported)
-          })
-        })
       }
 
       /** Runs a single test for a KEM/KDF/AEAD combination */
