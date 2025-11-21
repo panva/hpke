@@ -14,31 +14,31 @@ The noble-suite example shows how to integrate alternative cryptographic impleme
 
 ### KEM (Key Encapsulation Mechanisms)
 
-- **DHKEM-P-256-HKDF-SHA256**
-- **DHKEM-P-384-HKDF-SHA384**
-- **DHKEM-P-521-HKDF-SHA512**
-- **DHKEM-X25519-HKDF-SHA256**
-- **DHKEM-X448-HKDF-SHA512**
-- **ML-KEM-512**
-- **ML-KEM-768**
-- **ML-KEM-1024**
-- **MLKEM768-X25519**
+- DHKEM-P-256-HKDF-SHA256
+- DHKEM-P-384-HKDF-SHA384
+- DHKEM-P-521-HKDF-SHA512
+- DHKEM-X25519-HKDF-SHA256
+- DHKEM-X448-HKDF-SHA512
+- ML-KEM-512
+- ML-KEM-768
+- ML-KEM-1024
+- MLKEM768-X25519
 
 ### KDF (Key Derivation Functions)
 
-- **HKDF-SHA256**
-- **HKDF-SHA384**
-- **HKDF-SHA512**
-- **SHAKE128**
-- **SHAKE256**
-- **TurboSHAKE128**
-- **TurboSHAKE256**
+- HKDF-SHA256
+- HKDF-SHA384
+- HKDF-SHA512
+- SHAKE128
+- SHAKE256
+- TurboSHAKE128
+- TurboSHAKE256
 
 ### AEAD (Authenticated Encryption with Associated Data)
 
-- **AES-128-GCM**
-- **AES-256-GCM**
-- **ChaCha20Poly1305**
+- AES-128-GCM
+- AES-256-GCM
+- ChaCha20Poly1305
 
 ## Usage Pattern
 
