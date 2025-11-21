@@ -52,6 +52,18 @@
         color: #8b949e;
         text-decoration: none;
         font-family: 'Monaco', 'Courier New', monospace;
+        display: inline-flex;
+        align-items: center;
+        transition: color 0.2s ease;
+      }
+
+      h1 a:hover {
+        color: #58a6ff;
+      }
+
+      h1 a svg {
+        width: 20px;
+        height: 20px;
       }
 
       .subtitle {
@@ -160,14 +172,21 @@
         background: linear-gradient(
           135deg,
           rgba(46, 160, 67, 0.15) 0%,
-          rgba(46, 160, 67, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 50%,
+          rgba(46, 160, 67, 0.15) 66.67%,
+          rgba(56, 139, 253, 0.15) 66.67%,
           rgba(56, 139, 253, 0.15) 100%
         );
         border-color: #3fb950;
         border-width: 2px;
         border-style: solid;
-        border-image: linear-gradient(135deg, #3fb950 0%, #3fb950 50%, #388bfd 50%, #388bfd 100%) 1;
+        border-image: linear-gradient(
+            135deg,
+            #3fb950 0%,
+            #3fb950 66.67%,
+            #388bfd 66.67%,
+            #388bfd 100%
+          )
+          1;
         color: #e6edf3;
       }
 
@@ -197,203 +216,6 @@
         font-weight: 600;
         margin-bottom: 4px;
         word-break: break-word;
-      }
-
-      .test-grid {
-        display: grid;
-        gap: 15px;
-      }
-
-      .test-item {
-        border: 2px solid #30363d;
-        padding: 15px;
-        transition: all 0.3s ease;
-        background: rgb(13, 17, 23);
-      }
-
-      .test-item.running {
-        border-color: #bb8009;
-        background: rgba(187, 128, 9, 0.1);
-        animation: pulse 1.5s ease-in-out infinite;
-      }
-
-      .test-item.passed {
-        border-color: #3fb950;
-        background: rgba(46, 160, 67, 0.1);
-      }
-
-      .test-item.failed {
-        border-color: #f85149;
-        background: rgba(248, 81, 73, 0.1);
-      }
-
-      .test-item.expected {
-        border-color: #6e7681;
-        background: rgba(110, 118, 129, 0.1);
-      }
-
-      .test-item.passed-unexpected {
-        border-color: #58a6ff;
-        background: rgba(56, 139, 253, 0.1);
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.8;
-        }
-      }
-
-      .test-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 10px;
-        flex-wrap: wrap;
-      }
-
-      .test-name {
-        font-weight: 600;
-        font-size: 16px;
-        color: #e6edf3;
-        font-family: 'Monaco', 'Courier New', monospace;
-        word-break: break-word;
-        overflow-wrap: break-word;
-        flex: 1;
-        min-width: 0;
-      }
-
-      .test-status {
-        padding: 4px 12px;
-        font-size: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-
-      .test-status.pending {
-        background: #e0e0e0;
-        color: #666;
-      }
-
-      .test-status.running {
-        background: #ffc107;
-        color: #000;
-      }
-
-      .test-status.passed {
-        background: #28a745;
-        color: white;
-      }
-
-      .test-status.failed {
-        background: #dc3545;
-        color: white;
-      }
-
-      .test-status.expected {
-        background: #6c757d;
-        color: white;
-      }
-
-      .test-status.passed-unexpected {
-        background: #17a2b8;
-        color: white;
-      }
-
-      .test-details {
-        font-size: 13px;
-        color: #8b949e;
-        margin-bottom: 8px;
-        font-family: 'Monaco', 'Courier New', monospace;
-      }
-
-      .test-error {
-        margin-top: 10px;
-        padding: 10px;
-        background: rgba(248, 81, 73, 0.15);
-        border-left: 4px solid #f85149;
-
-        font-size: 13px;
-        color: #ff7b72;
-        font-family: 'Monaco', 'Courier New', monospace;
-        overflow-x: auto;
-      }
-
-      .test-duration {
-        font-size: 12px;
-        color: #6e7681;
-        margin-top: 5px;
-      }
-
-      .expected-failure {
-        display: inline-block;
-        margin-left: 8px;
-        padding: 2px 8px;
-        background: #6c757d;
-        color: white;
-
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-      }
-
-      .loader {
-        display: inline-block;
-        width: 14px;
-        height: 14px;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #ffc107;
-
-        animation: spin 1s linear infinite;
-        margin-right: 8px;
-        vertical-align: middle;
-      }
-
-      @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      .filter-buttons {
-        margin-bottom: 20px;
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-      }
-
-      .filter-btn {
-        padding: 8px 16px;
-        border: 2px solid #30363d;
-        background: rgb(13, 17, 23);
-        color: #e6edf3;
-
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-      }
-
-      .filter-btn:hover {
-        background: #30363d;
-        border-color: #6e7681;
-      }
-
-      .filter-btn.active {
-        background: #388bfd;
-        color: white;
-        border-color: #388bfd;
-      }
-
-      .hidden {
-        display: none;
       }
 
       .vector-validation {
@@ -490,7 +312,13 @@
     <div class="container">
       <h1>
         @panva/hpke Browser Test Suite
-        <a href="https://github.com/panva/hpke" target="_blank">🔗</a>
+        <a href="https://github.com/panva/hpke" target="_blank">
+          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path
+              d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"
+            ></path>
+          </svg>
+        </a>
       </h1>
       <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
 
@@ -529,19 +357,6 @@
           <span>Pending...</span>
         </div>
       </div>
-
-      <div class="filter-buttons hidden">
-        <button class="filter-btn active" data-filter="all">All</button>
-        <button class="filter-btn" data-filter="native">Native</button>
-        <button class="filter-btn" data-filter="noble">extensibility</button>
-        <button class="filter-btn" data-filter="passed">Passed</button>
-        <button class="filter-btn" data-filter="passed-unexpected">Passed (Unexpected)</button>
-        <button class="filter-btn" data-filter="failed-expected">Failed (Expected)</button>
-        <button class="filter-btn" data-filter="failed-unexpected">Failed (Unexpected)</button>
-        <button class="filter-btn" data-filter="pending">Pending</button>
-      </div>
-
-      <div class="test-grid hidden" id="testGrid"></div>
     </div>
 
     <script type="module">
@@ -757,7 +572,6 @@
       // ============================================================================
 
       let tests = []
-      let currentFilter = 'all'
 
       // Track passing implementations by algorithm ID
       const passingImplementations = {
@@ -969,136 +783,6 @@
           .join('')
       }
 
-      /** Updates the filter button counts and visibility Called whenever test statuses change */
-      function updateSummary() {
-        const counts = {
-          total: tests.length,
-          native: tests.filter((t) => !getTestComponent(t).isNoble).length,
-          noble: tests.filter((t) => getTestComponent(t).isNoble).length,
-          passed: tests.filter((t) => t.status === 'passed').length,
-          'failed-expected': tests.filter((t) => t.status === 'failed' && t.expectedToFail).length,
-          'passed-unexpected': tests.filter((t) => t.status === 'passed' && t.expectedToFail)
-            .length,
-          'failed-unexpected': tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
-            .length,
-          pending: tests.filter((t) => t.status === 'pending').length,
-        }
-
-        const buttonConfigs = [
-          { filter: 'all', label: 'All', count: counts.total },
-          { filter: 'native', label: 'Native', count: counts.native },
-          { filter: 'noble', label: 'Extensibility', count: counts.noble },
-          { filter: 'passed', label: 'Passed', count: counts.passed },
-          {
-            filter: 'failed-expected',
-            label: 'Failed (Expected)',
-            count: counts['failed-expected'],
-          },
-          {
-            filter: 'passed-unexpected',
-            label: 'Passed (Unexpected) ⚠️',
-            count: counts['passed-unexpected'],
-            hideIfZero: true,
-          },
-          {
-            filter: 'failed-unexpected',
-            label: 'Failed (Unexpected) ⚠️',
-            count: counts['failed-unexpected'],
-            hideIfZero: true,
-          },
-          { filter: 'pending', label: 'Pending', count: counts.pending, hideIfZero: true },
-        ]
-
-        buttonConfigs.forEach(({ filter, label, count, hideIfZero }) => {
-          const btn = document.querySelector(`[data-filter="${filter}"]`)
-          if (!btn) return
-
-          if (hideIfZero && count === 0) {
-            btn.style.display = 'none'
-          } else {
-            btn.style.display = ''
-            btn.textContent = `${label} (${count})`
-          }
-        })
-      }
-
-      /** Gets the display name for a test (shows the component being tested) */
-      function getTestDisplayName(test) {
-        const component = getTestComponent(test)
-        return component.displayName || component.name
-      }
-
-      /** Renders a single test item as HTML */
-      function renderTest(test) {
-        const testName = getTestDisplayName(test)
-
-        // Determine status display
-        let statusClass = test.status
-        let statusText = test.status
-        let showStatus = true
-
-        if (test.expectedToFail && test.status === 'failed') {
-          // Expected failure - don't show status pill
-          statusClass = 'expected'
-          statusText = 'expected'
-          showStatus = false
-        } else if (test.expectedToFail && test.status === 'passed') {
-          // Unexpected pass
-          statusClass = 'passed-unexpected'
-          statusText = 'unexpected pass'
-        }
-
-        return `
-        <div class="test-item ${statusClass}" data-id="${test.id}" data-status="${test.status}">
-          <div class="test-header">
-            <div class="test-name">${testName}</div>
-            ${
-              showStatus
-                ? `<div class="test-status ${statusClass}">
-              ${test.status === 'running' ? '<span class="loader"></span>' : ''}
-              ${statusText}
-            </div>`
-                : ''
-            }
-          </div>
-          ${test.error ? `<div class="test-error">${escapeHtml(test.error)}</div>` : ''}
-        </div>
-      `
-      }
-
-      /** Escapes HTML characters in text to prevent XSS */
-      function escapeHtml(text) {
-        const div = document.createElement('div')
-        div.textContent = text
-        return div.innerHTML
-      }
-
-      /** Filters tests based on the current filter setting */
-      function getFilteredTests() {
-        if (currentFilter === 'all') {
-          return tests
-        } else if (currentFilter === 'native') {
-          return tests.filter((t) => !getTestComponent(t).isNoble)
-        } else if (currentFilter === 'noble') {
-          return tests.filter((t) => getTestComponent(t).isNoble)
-        } else if (currentFilter === 'failed-expected') {
-          return tests.filter((t) => t.status === 'failed' && t.expectedToFail)
-        } else if (currentFilter === 'failed-unexpected') {
-          return tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
-        } else if (currentFilter === 'passed-unexpected') {
-          return tests.filter((t) => t.status === 'passed' && t.expectedToFail)
-        } else {
-          return tests.filter((t) => t.status === currentFilter)
-        }
-      }
-
-      /** Renders the test grid with filtered tests */
-      function renderTests() {
-        const grid = document.getElementById('testGrid')
-        const filteredTests = getFilteredTests()
-        grid.innerHTML = filteredTests.map(renderTest).join('')
-      }
-
       // ============================================================================
       // TEST EXECUTION
       // ============================================================================
@@ -1180,8 +864,6 @@
       /** Runs a single test for a KEM/KDF/AEAD combination */
       async function runTest(test) {
         test.status = 'running'
-        renderTests()
-        updateSummary()
         renderAlgorithmSummary()
 
         try {
@@ -1237,8 +919,6 @@
           }
         }
 
-        renderTests()
-        updateSummary()
         renderAlgorithmSummary()
       }
 
@@ -1285,37 +965,6 @@
             }
           }),
         }
-      }
-
-      // ============================================================================
-      // FILTER MANAGEMENT
-      // ============================================================================
-
-      /** Sets up filter buttons and loads saved filter preference */
-      function setupFilters() {
-        // Load saved filter from localStorage
-        const savedFilter = localStorage.getItem('hpkeTestFilter')
-        if (savedFilter) {
-          currentFilter = savedFilter
-          // Update active button
-          document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'))
-          const activeBtn = document.querySelector(`[data-filter="${savedFilter}"]`)
-          if (activeBtn) {
-            activeBtn.classList.add('active')
-          }
-        }
-
-        // Add click handlers to filter buttons
-        document.querySelectorAll('.filter-btn').forEach((btn) => {
-          btn.addEventListener('click', (e) => {
-            document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'))
-            e.target.classList.add('active')
-            currentFilter = e.target.dataset.filter
-            // Save filter preference to localStorage
-            localStorage.setItem('hpkeTestFilter', currentFilter)
-            renderTests()
-          })
-        })
       }
 
       // ============================================================================
@@ -1472,9 +1121,6 @@
       async function init() {
         tests = generateTests()
         renderAlgorithmSummary()
-        setupFilters()
-        updateSummary()
-        renderTests()
         await runAllTests()
         await runVectorValidation()
       }
