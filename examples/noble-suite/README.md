@@ -14,23 +14,23 @@ The noble-suite example shows how to integrate alternative cryptographic impleme
 
 ### KEM (Key Encapsulation Mechanisms)
 
-- **DHKEM-X25519-HKDF-SHA256** - Traditional elliptic curve KEM using Curve25519 (via `@noble/curves ^2.0.0`)
-- **DHKEM-X448-HKDF-SHA512** - Traditional elliptic curve KEM using Curve448 (via `@noble/curves ^2.0.0`)
-- **ML-KEM-512** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
-- **ML-KEM-768** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
-- **ML-KEM-1024** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
-- **MLKEM768-X25519** - Hybrid post-quantum/traditional KEM (aka X-Wing, via `@noble/post-quantum ^0.5.2`)
+- **DHKEM-X25519-HKDF-SHA256** - Traditional elliptic curve KEM using X25519 (via `@noble/curves`)
+- **DHKEM-X448-HKDF-SHA512** - Traditional elliptic curve KEM using X448 (via `@noble/curves`)
+- **ML-KEM-512** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
+- **ML-KEM-768** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
+- **ML-KEM-1024** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
+- **MLKEM768-X25519** - Hybrid post-quantum/traditional KEM combining ML-KEM-768 with X25519 (aka X-Wing, via `@noble/post-quantum`)
 
 ### KDF (Key Derivation Functions)
 
-- **SHAKE128** - SHA-3 XOF-based KDF (via `@noble/hashes ^2.0.0`)
-- **SHAKE256** - SHA-3 XOF-based KDF (via `@noble/hashes ^2.0.0`)
-- **TurboSHAKE128** - High-performance SHA-3 variant (via `@noble/hashes ^2.0.0`)
-- **TurboSHAKE256** - High-performance SHA-3 variant (via `@noble/hashes ^2.0.0`)
+- **SHAKE128** - SHA-3 XOF-based KDF (via `@noble/hashes`)
+- **SHAKE256** - SHA-3 XOF-based KDF (via `@noble/hashes`)
+- **TurboSHAKE128** - High-performance SHA-3 variant (via `@noble/hashes`)
+- **TurboSHAKE256** - High-performance SHA-3 variant (via `@noble/hashes`)
 
 ### AEAD (Authenticated Encryption with Associated Data)
 
-- **ChaCha20Poly1305** - Modern authenticated encryption (via `@noble/ciphers ^2.0.0`)
+- **ChaCha20Poly1305** - Modern authenticated encryption (via `@noble/ciphers`)
 
 ## File Structure
 
