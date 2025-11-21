@@ -4145,7 +4145,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
     },
     t: {
       ...P256,
-      Nseed: 32,
+      Nseed: 128,
       Nss: 32,
       Nct: 65,
       Nscalar: 32,
