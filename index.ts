@@ -1197,6 +1197,8 @@ export class ValidationError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'ValidationError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, ValidationError)
   }
 }
 
@@ -1210,6 +1212,8 @@ export class DeserializeError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'DeserializeError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, DeserializeError)
   }
 }
 
@@ -1223,6 +1227,8 @@ export class EncapError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'EncapError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, EncapError)
   }
 }
 
@@ -1236,6 +1242,8 @@ export class DecapError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'DecapError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, DecapError)
   }
 }
 
@@ -1249,6 +1257,8 @@ export class OpenError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'OpenError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, OpenError)
   }
 }
 
@@ -1262,6 +1272,8 @@ export class MessageLimitReachedError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'MessageLimitReachedError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, MessageLimitReachedError)
   }
 }
 
@@ -1275,6 +1287,8 @@ export class DeriveKeyPairError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'DeriveKeyPairError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, DeriveKeyPairError)
   }
 }
 
@@ -1288,6 +1302,8 @@ export class NotSupportedError extends Error {
   constructor(message?: string, options?: { cause?: unknown }) {
     super(message, options)
     this.name = 'NotSupportedError'
+    // @ts-ignore
+    Error.captureStackTrace?.(this, NotSupportedError)
   }
 }
 
