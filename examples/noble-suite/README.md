@@ -20,6 +20,8 @@ The noble-suite example shows how to integrate alternative cryptographic impleme
 - **ML-KEM-768** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
 - **ML-KEM-1024** - NIST standardized post-quantum KEM (via `@noble/post-quantum`)
 - **MLKEM768-X25519** - Hybrid post-quantum/traditional KEM combining ML-KEM-768 with X25519 (aka X-Wing, via `@noble/post-quantum`)
+- **MLKEM768-P256** - Hybrid post-quantum/traditional KEM combining ML-KEM-768 with P-256 (via `@noble/post-quantum`)
+- **MLKEM1024-P384** - Hybrid post-quantum/traditional KEM combining ML-KEM-1024 with P-384 (via `@noble/post-quantum`)
 
 ### KDF (Key Derivation Functions)
 

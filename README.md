@@ -75,9 +75,9 @@ This module is designed to be extensible, you can bring outside-built implementa
 | ML-KEM-512                 | `0x0040` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | ML-KEM-768                 | `0x0041` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | ML-KEM-1024                | `0x0042` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| MLKEM768-P256              | `0x0050` | ✓[^24.7] |           |           |                    |                   |
+| MLKEM768-P256              | `0x0050` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 | MLKEM768-X25519            | `0x647a` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| MLKEM1024-P384             | `0x0051` | ✓[^24.7] |           |           |                    |                   |
+| MLKEM1024-P384             | `0x0051` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 
 ### KDF
 

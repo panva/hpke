@@ -1,5 +1,5 @@
 import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js'
-import { XWing, ecdhKem } from '@noble/post-quantum/hybrid.js'
+import { MLKEM768X25519, MLKEM768P256, MLKEM1024P384, ecdhKem } from '@noble/post-quantum/hybrid.js'
 import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
 import { shake256 } from '@noble/hashes/sha3.js'
@@ -40,7 +40,13 @@ export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
   createPqKem(0x0042, 'ML-KEM-1024', 32, 1568, 1568, 64, ml_kem1024)()
 
 export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
-  createPqKem(0x647a, 'MLKEM768-X25519', 32, 1120, 1216, 32, XWing)()
+  createPqKem(0x647a, 'MLKEM768-X25519', 32, 1120, 1216, 32, MLKEM768X25519)()
+
+export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
+  createPqKem(0x0050, 'MLKEM768-P256', 32, 1153, 1249, 32, MLKEM768P256)()
+
+export const KEM_MLKEM1024_P384: HPKE.KEMFactory = () =>
+  createPqKem(0x0051, 'MLKEM1024-P384', 32, 1665, 1665, 32, MLKEM1024P384)()
 
 function createKem(
   id: number,
