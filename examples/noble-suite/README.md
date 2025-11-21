@@ -14,6 +14,8 @@ The noble-suite example shows how to integrate alternative cryptographic impleme
 
 ### KEM (Key Encapsulation Mechanisms)
 
+- **DHKEM-X25519-HKDF-SHA256** - Traditional elliptic curve KEM using Curve25519 (via `@noble/curves ^2.0.0`)
+- **DHKEM-X448-HKDF-SHA512** - Traditional elliptic curve KEM using Curve448 (via `@noble/curves ^2.0.0`)
 - **ML-KEM-512** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
 - **ML-KEM-768** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
 - **ML-KEM-1024** - NIST standardized post-quantum KEM (via `@noble/post-quantum ^0.5.2`)
