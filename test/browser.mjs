@@ -46,6 +46,7 @@ async function waitForTestsToComplete(page, browserName, timeout = 120000) {
   console.log(`  Waiting for tests to complete in ${browserName}...`)
 
   try {
+    // Wait for main algorithm tests
     await page.waitForFunction(
       () => {
         const results = globalThis.hpkeTestResults
@@ -54,6 +55,16 @@ async function waitForTestsToComplete(page, browserName, timeout = 120000) {
         return pending === 0
       },
       { timeout },
+    )
+
+    // Wait for vector validation to complete
+    await page.waitForFunction(
+      () => {
+        const results = globalThis.hpkeTestResults
+        if (!results || !results.vectorValidation) return false
+        return true
+      },
+      { timeout: 60000 },
     )
 
     const results = await page.evaluate(() => globalThis.hpkeTestResults)
@@ -101,6 +112,10 @@ async function runBrowserTests(browserType, browserName, channel = null) {
     console.log(`  Unexpected failures: ${results.unexpectedFailures}`)
     console.log(`  Unexpected passes: ${results.unexpectedPasses}`)
 
+    if (results.vectorValidation) {
+      console.log(`  Vector validation: ${results.vectorValidation.passed}/${results.vectorValidation.total} passed`)
+    }
+
     // Check for unexpected results
     if (results.unexpectedFailures > 0) {
       console.error(`\n  ✗ ${browserName}: ${results.unexpectedFailures} unexpected failure(s)!`)
@@ -111,6 +126,11 @@ async function runBrowserTests(browserType, browserName, channel = null) {
           console.error(`    - ${t.name}`)
           console.error(`      ${t.error}`)
         })
+      return { browserName, success: false, results }
+    }
+
+    if (results.vectorValidation && results.vectorValidation.failed > 0) {
+      console.error(`\n  ✗ ${browserName}: ${results.vectorValidation.failed} vector validation failure(s)!`)
       return { browserName, success: false, results }
     }
 
@@ -126,8 +146,6 @@ async function runBrowserTests(browserType, browserName, channel = null) {
         })
       return { browserName, success: false, results }
     }
-
-    console.log(`\n  ✓ ${browserName}: All tests passed as expected!`)
     return { browserName, success: true, results }
   } catch (error) {
     console.error(`\n  ✗ ${browserName}: Error running tests:`, error.message)

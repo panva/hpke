@@ -359,6 +359,85 @@
         display: none;
       }
 
+      .vector-validation {
+        margin-bottom: 30px;
+        padding: 20px;
+        background: rgb(13, 17, 23);
+        border-radius: 8px;
+        border: 2px solid #30363d;
+      }
+
+      .vector-validation.running {
+        border-color: #bb8009;
+      }
+
+      .vector-validation.passed {
+        border-color: #3fb950;
+      }
+
+      .vector-validation.failed {
+        border-color: #f85149;
+      }
+
+      .vector-validation h3 {
+        font-size: 18px;
+        color: #e6edf3;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .vector-validation .subtitle-text {
+        font-size: 13px;
+        color: #8b949e;
+        margin-bottom: 15px;
+      }
+
+      .progress-bar-container {
+        background: rgb(22, 27, 34);
+        border-radius: 6px;
+        height: 24px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        position: relative;
+      }
+
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #3fb950, #7ee787);
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 8px;
+      }
+
+      .progress-bar.failed {
+        background: linear-gradient(90deg, #f85149, #ff7b72);
+      }
+
+      .progress-text {
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      }
+
+      .progress-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 13px;
+        color: #8b949e;
+        font-family: 'Monaco', 'Courier New', monospace;
+      }
+
+      .progress-info .passed {
+        color: #7ee787;
+      }
+
+      .progress-info .failed {
+        color: #ff7b72;
+      }
+
       @media (max-width: 768px) {
         body {
           padding: 10px;
@@ -379,6 +458,21 @@
       <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
 
       <div class="summary" id="summary"></div>
+
+      <div class="vector-validation" id="vectorValidation">
+        <h3>Test Vector Validation</h3>
+        <p class="subtitle-text">
+          Testing all encryptions and exports from RFC test vectors with functional implementations
+        </p>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="vectorProgress" style="width: 0%">
+            <span class="progress-text" id="vectorProgressText">0%</span>
+          </div>
+        </div>
+        <div class="progress-info" id="vectorProgressInfo">
+          <span>Pending...</span>
+        </div>
+      </div>
 
       <div class="filter-buttons hidden">
         <button class="filter-btn active" data-filter="all">All</button>
@@ -545,6 +639,13 @@
 
       let tests = []
       let currentFilter = 'all'
+
+      // Track passing implementations by algorithm ID
+      const passingImplementations = {
+        kem: new Map(), // id -> [factories]
+        kdf: new Map(), // id -> [factories]
+        aead: new Map(), // id -> [factories]
+      }
 
       // ============================================================================
       // TEST GENERATION
@@ -969,95 +1070,27 @@
             await testRegularAEAD(suite, recipientKeyPair)
           }
 
-          // Pass 2: If we have a vector, test against it
-          if (hasVector && vectorToUse) {
-            // Find the matching components from the vector - prefer native, fallback to Noble
-            const vectorKemMatch = findMatchingImplementation(
-              ALL_KEMS,
-              vectorToUse.kem_id,
-              unsupported.kem,
-            )
-            const vectorKdfMatch = findMatchingImplementation(
-              ALL_KDFS,
-              vectorToUse.kdf_id,
-              unsupported.kdf,
-            )
-            const vectorAeadMatch = findMatchingImplementation(
-              ALL_AEADS,
-              vectorToUse.aead_id,
-              unsupported.aead,
-            )
-
-            if (vectorKemMatch && vectorKdfMatch && vectorAeadMatch) {
-              // Create suite with vector's components
-              const vectorSuite = new HPKE.CipherSuite(
-                vectorKemMatch.factory,
-                vectorKdfMatch.factory,
-                vectorAeadMatch.factory,
-              )
-
-              // Derive recipient key pair from vector's ikmR
-              const ikmR = Uint8Array.fromHex(vectorToUse.ikmR)
-              const vectorRecipientKeyPair = await vectorSuite.DeriveKeyPair(ikmR, true)
-
-              // Verify serialized public key matches the vector's skRm and pkRm
-              const serializedPrivateKey = await vectorSuite.SerializePrivateKey(
-                vectorRecipientKeyPair.privateKey,
-              )
-
-              const serializedPublicKey = await vectorSuite.SerializePublicKey(
-                vectorRecipientKeyPair.publicKey,
-              )
-              const expectedPublicKey = Uint8Array.fromHex(vectorToUse.pkRm)
-              assertUint8ArraysEqual(
-                serializedPublicKey,
-                expectedPublicKey,
-                'Vector test: Public key mismatch',
-              )
-
-              // Test against first encryption in the vector
-              if (vectorToUse.encryptions && vectorToUse.encryptions.length > 0) {
-                const firstEnc = vectorToUse.encryptions[0]
-                const enc = Uint8Array.fromHex(vectorToUse.enc)
-                const ciphertext = Uint8Array.fromHex(firstEnc.ct)
-                const aad = Uint8Array.fromHex(firstEnc.aad)
-                const expectedPlaintext = Uint8Array.fromHex(firstEnc.pt)
-
-                // Build options object based on mode
-                const options = {
-                  info: Uint8Array.fromHex(vectorToUse.info),
-                  psk: vectorToUse.psk ? Uint8Array.fromHex(vectorToUse.psk) : undefined,
-                  pskId: vectorToUse.psk_id ? Uint8Array.fromHex(vectorToUse.psk_id) : undefined,
-                }
-
-                // Use one-shot Open API
-                const decrypted = await vectorSuite.Open(
-                  vectorRecipientKeyPair,
-                  enc,
-                  ciphertext,
-                  aad,
-                  options,
-                )
-
-                // Verify the decrypted plaintext matches
-                assertUint8ArraysEqual(
-                  decrypted,
-                  expectedPlaintext,
-                  'Vector test: Decrypted mismatch',
-                )
-              }
-            }
-          }
-
           test.status = 'passed'
           test.error = null
+
+          // Collect passing implementation
+          const component = test.testingComponent
+          const componentAlgo = test[component]
+          const algoId = ALGORITHM_IDS[componentAlgo.name]
+
+          if (algoId !== undefined) {
+            if (!passingImplementations[component].has(algoId)) {
+              passingImplementations[component].set(algoId, [])
+            }
+            passingImplementations[component].get(algoId).push(componentAlgo.factory)
+          }
         } catch (error) {
           test.status = 'failed'
           test.error = error.message || String(error)
 
           // Log unexpected failures to console
           if (!test.expectedToFail) {
-            console.error(`Unexpected failure: ${getTestDisplayName(test)}`, error)
+            // console.error(`Unexpected failure: ${getTestDisplayName(test)}`, error)
           }
         }
 
@@ -1149,6 +1182,153 @@
       // INITIALIZATION
       // ============================================================================
 
+      // ============================================================================
+      // VECTOR VALIDATION
+      // ============================================================================
+
+      /** Runs comprehensive vector validation tests */
+      async function runVectorValidation() {
+        const vectorSection = document.getElementById('vectorValidation')
+        vectorSection.classList.add('running')
+
+        const progressBar = document.getElementById('vectorProgress')
+        const progressText = document.getElementById('vectorProgressText')
+        const progressInfo = document.getElementById('vectorProgressInfo')
+
+        // Count total test operations across all vectors and implementation combinations
+        let totalOps = 0
+        let completedOps = 0
+        let passedOps = 0
+        let failedOps = 0
+
+        for (const vector of allVectors) {
+          const kemFactories = passingImplementations.kem.get(vector.kem_id) || []
+          const kdfFactories = passingImplementations.kdf.get(vector.kdf_id) || []
+          const aeadFactories = passingImplementations.aead.get(vector.aead_id) || []
+
+          // Count combinations
+          if (kemFactories.length && kdfFactories.length && aeadFactories.length) {
+            const combinations = kemFactories.length * kdfFactories.length * aeadFactories.length
+            totalOps +=
+              combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0))
+          }
+        }
+
+        if (totalOps === 0) {
+          progressInfo.innerHTML =
+            '<span>No functional implementations found for vector validation</span>'
+          vectorSection.classList.remove('running')
+          return
+        }
+
+        const updateProgress = () => {
+          const percent = Math.round((completedOps / totalOps) * 100)
+          progressBar.style.width = `${percent}%`
+          progressText.textContent = `${percent}%`
+          progressInfo.innerHTML = `
+            <span>Total: ${totalOps} operations</span>
+            <span><span class="passed">✓ ${passedOps}</span> <span class="failed">✗ ${failedOps}</span></span>
+          `
+        }
+
+        updateProgress()
+
+        // Test all vectors with all passing implementation combinations
+        for (const vector of allVectors) {
+          const kemFactories = passingImplementations.kem.get(vector.kem_id) || []
+          const kdfFactories = passingImplementations.kdf.get(vector.kdf_id) || []
+          const aeadFactories = passingImplementations.aead.get(vector.aead_id) || []
+
+          // Skip vectors where we don't have all functional implementations
+          if (!kemFactories.length || !kdfFactories.length || !aeadFactories.length) continue
+
+          // Test all combinations of passing implementations
+          for (const kemFactory of kemFactories) {
+            for (const kdfFactory of kdfFactories) {
+              for (const aeadFactory of aeadFactories) {
+                const suite = new HPKE.CipherSuite(kemFactory, kdfFactory, aeadFactory)
+                const ikmR = Uint8Array.fromHex(vector.ikmR)
+                const recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
+                const enc = Uint8Array.fromHex(vector.enc)
+
+                const options = {
+                  info: Uint8Array.fromHex(vector.info),
+                  psk: vector.psk ? Uint8Array.fromHex(vector.psk) : undefined,
+                  pskId: vector.psk_id ? Uint8Array.fromHex(vector.psk_id) : undefined,
+                }
+
+                const ctx = await suite.SetupRecipient(recipientKeyPair, enc, options)
+
+                // Test all encryptions
+                if (vector.encryptions) {
+                  for (const encryption of vector.encryptions) {
+                    try {
+                      const ciphertext = Uint8Array.fromHex(encryption.ct)
+                      const aad = Uint8Array.fromHex(encryption.aad)
+                      const expectedPlaintext = Uint8Array.fromHex(encryption.pt)
+                      const decrypted = await ctx.Open(ciphertext, aad)
+                      assertUint8ArraysEqual(decrypted, expectedPlaintext, 'Plaintext mismatch')
+                      passedOps++
+                    } catch (e) {
+                      failedOps++
+                      // console.error('Vector encryption test failed:', e)
+                    } finally {
+                      completedOps++
+                      updateProgress()
+                    }
+                  }
+                }
+
+                // Test all exports
+                if (vector.exports) {
+                  for (const exportTest of vector.exports) {
+                    try {
+                      const exporterContext = Uint8Array.fromHex(exportTest.exporter_context)
+                      const L = exportTest.L
+                      const expectedExportedValue = Uint8Array.fromHex(exportTest.exported_value)
+                      const exportedValue = await ctx.Export(exporterContext, L)
+                      assertUint8ArraysEqual(
+                        exportedValue,
+                        expectedExportedValue,
+                        'Export mismatch',
+                      )
+                      passedOps++
+                    } catch (e) {
+                      failedOps++
+                      // console.error('Vector export test failed:', e)
+                    } finally {
+                      completedOps++
+                      updateProgress()
+                    }
+                  }
+                }
+
+                // Small delay for UI updates
+                await new Promise((resolve) => setTimeout(resolve, 0))
+              }
+            }
+          }
+        }
+
+        // Final update
+        vectorSection.classList.remove('running')
+        if (failedOps === 0) {
+          vectorSection.classList.add('passed')
+          progressBar.classList.remove('failed')
+        } else {
+          vectorSection.classList.add('failed')
+          progressBar.classList.add('failed')
+        }
+        updateProgress()
+
+        // Add vector results to globalThis
+        globalThis.hpkeTestResults.vectorValidation = {
+          total: totalOps,
+          passed: passedOps,
+          failed: failedOps,
+        }
+      }
+
       /** Initializes the test suite and starts execution */
       async function init() {
         tests = generateTests()
@@ -1157,6 +1337,7 @@
         updateSummary()
         renderTests()
         await runAllTests()
+        await runVectorValidation()
       }
 
       init()
