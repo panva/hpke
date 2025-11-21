@@ -42,9 +42,18 @@
         padding: 30px;
       }
 
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+        gap: 20px;
+        position: relative;
+      }
+
       h1 {
         color: #e6edf3;
-        margin-bottom: 10px;
+        margin: 0;
         font-size: 32px;
       }
 
@@ -64,6 +73,90 @@
       h1 a svg {
         width: 20px;
         height: 20px;
+      }
+
+      .filter-links {
+        display: flex;
+        gap: 12px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      .filter-links a {
+        color: #8b949e;
+        text-decoration: none;
+        padding: 6px 12px;
+        border: 2px solid #30363d;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        font-family: 'Monaco', 'Courier New', monospace;
+      }
+
+      .filter-links a:hover {
+        color: #e6edf3;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .filter-links a#filterNative.active {
+        color: #e6edf3;
+        border-color: #3fb950;
+        background: rgba(46, 160, 67, 0.15);
+      }
+
+      .filter-links a#filterNoble.active {
+        color: #e6edf3;
+        border-color: #388bfd;
+        background: rgba(56, 139, 253, 0.15);
+      }
+
+      .filter-links a#filterBoth.active {
+        color: #e6edf3;
+        background: linear-gradient(
+          135deg,
+          rgba(46, 160, 67, 0.15) 0%,
+          rgba(46, 160, 67, 0.15) 66.67%,
+          rgba(56, 139, 253, 0.15) 66.67%,
+          rgba(56, 139, 253, 0.15) 100%
+        );
+        border-width: 2px;
+        border-style: solid;
+        border-image: linear-gradient(
+            135deg,
+            #3fb950 0%,
+            #3fb950 66.67%,
+            #388bfd 66.67%,
+            #388bfd 100%
+          )
+          1;
+      }
+
+      .burger-menu {
+        display: none;
+        flex-direction: column;
+        gap: 4px;
+        cursor: pointer;
+        padding: 8px;
+        border: 2px solid #30363d;
+        background: transparent;
+        transition: all 0.2s ease;
+      }
+
+      .burger-menu:hover {
+        border-color: #58a6ff;
+        transform: translateY(-2px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .burger-menu span {
+        width: 20px;
+        height: 2px;
+        background: #8b949e;
+        transition: all 0.2s ease;
+      }
+
+      .burger-menu:hover span {
+        background: #58a6ff;
       }
 
       .subtitle {
@@ -91,6 +184,16 @@
         gap: 8px;
         font-size: 13px;
         color: #8b949e;
+        transition: all 0.2s ease;
+      }
+
+      .legend-item.disabled {
+        opacity: 0.5;
+      }
+
+      .legend-item.disabled span {
+        text-decoration: line-through;
+        color: #6e7681;
       }
 
       .legend-color {
@@ -221,20 +324,48 @@
         margin-bottom: 30px;
         padding: 20px;
         background: rgb(13, 17, 23);
-
         border: 2px solid #30363d;
+        transition: all 0.2s ease;
       }
 
       .vector-validation.running {
         border-color: #bb8009;
+        background: rgba(187, 128, 9, 0.15);
       }
 
-      .vector-validation.passed {
+      .vector-validation.passed-native {
         border-color: #3fb950;
+        background: rgba(46, 160, 67, 0.15);
+      }
+
+      .vector-validation.passed-noble {
+        border-color: #388bfd;
+        background: rgba(56, 139, 253, 0.15);
+      }
+
+      .vector-validation.passed-both {
+        background: linear-gradient(
+          135deg,
+          rgba(46, 160, 67, 0.15) 0%,
+          rgba(46, 160, 67, 0.15) 66.67%,
+          rgba(56, 139, 253, 0.15) 66.67%,
+          rgba(56, 139, 253, 0.15) 100%
+        );
+        border-width: 2px;
+        border-style: solid;
+        border-image: linear-gradient(
+            135deg,
+            #3fb950 0%,
+            #3fb950 66.67%,
+            #388bfd 66.67%,
+            #388bfd 100%
+          )
+          1;
       }
 
       .vector-validation.failed {
         border-color: #f85149;
+        background: rgba(248, 81, 73, 0.15);
       }
 
       .vector-validation h3 {
@@ -303,34 +434,98 @@
 
         .container {
           padding: 15px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .header {
+          flex-wrap: wrap;
+          order: 1;
+        }
+
+        h1 {
+          font-size: 24px;
+          flex: 1;
+        }
+
+        .burger-menu {
+          display: flex;
+        }
+
+        .filter-links {
+          display: none;
+          flex-direction: column;
+          width: 100%;
+          order: 3;
+        }
+
+        .filter-links.open {
+          display: flex;
+        }
+
+        .filter-links a {
+          text-align: center;
+        }
+
+        .subtitle {
+          order: 2;
+        }
+
+        .legend {
+          order: 3;
+        }
+
+        .vector-validation {
+          order: 4;
+        }
+
+        .vector-validation .progress-bar-container {
+          order: -1;
+          margin-bottom: 15px;
+        }
+
+        .summary {
+          order: 5;
         }
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <h1>
-        @panva/hpke Browser Test Suite
-        <a href="https://github.com/panva/hpke" target="_blank">
-          <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-            <path
-              d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"
-            ></path>
-          </svg>
-        </a>
-      </h1>
+      <div class="header">
+        <h1>
+          @panva/hpke Browser Test Suite
+          <a href="https://github.com/panva/hpke" target="_blank">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path
+                d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"
+              ></path>
+            </svg>
+          </a>
+        </h1>
+        <button class="burger-menu" id="burgerMenu" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+        <div class="filter-links" id="filterLinks">
+          <a href="?native" id="filterNative">Native</a>
+          <a href="?noble" id="filterNoble">Extensibility</a>
+          <a href="./" id="filterBoth">Both</a>
+        </div>
+      </div>
       <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
 
       <div class="legend">
-        <div class="legend-item">
+        <div class="legend-item" id="legendNative">
           <div class="legend-color native"></div>
           <span>Native (Web Cryptography)</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" id="legendNoble">
           <div class="legend-color noble"></div>
           <span>Extensibility (Noble Cryptography)</span>
         </div>
-        <div class="legend-item">
+        <div class="legend-item" id="legendBoth">
           <div class="legend-color both"></div>
           <span>Both implementations</span>
         </div>
@@ -359,6 +554,25 @@
     </div>
 
     <script type="module">
+      // Check query string parameters to filter implementations
+      const params = new URLSearchParams(window.location.search)
+      const onlyNative = params.has('native')
+      const onlyNoble = params.has('noble')
+      const both = (onlyNative && onlyNoble) || (!onlyNative && !onlyNoble)
+
+      // Highlight active filter link
+      if (onlyNative) {
+        document.getElementById('filterNative').classList.add('active')
+        document.getElementById('legendNoble').classList.add('disabled')
+        document.getElementById('legendBoth').classList.add('disabled')
+      } else if (onlyNoble) {
+        document.getElementById('filterNoble').classList.add('active')
+        document.getElementById('legendNative').classList.add('disabled')
+        document.getElementById('legendBoth').classList.add('disabled')
+      } else {
+        document.getElementById('filterBoth').classList.add('active')
+      }
+
       import * as HPKE from '@panva/hpke'
       import * as Noble from '@panva/hpke-noble'
       import Bowser from 'bowser'
@@ -399,10 +613,15 @@
       const NOBLE_KDFS = extractAlgorithms(Noble, 'KDF_', 'extensibility', true)
       const NOBLE_AEADS = extractAlgorithms(Noble, 'AEAD_', 'extensibility', true)
 
-      // Combine native and Noble implementations
-      const ALL_KEMS = [...KEMS, ...NOBLE_KEMS]
-      const ALL_KDFS = [...KDFS, ...NOBLE_KDFS]
-      const ALL_AEADS = [...AEADS, ...NOBLE_AEADS]
+      // Burger menu toggle
+      document.getElementById('burgerMenu').addEventListener('click', () => {
+        document.getElementById('filterLinks').classList.toggle('open')
+      })
+
+      // Combine native and Noble implementations based on query params
+      const ALL_KEMS = both ? KEMS.concat(NOBLE_KEMS) : onlyNative ? KEMS : NOBLE_KEMS
+      const ALL_KDFS = both ? KDFS.concat(NOBLE_KDFS) : onlyNative ? KDFS : NOBLE_KDFS
+      const ALL_AEADS = both ? AEADS.concat(NOBLE_AEADS) : onlyNative ? AEADS : NOBLE_AEADS
 
       // ============================================================================
       // ALGORITHM ID MAPPINGS
@@ -1100,7 +1319,13 @@
         // Final update
         vectorSection.classList.remove('running')
         if (failedOps === 0) {
-          vectorSection.classList.add('passed')
+          if (onlyNative) {
+            vectorSection.classList.add('passed-native')
+          } else if (onlyNoble) {
+            vectorSection.classList.add('passed-noble')
+          } else {
+            vectorSection.classList.add('passed-both')
+          }
           progressBar.classList.remove('failed')
         } else {
           vectorSection.classList.add('failed')
