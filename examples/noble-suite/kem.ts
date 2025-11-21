@@ -2,58 +2,138 @@ import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js'
 import { XWing, ecdhKem } from '@noble/post-quantum/hybrid.js'
 import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
+import { p256, p384, p521 } from '@noble/curves/nist.js'
 import { shake256 } from '@noble/hashes/sha3.js'
 import type * as HPKE from '../../index.ts'
-import {
-  LabeledDerive,
-  LabeledExtract,
-  LabeledExpand,
-  KDF_HKDF_SHA256,
-  KDF_HKDF_SHA512,
-  concat,
-  encode,
-  I2OSP,
-} from '../../index.ts'
+import { LabeledDerive, LabeledExtract, LabeledExpand, concat, encode, I2OSP } from '../../index.ts'
+import { KDF_HKDF_SHA256, KDF_HKDF_SHA384, KDF_HKDF_SHA512 } from './kdf.ts'
+
+export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0010,
+    name: 'DHKEM(P-256, HKDF-SHA256)',
+    Nsecret: 32,
+    Nenc: 65,
+    Npk: 65,
+    Nsk: 32,
+    curve: p256,
+    kdf: KDF_HKDF_SHA256,
+    order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
+    bitmask: 0xff,
+  })()
+
+export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0011,
+    name: 'DHKEM(P-384, HKDF-SHA384)',
+    Nsecret: 48,
+    Nenc: 97,
+    Npk: 97,
+    Nsk: 48,
+    curve: p384,
+    kdf: KDF_HKDF_SHA384,
+    order:
+      0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
+    bitmask: 0xff,
+  })()
+
+export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0012,
+    name: 'DHKEM(P-521, HKDF-SHA512)',
+    Nsecret: 64,
+    Nenc: 133,
+    Npk: 133,
+    Nsk: 66,
+    curve: p521,
+    kdf: KDF_HKDF_SHA512,
+    order:
+      0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
+    bitmask: 0x01,
+  })()
 
 export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
-  createDhKem(
-    0x0020,
-    'DHKEM(X25519, HKDF-SHA256)',
-    32,
-    32,
-    32,
-    32,
-    ecdhKem(x25519),
-    KDF_HKDF_SHA256,
-  )()
+  createDhKemX({
+    id: 0x0020,
+    name: 'DHKEM(X25519, HKDF-SHA256)',
+    Nsecret: 32,
+    Nenc: 32,
+    Npk: 32,
+    Nsk: 32,
+    kem: ecdhKem(x25519),
+    kdf: KDF_HKDF_SHA256,
+  })()
 
 export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
-  createDhKem(0x0021, 'DHKEM(X448, HKDF-SHA512)', 64, 56, 56, 56, ecdhKem(x448), KDF_HKDF_SHA512)()
+  createDhKemX({
+    id: 0x0021,
+    name: 'DHKEM(X448, HKDF-SHA512)',
+    Nsecret: 64,
+    Nenc: 56,
+    Npk: 56,
+    Nsk: 56,
+    kem: ecdhKem(x448),
+    kdf: KDF_HKDF_SHA512,
+  })()
 
 export const KEM_ML_KEM_512: HPKE.KEMFactory = () =>
-  createPqKem(0x0040, 'ML-KEM-512', 32, 768, 800, 64, ml_kem512)()
+  createPqKem({
+    id: 0x0040,
+    name: 'ML-KEM-512',
+    Nsecret: 32,
+    Nenc: 768,
+    Npk: 800,
+    Nsk: 64,
+    kem: ml_kem512,
+  })()
 
 export const KEM_ML_KEM_768: HPKE.KEMFactory = () =>
-  createPqKem(0x0041, 'ML-KEM-768', 32, 1088, 1184, 64, ml_kem768)()
+  createPqKem({
+    id: 0x0041,
+    name: 'ML-KEM-768',
+    Nsecret: 32,
+    Nenc: 1088,
+    Npk: 1184,
+    Nsk: 64,
+    kem: ml_kem768,
+  })()
 
 export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
-  createPqKem(0x0042, 'ML-KEM-1024', 32, 1568, 1568, 64, ml_kem1024)()
+  createPqKem({
+    id: 0x0042,
+    name: 'ML-KEM-1024',
+    Nsecret: 32,
+    Nenc: 1568,
+    Npk: 1568,
+    Nsk: 64,
+    kem: ml_kem1024,
+  })()
 
 export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
-  createPqKem(0x647a, 'MLKEM768-X25519', 32, 1120, 1216, 32, XWing)()
+  createPqKem({
+    id: 0x647a,
+    name: 'MLKEM768-X25519',
+    Nsecret: 32,
+    Nenc: 1120,
+    Npk: 1216,
+    Nsk: 32,
+    kem: XWing,
+  })()
 
-function createKem(
-  id: number,
-  name: string,
-  Nsecret: number,
-  Nenc: number,
-  Npk: number,
-  Nsk: number,
-  nobleKem: NobleKEM,
-  impl: Implementation,
-): HPKE.KEMFactory {
+function createPqKem(config: {
+  id: number
+  name: string
+  Nsecret: number
+  Nenc: number
+  Npk: number
+  Nsk: number
+  kem: NobleKEM
+}): HPKE.KEMFactory {
+  const { id, name, Nsecret, Nenc, Npk, Nsk, kem: nobleKem } = config
+  const suite_id = concat(encode('KEM'), I2OSP(id, 2))
+
   Object.freeze(NobleKey.prototype)
-  return function (): HPKE.KEM {
+  return (): HPKE.KEM => {
     const algorithm = { name }
 
     return {
@@ -65,10 +145,27 @@ function createKem(
       Npk,
       Nsk,
       async DeriveKeyPair(ikm, extractable) {
-        return impl.DeriveKeyPair(this, nobleKem, ikm, extractable, algorithm)
+        const seed = await LabeledDerive(
+          {
+            async Derive(ikm, L) {
+              return shake256(ikm, { dkLen: L })
+            },
+          },
+          suite_id,
+          ikm,
+          encode('DeriveKeyPair'),
+          new Uint8Array(),
+          Nsk,
+        )
+        const { secretKey, publicKey } = nobleKem.keygen(seed)
+
+        return {
+          privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm, seed),
+          publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
+        }
       },
       async GenerateKeyPair(extractable) {
-        const ikm = crypto.getRandomValues(new Uint8Array(this.Nsk))
+        const ikm = crypto.getRandomValues(new Uint8Array(Nsk))
         return this.DeriveKeyPair(ikm, extractable)
       },
       async SerializePublicKey(key) {
@@ -80,159 +177,254 @@ function createKem(
       },
       async SerializePrivateKey(key) {
         assertNobleKey(key, algorithm)
-        return impl.SerializePrivateKey(this, key)
+        return (key as NobleKey).seed(priv)
       },
       async DeserializePrivateKey(key, extractable) {
-        return impl.DeserializePrivateKey(this, nobleKem, key, extractable, algorithm)
+        const { secretKey } = nobleKem.keygen(key)
+        return new NobleKey(priv, 'private', secretKey, extractable, algorithm, key.slice())
       },
       async Encap(pkR) {
         assertNobleKey(pkR, algorithm)
-        return impl.Encap(this, nobleKem, pkR, algorithm)
+        const { cipherText, sharedSecret } = nobleKem.encapsulate((pkR as NobleKey).value(priv))
+        return { shared_secret: sharedSecret, enc: cipherText }
       },
-      async Decap(enc, skR, pkR) {
+      async Decap(enc, skR) {
         assertNobleKey(skR, algorithm)
-        return impl.Decap(this, nobleKem, enc, skR, pkR, algorithm)
+        return nobleKem.decapsulate(enc, (skR as NobleKey).value(priv))
       },
     }
   }
 }
 
-function createPqKem(
-  id: number,
-  name: string,
-  Nsecret: number,
-  Nenc: number,
-  Npk: number,
-  Nsk: number,
-  nobleKem: NobleKEM,
-): HPKE.KEMFactory {
-  return createKem(id, name, Nsecret, Nenc, Npk, Nsk, nobleKem, {
-    async DeriveKeyPair(kem, nobleKem, ikm, extractable, algorithm) {
-      const seed = await LabeledDerive(
-        {
-          async Derive(ikm, L) {
-            return shake256(ikm, { dkLen: L })
-          },
-        },
-        concat(encode('KEM'), I2OSP(id, 2)),
-        ikm,
-        encode('DeriveKeyPair'),
-        new Uint8Array(),
-        kem.Nsk,
-      )
-      const { secretKey, publicKey } = nobleKem.keygen(seed)
-
-      return {
-        privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm, seed),
-        publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
-      }
-    },
-    async SerializePrivateKey(_kem, key) {
-      return (key as NobleKey).seed(priv)
-    },
-    async DeserializePrivateKey(_kem, nobleKem, key, extractable, algorithm) {
-      const { secretKey } = nobleKem.keygen(key)
-      return new NobleKey(priv, 'private', secretKey, extractable, algorithm, key.slice())
-    },
-    async Encap(_kem, nobleKem, pkR) {
-      const { cipherText, sharedSecret } = nobleKem.encapsulate((pkR as NobleKey).value(priv))
-      return { shared_secret: sharedSecret, enc: cipherText }
-    },
-    async Decap(_kem, nobleKem, enc, skR) {
-      return nobleKem.decapsulate(enc, (skR as NobleKey).value(priv))
-    },
-  })
-}
-
-function createDhKem(
-  id: number,
-  name: string,
-  Nsecret: number,
-  Nenc: number,
-  Npk: number,
-  Nsk: number,
-  nobleKem: NobleKEM,
-  kdfFactory: HPKE.KDFFactory,
-): HPKE.KEMFactory {
+function createDhKemNist(config: {
+  id: number
+  name: string
+  Nsecret: number
+  Nenc: number
+  Npk: number
+  Nsk: number
+  curve: typeof p256 | typeof p384 | typeof p521
+  kdf: HPKE.KDFFactory
+  order: bigint
+  bitmask: number
+}): HPKE.KEMFactory {
+  const { id, name, Nsecret, Nenc, Npk, Nsk, curve, kdf: kdfFactory, order, bitmask } = config
   const kdf = kdfFactory()
   const suite_id = concat(encode('KEM'), I2OSP(id, 2))
 
-  return createKem(id, name, Nsecret, Nenc, Npk, Nsk, nobleKem, {
-    async DeriveKeyPair(kem, nobleKem, ikm, extractable, algorithm) {
-      const dkp_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('dkp_prk'), ikm)
-      const sk = await LabeledExpand(
+  async function deriveSharedSecret(
+    dh: Uint8Array,
+    enc: Uint8Array,
+    pkRm: Uint8Array,
+  ): Promise<Uint8Array> {
+    const kem_context = concat(enc, pkRm)
+    const eae_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('eae_prk'), dh)
+    return LabeledExpand(kdf, suite_id, eae_prk, encode('shared_secret'), kem_context, Nsecret)
+  }
+
+  async function deriveKeyPair(ikm: Uint8Array, extractable: boolean): Promise<HPKE.KeyPair> {
+    const dkp_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('dkp_prk'), ikm)
+
+    // Rejection sampling for NIST curves
+    let sk = 0n
+    let counter = 0
+    let bytes: Uint8Array
+
+    do {
+      if (counter > 255) throw new Error('Key derivation failed')
+      bytes = await LabeledExpand(
         kdf,
         suite_id,
         dkp_prk,
-        encode('sk'),
-        new Uint8Array(),
-        kem.Nsk,
+        encode('candidate'),
+        Uint8Array.of(counter),
+        Nsk,
       )
-      const { secretKey, publicKey } = nobleKem.keygen(sk)
+      bytes[0]! &= bitmask
+      sk = bytes.reduce((acc, byte) => (acc << 8n) | BigInt(byte), 0n)
+      counter++
+    } while (sk === 0n || sk >= order)
 
-      return {
-        privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm),
-        publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
-      }
-    },
-    async DeserializePrivateKey(_kem, _nobleKem, key, extractable, algorithm) {
-      return new NobleKey(priv, 'private', key.slice(), extractable, algorithm)
-    },
-    async SerializePrivateKey(_kem, key) {
-      return (key as NobleKey).value(priv)
-    },
-    async Encap(kem, nobleKem, pkR) {
-      // Generate ephemeral key pair
-      const ekp = await kem.GenerateKeyPair(false)
-      const skE = ekp.privateKey as NobleKey
-      const pkE = ekp.publicKey as NobleKey
+    const secretKey = bytes!
+    const publicKey = curve.getPublicKey(secretKey, false)
 
-      // Perform DH
-      const dh = nobleKem.decapsulate((pkR as NobleKey).value(priv), skE.value(priv))
+    curve.Point.fromBytes(publicKey).assertValidity()
 
-      // DHKEM encapsulation
-      const enc = pkE.value(priv)
-      const pkRm = (pkR as NobleKey).value(priv)
-      const kem_context = concat(enc, pkRm)
-      const eae_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('eae_prk'), dh)
-      const shared_secret = await LabeledExpand(
-        kdf,
-        suite_id,
-        eae_prk,
-        encode('shared_secret'),
-        kem_context,
-        kem.Nsecret,
-      )
+    return {
+      privateKey: new NobleKey(priv, 'private', secretKey, extractable, { name }),
+      publicKey: new NobleKey(priv, 'public', publicKey, true, { name }),
+    }
+  }
 
-      return { shared_secret, enc }
-    },
-    async Decap(kem, nobleKem, enc, skR, pkR) {
-      pkR ??= (await kem.DeserializePublicKey(
-        nobleKem.keygen((skR as NobleKey).value(priv)).publicKey,
-      )) as NobleKey
+  Object.freeze(NobleKey.prototype)
+  return (): HPKE.KEM => {
+    const algorithm = { name }
 
-      // Deserialize encapsulated key
-      const pkE = (await kem.DeserializePublicKey(enc)) as NobleKey
+    return {
+      id,
+      type: 'KEM',
+      name,
+      Nsecret,
+      Nenc,
+      Npk,
+      Nsk,
+      async DeriveKeyPair(ikm, extractable) {
+        return deriveKeyPair(ikm, extractable)
+      },
+      async GenerateKeyPair(extractable) {
+        const ikm = crypto.getRandomValues(new Uint8Array(Nsk))
+        return this.DeriveKeyPair(ikm, extractable)
+      },
+      async SerializePublicKey(key) {
+        assertNobleKey(key, algorithm)
+        return key.value(priv)
+      },
+      async DeserializePublicKey(key) {
+        curve.Point.fromBytes(key).assertValidity()
+        return new NobleKey(priv, 'public', key.slice(), true, algorithm)
+      },
+      async SerializePrivateKey(key) {
+        assertNobleKey(key, algorithm)
+        return (key as NobleKey).value(priv)
+      },
+      async DeserializePrivateKey(key, extractable) {
+        return new NobleKey(priv, 'private', key.slice(), extractable, algorithm)
+      },
+      async Encap(pkR) {
+        assertNobleKey(pkR, algorithm)
 
-      // Perform DH
-      const dh = nobleKem.decapsulate(pkE.value(priv), (skR as NobleKey).value(priv))
+        const pkRValue = (pkR as NobleKey).value(priv)
+        curve.Point.fromBytes(pkRValue).assertValidity()
 
-      // DHKEM decapsulation
-      const pkRm = (pkR as NobleKey).value(priv)
-      const kem_context = concat(enc, pkRm)
-      const eae_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('eae_prk'), dh)
-      const shared_secret = await LabeledExpand(
-        kdf,
-        suite_id,
-        eae_prk,
-        encode('shared_secret'),
-        kem_context,
-        kem.Nsecret,
-      )
+        const ekp = await this.GenerateKeyPair(false)
+        const skE = (ekp.privateKey as NobleKey).value(priv)
+        const enc = (ekp.publicKey as NobleKey).value(priv)
 
-      return shared_secret
-    },
-  })
+        const dh = curve.getSharedSecret(skE, pkRValue).slice(1)
+        checkNotAllZeros(dh)
+
+        return {
+          shared_secret: await deriveSharedSecret(dh, enc, pkRValue),
+          enc,
+        }
+      },
+      async Decap(enc, skR, pkR) {
+        assertNobleKey(skR, algorithm)
+
+        const skRValue = (skR as NobleKey).value(priv)
+        pkR ??= (await this.DeserializePublicKey(curve.getPublicKey(skRValue, false))) as NobleKey
+        assertNobleKey(pkR, algorithm)
+
+        const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
+        const pkEValue = pkE.value(priv)
+        const dh = curve.getSharedSecret(skRValue, pkEValue).slice(1)
+        checkNotAllZeros(dh)
+
+        return deriveSharedSecret(dh, enc, (pkR as NobleKey).value(priv))
+      },
+    }
+  }
+}
+
+function createDhKemX(config: {
+  id: number
+  name: string
+  Nsecret: number
+  Nenc: number
+  Npk: number
+  Nsk: number
+  kem: NobleKEM
+  kdf: HPKE.KDFFactory
+}): HPKE.KEMFactory {
+  const { id, name, Nsecret, Nenc, Npk, Nsk, kem: nobleKem, kdf: kdfFactory } = config
+  const kdf = kdfFactory()
+  const suite_id = concat(encode('KEM'), I2OSP(id, 2))
+
+  async function deriveSharedSecret(
+    dh: Uint8Array,
+    enc: Uint8Array,
+    pkRm: Uint8Array,
+  ): Promise<Uint8Array> {
+    const kem_context = concat(enc, pkRm)
+    const eae_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('eae_prk'), dh)
+    return LabeledExpand(kdf, suite_id, eae_prk, encode('shared_secret'), kem_context, Nsecret)
+  }
+
+  Object.freeze(NobleKey.prototype)
+  return (): HPKE.KEM => {
+    const algorithm = { name }
+
+    return {
+      id,
+      type: 'KEM',
+      name,
+      Nsecret,
+      Nenc,
+      Npk,
+      Nsk,
+      async DeriveKeyPair(ikm, extractable) {
+        const dkp_prk = await LabeledExtract(
+          kdf,
+          suite_id,
+          new Uint8Array(),
+          encode('dkp_prk'),
+          ikm,
+        )
+        const sk = await LabeledExpand(kdf, suite_id, dkp_prk, encode('sk'), new Uint8Array(), Nsk)
+        const { secretKey, publicKey } = nobleKem.keygen(sk)
+
+        return {
+          privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm),
+          publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
+        }
+      },
+      async GenerateKeyPair(extractable) {
+        const ikm = crypto.getRandomValues(new Uint8Array(Nsk))
+        return this.DeriveKeyPair(ikm, extractable)
+      },
+      async SerializePublicKey(key) {
+        assertNobleKey(key, algorithm)
+        return key.value(priv)
+      },
+      async DeserializePublicKey(key) {
+        return new NobleKey(priv, 'public', key.slice(), true, algorithm)
+      },
+      async SerializePrivateKey(key) {
+        assertNobleKey(key, algorithm)
+        return (key as NobleKey).value(priv)
+      },
+      async DeserializePrivateKey(key, extractable) {
+        return new NobleKey(priv, 'private', key.slice(), extractable, algorithm)
+      },
+      async Encap(pkR) {
+        assertNobleKey(pkR, algorithm)
+
+        const ekp = await this.GenerateKeyPair(false)
+        const enc = (ekp.publicKey as NobleKey).value(priv)
+        const dh = nobleKem.decapsulate(
+          (pkR as NobleKey).value(priv),
+          (ekp.privateKey as NobleKey).value(priv),
+        )
+
+        return {
+          shared_secret: await deriveSharedSecret(dh, enc, (pkR as NobleKey).value(priv)),
+          enc,
+        }
+      },
+      async Decap(enc, skR, pkR) {
+        assertNobleKey(skR, algorithm)
+
+        const skRValue = (skR as NobleKey).value(priv)
+        pkR ??= (await this.DeserializePublicKey(nobleKem.keygen(skRValue).publicKey)) as NobleKey
+        assertNobleKey(pkR, algorithm)
+
+        const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
+        const dh = nobleKem.decapsulate(pkE.value(priv), skRValue)
+
+        return deriveSharedSecret(dh, enc, (pkR as NobleKey).value(priv))
+      },
+    }
+  }
 }
 
 function assertNobleKey(key: HPKE.Key, algorithm: KeyAlgorithm): asserts key is NobleKey {
@@ -299,40 +491,18 @@ class NobleKey implements HPKE.Key {
   }
 }
 
+function checkNotAllZeros(buffer: Uint8Array): void {
+  let allZeros = 1
+  for (let i = 0; i < buffer.length; i++) {
+    allZeros &= buffer[i]! === 0 ? 1 : 0
+  }
+  if (allZeros === 1) {
+    throw new Error('DH shared secret is an all-zero value')
+  }
+}
+
 interface NobleKEM {
   keygen(seed: Uint8Array): { secretKey: Uint8Array; publicKey: Uint8Array }
   encapsulate(publicKey: Uint8Array): { cipherText: Uint8Array; sharedSecret: Uint8Array }
   decapsulate(cipherText: Uint8Array, secretKey: Uint8Array): Uint8Array
-}
-
-type Implementation = {
-  DeriveKeyPair: (
-    kem: HPKE.KEM,
-    nobleKem: NobleKEM,
-    ikm: Uint8Array,
-    extractable: boolean,
-    algorithm: KeyAlgorithm,
-  ) => Promise<HPKE.KeyPair>
-  SerializePrivateKey: (kem: HPKE.KEM, key: HPKE.Key) => Promise<Uint8Array>
-  DeserializePrivateKey: (
-    kem: HPKE.KEM,
-    nobleKem: NobleKEM,
-    key: Uint8Array,
-    extractable: boolean,
-    algorithm: KeyAlgorithm,
-  ) => Promise<HPKE.Key>
-  Encap: (
-    kem: HPKE.KEM,
-    nobleKem: NobleKEM,
-    pkR: HPKE.Key,
-    algorithm: KeyAlgorithm,
-  ) => Promise<{ shared_secret: Uint8Array; enc: Uint8Array }>
-  Decap: (
-    kem: HPKE.KEM,
-    nobleKem: NobleKEM,
-    enc: Uint8Array,
-    skR: HPKE.Key,
-    pkR: HPKE.Key | undefined,
-    algorithm: KeyAlgorithm,
-  ) => Promise<Uint8Array>
 }

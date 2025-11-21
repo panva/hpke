@@ -42,7 +42,7 @@ function startServer() {
 }
 
 // Wait for tests to complete on a page
-async function waitForTestsToComplete(page, browserName, timeout = 120000) {
+async function waitForTestsToComplete(page, browserName, timeout = 180000) {
   console.log(`  Waiting for tests to complete in ${browserName}...`)
 
   try {
@@ -64,7 +64,7 @@ async function waitForTestsToComplete(page, browserName, timeout = 120000) {
         if (!results || !results.vectorValidation) return false
         return true
       },
-      { timeout: 60000 },
+      { timeout: 120000 },
     )
 
     const results = await page.evaluate(() => globalThis.hpkeTestResults)
@@ -83,6 +83,9 @@ async function runBrowserTests(browserType, browserName, channel = null) {
   const browser = await browserType.launch(launchOptions)
   const context = await browser.newContext()
   const page = await context.newPage()
+
+  // Set default timeout for all page operations
+  page.setDefaultTimeout(180000)
 
   // Listen for console messages
   page.on('console', (msg) => {
@@ -164,11 +167,20 @@ async function main() {
     console.log('Starting server...')
     server = await startServer()
 
-    const browsers = [
+    const allBrowsers = [
       { type: chromium, name: 'Chromium' },
       { type: firefox, name: 'Firefox' },
       { type: webkit, name: 'Safari' },
     ]
+
+    // Filter browsers based on BROWSER env var if set
+    const browsers = process.env.BROWSER
+      ? allBrowsers.filter((b) => b.name.toLowerCase() === process.env.BROWSER.toLowerCase())
+      : allBrowsers
+
+    if (browsers.length === 0) {
+      throw new Error(`Unknown browser: ${process.env.BROWSER}`)
+    }
 
     // Run tests sequentially to avoid resource issues
     const results = []

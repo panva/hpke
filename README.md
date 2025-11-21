@@ -65,40 +65,40 @@ This module is designed to be extensible, you can bring outside-built implementa
 
 ### KEM
 
-| Name                       | ID       | Node.js  | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
-| -------------------------- | -------- | -------- | --------- | --------- | ------------------ | ----------------- |
-| DHKEM(P-256, HKDF-SHA256)  | `0x0010` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
-| DHKEM(P-384, HKDF-SHA384)  | `0x0011` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
-| DHKEM(P-521, HKDF-SHA512)  | `0x0012` | ✓        |           | ✓         | ✓                  | ✓                 |
-| DHKEM(X25519, HKDF-SHA256) | `0x0020` | ✓        | ✓         | ✓[^noble] | ✓                  | ✓                 |
-| DHKEM(X448, HKDF-SHA512)   | `0x0021` | ✓        | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| ML-KEM-512                 | `0x0040` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| ML-KEM-768                 | `0x0041` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| ML-KEM-1024                | `0x0042` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| MLKEM768-P256              | `0x0050` | ✓[^24.7] |           |           |                    |                   |
-| MLKEM768-X25519            | `0x647a` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| MLKEM1024-P384             | `0x0051` | ✓[^24.7] |           |           |                    |                   |
+| Name                       | ID       | Node.js          | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
+| -------------------------- | -------- | ---------------- | --------- | --------- | ------------------ | ----------------- |
+| DHKEM(P-256, HKDF-SHA256)  | `0x0010` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| DHKEM(P-384, HKDF-SHA384)  | `0x0011` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| DHKEM(P-521, HKDF-SHA512)  | `0x0012` | ✓                | ✓[^noble] | ✓         | ✓                  | ✓                 |
+| DHKEM(X25519, HKDF-SHA256) | `0x0020` | ✓                | ✓         | ✓[^noble] | ✓                  | ✓                 |
+| DHKEM(X448, HKDF-SHA512)   | `0x0021` | ✓                | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| ML-KEM-512                 | `0x0040` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| ML-KEM-768                 | `0x0041` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| ML-KEM-1024                | `0x0042` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| MLKEM768-P256              | `0x0050` | ✓[^24.7]         |           |           |                    |                   |
+| MLKEM768-X25519            | `0x647a` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| MLKEM1024-P384             | `0x0051` | ✓[^24.7]         |           |           |                    |                   |
 
 ### KDF
 
-| Name          | ID       | Node.js   | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
-| ------------- | -------- | --------- | --------- | --------- | ------------------ | ----------------- |
-| HKDF-SHA256   | `0x0001` | ✓         | ✓         | ✓         | ✓                  | ✓                 |
-| HKDF-SHA384   | `0x0002` | ✓         | ✓         | ✓         | ✓                  | ✓                 |
-| HKDF-SHA512   | `0x0003` | ✓         | ✓         | ✓         | ✓                  | ✓                 |
-| SHAKE128      | `0x0010` | ✓[^24.7]  | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| SHAKE256      | `0x0011` | ✓[^24.7]  | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| TurboSHAKE128 | `0x0012` | ✓[^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| TurboSHAKE256 | `0x0013` | ✓[^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| Name          | ID       | Node.js          | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
+| ------------- | -------- | ---------------- | --------- | --------- | ------------------ | ----------------- |
+| HKDF-SHA256   | `0x0001` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| HKDF-SHA384   | `0x0002` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| HKDF-SHA512   | `0x0003` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| SHAKE128      | `0x0010` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| SHAKE256      | `0x0011` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| TurboSHAKE128 | `0x0012` | ✓[^noble]        | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| TurboSHAKE256 | `0x0013` | ✓[^noble]        | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
 
 ### AEAD
 
-| Name             | ID       | Node.js  | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
-| ---------------- | -------- | -------- | --------- | --------- | ------------------ | ----------------- |
-| AES-128-GCM      | `0x0001` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
-| AES-256-GCM      | `0x0002` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
-| ChaCha20Poly1305 | `0x0003` | ✓[^24.7] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
-| Export-only      | `0xffff` | ✓        | ✓         | ✓         | ✓                  | ✓                 |
+| Name             | ID       | Node.js          | Deno      | Bun       | Cloudflare Workers | Browsers[^status] |
+| ---------------- | -------- | ---------------- | --------- | --------- | ------------------ | ----------------- |
+| AES-128-GCM      | `0x0001` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| AES-256-GCM      | `0x0002` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
+| ChaCha20Poly1305 | `0x0003` | ✓[^24.7][^noble] | ✓[^noble] | ✓[^noble] | ✓[^noble]          | ✓[^noble]         |
+| Export-only      | `0xffff` | ✓                | ✓         | ✓         | ✓                  | ✓                 |
 
 ## Supported Versions
 

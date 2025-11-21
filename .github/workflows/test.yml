@@ -96,6 +96,10 @@ jobs:
   browsers:
     needs: build
     runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, safari]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v6
@@ -115,3 +119,5 @@ jobs:
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
       - run: npx playwright install --only-shell chromium firefox webkit
       - run: node --run test:browsers
+        env:
+          BROWSER: ${{ matrix.browser }}
