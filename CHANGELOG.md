@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.4](https://github.com/panva/hpke/compare/v0.2.3...v0.2.4) (2025-11-21)
+
+
+### Fixes
+
+* set P-256 group Nseed constant correctly ([0417448](https://github.com/panva/hpke/commit/0417448364c23fb1a59a9984f42de40f06264a6e))
+
 ## [0.2.3](https://github.com/panva/hpke/compare/v0.2.2...v0.2.3) (2025-11-19)
 
 
