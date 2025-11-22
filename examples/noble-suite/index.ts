@@ -8,7 +8,7 @@ import { turboshake128, turboshake256 } from '@noble/hashes/sha3-addons.js'
 import { extract, expand } from '@noble/hashes/hkdf.js'
 import { sha256, sha384, sha512 } from '@noble/hashes/sha2.js'
 import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js'
-import { XWing, ecdhKem } from '@noble/post-quantum/hybrid.js'
+import { XWing } from '@noble/post-quantum/hybrid.js'
 import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
 import { p256, p384, p521 } from '@noble/curves/nist.js'
@@ -162,7 +162,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
     Nenc: 32,
     Npk: 32,
     Nsk: 32,
-    kem: ecdhKem(x25519),
+    curve: x25519,
     kdf: KDF_HKDF_SHA256,
   })
 
@@ -174,7 +174,7 @@ export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
     Nenc: 56,
     Npk: 56,
     Nsk: 56,
-    kem: ecdhKem(x448),
+    curve: x448,
     kdf: KDF_HKDF_SHA512,
   })
 
@@ -449,10 +449,10 @@ function createDhKemX(config: {
   Nenc: number
   Npk: number
   Nsk: number
-  kem: ReturnType<typeof ecdhKem>
+  curve: typeof x25519 | typeof x448
   kdf: HPKE.KDFFactory
 }): HPKE.KEM {
-  const { id, name, Nsecret, Nenc, Npk, Nsk, kem: nobleKem, kdf: kdfFactory } = config
+  const { id, name, Nsecret, Nenc, Npk, Nsk, curve, kdf: kdfFactory } = config
   const kdf = kdfFactory()
   const suite_id = concat(encode('KEM'), I2OSP(id, 2))
   const algorithm = { name }
@@ -469,11 +469,11 @@ function createDhKemX(config: {
     async DeriveKeyPair(ikm, extractable) {
       const dkp_prk = await LabeledExtract(kdf, suite_id, new Uint8Array(), encode('dkp_prk'), ikm)
       const sk = await LabeledExpand(kdf, suite_id, dkp_prk, encode('sk'), new Uint8Array(), Nsk)
-      const { secretKey, publicKey } = nobleKem.keygen(sk)
+      const pk = curve.getPublicKey(sk)
 
       return {
-        privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm),
-        publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
+        privateKey: new NobleKey(priv, 'private', sk, extractable, algorithm),
+        publicKey: new NobleKey(priv, 'public', pk, true, algorithm),
       }
     },
     async GenerateKeyPair(extractable) {
@@ -499,9 +499,9 @@ function createDhKemX(config: {
 
       const ekp = await this.GenerateKeyPair(false)
       const enc = (ekp.publicKey as NobleKey).value(priv)
-      const dh = nobleKem.decapsulate(
-        (pkR as NobleKey).value(priv),
+      const dh = curve.getSharedSecret(
         (ekp.privateKey as NobleKey).value(priv),
+        (pkR as NobleKey).value(priv),
       )
 
       return {
@@ -520,11 +520,11 @@ function createDhKemX(config: {
       assertNobleKey(skR, algorithm)
 
       const skRValue = (skR as NobleKey).value(priv)
-      pkR ??= (await this.DeserializePublicKey(nobleKem.keygen(skRValue).publicKey)) as NobleKey
+      pkR ??= (await this.DeserializePublicKey(curve.getPublicKey(skRValue))) as NobleKey
       assertNobleKey(pkR, algorithm)
 
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
-      const dh = nobleKem.decapsulate(pkE.value(priv), skRValue)
+      const dh = curve.getSharedSecret(skRValue, pkE.value(priv))
 
       return await deriveSharedSecret(
         kdf,
