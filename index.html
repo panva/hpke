@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@panva/hpke Browser Test Suite</title>
+    <title>@panva/hpke</title>
     <script type="importmap">
       {
         "imports": {
@@ -68,8 +68,8 @@
       }
 
       h1 a svg {
-        width: 20px;
-        height: 20px;
+        width: 24px;
+        height: 24px;
       }
 
       .filter-links {
@@ -182,6 +182,20 @@
         font-size: 13px;
         color: #8b949e;
         transition: all 0.2s ease;
+      }
+
+      .legend-item a {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #8b949e;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .legend-item a:hover {
+        color: #e6edf3;
       }
 
       .legend-item.disabled {
@@ -484,11 +498,11 @@
     <div class="container">
       <div class="header">
         <h1>
-          @panva/hpke Browser Test Suite
+          @panva/hpke
           <a href="https://github.com/panva/hpke" target="_blank">
             <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <path
-                d="M7.775 3.275a.75.75 0 001.06 1.06l1.25-1.25a2 2 0 112.83 2.83l-2.5 2.5a2 2 0 01-2.83 0 .75.75 0 00-1.06 1.06 3.5 3.5 0 004.95 0l2.5-2.5a3.5 3.5 0 00-4.95-4.95l-1.25 1.25zm-4.69 9.64a2 2 0 010-2.83l2.5-2.5a2 2 0 012.83 0 .75.75 0 001.06-1.06 3.5 3.5 0 00-4.95 0l-2.5 2.5a3.5 3.5 0 004.95 4.95l1.25-1.25a.75.75 0 00-1.06-1.06l-1.25 1.25a2 2 0 01-2.83 0z"
+                d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"
               ></path>
             </svg>
           </a>
@@ -504,20 +518,26 @@
           <a href="./" id="filterBoth">Both</a>
         </div>
       </div>
-      <p class="subtitle">Testing all KEM, KDF, and AEAD implementations in your browser</p>
+      <p class="subtitle">Test suite for all KEM, KDF, and AEAD implementations in your browser</p>
 
       <div class="legend">
         <div class="legend-item" id="legendNative">
-          <div class="legend-color native"></div>
-          <span>Native (Web Cryptography)</span>
+          <a href="?native">
+            <div class="legend-color native"></div>
+            <span>Native (Web Cryptography)</span>
+          </a>
         </div>
         <div class="legend-item" id="legendNoble">
-          <div class="legend-color noble"></div>
-          <span>Extensibility (Noble Cryptography)</span>
+          <a href="?noble">
+            <div class="legend-color noble"></div>
+            <span>Extensibility (Noble Cryptography)</span>
+          </a>
         </div>
         <div class="legend-item" id="legendBoth">
-          <div class="legend-color both"></div>
-          <span>Both implementations</span>
+          <a href="./">
+            <div class="legend-color both"></div>
+            <span>Both implementations</span>
+          </a>
         </div>
         <div class="legend-item">
           <div class="legend-color unsupported"></div>
