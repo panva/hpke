@@ -1,11 +1,33 @@
 {
-  "name": "noble-suite",
-  "private": true,
-  "version": "0.0.0",
-  "description": "",
-  "main": "index.ts",
+  "name": "@panva/hpke-noble",
+  "version": "0.2.4",
+  "description": "@noble/* based HPKE algorithm implementations for @panva/hpke",
   "keywords": [],
-  "author": "Filip Skokan <panva.ip@gmail.com>",
+  "homepage": "https://github.com/panva/hpke/tree/main/examples/noble-suite",
+  "repository": "panva/hpke",
+  "funding": {
+    "url": "https://github.com/sponsors/panva"
+  },
   "license": "MIT",
-  "type": "module"
+  "author": "Filip Skokan <panva.ip@gmail.com>",
+  "sideEffects": false,
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ],
+  "dependencies": {
+    "@noble/ciphers": "^2.0.1",
+    "@noble/curves": "^2.0.1",
+    "@noble/hashes": "^2.0.1",
+    "@noble/post-quantum": "^0.5.2"
+  },
+  "peerDependencies": {
+    "@panva/hpke": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

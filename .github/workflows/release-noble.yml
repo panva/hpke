@@ -1,0 +1,25 @@
+name: Release @panva/hpke-noble
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+          registry-url: https://registry.npmjs.org
+      - run: npm clean-install
+      - run: node --run build
+      - run: npm publish
+        working-directory: './examples/noble-suite'

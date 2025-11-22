@@ -134,4 +134,5 @@ index.js
 index.d.ts
 index.d.ts.map
 examples/noble-suite/*.js
+examples/noble-suite/*.d.ts
 static

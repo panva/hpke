@@ -40,7 +40,7 @@
     "index.ts"
   ],
   "scripts": {
-    "build": "npx tsc -p tsconfig.json && node build.cjs",
+    "build": "node build.cjs",
     "build:other": "npx tsc -p tsconfig.test.json && npx tsc -p tsconfig.examples.json",
     "docs": "npx typedoc",
     "format": "prettier --log-level silent --write ./index.ts test/**/*.ts examples/**/*.ts index.html",

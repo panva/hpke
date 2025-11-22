@@ -13,10 +13,31 @@ import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
 import { p256, p384, p521 } from '@noble/curves/nist.js'
 
+/**
+ * AES-128-GCM Authenticated Encryption with Associated Data (AEAD).
+ *
+ * Uses AES in Galois/Counter Mode with 128-bit keys.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const AEAD_AES_128_GCM: HPKE.AEADFactory = () => createAead(0x0001, 'AES-128-GCM', 16, gcm)
 
+/**
+ * AES-256-GCM Authenticated Encryption with Associated Data (AEAD).
+ *
+ * Uses AES in Galois/Counter Mode with 256-bit keys.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const AEAD_AES_256_GCM: HPKE.AEADFactory = () => createAead(0x0002, 'AES-256-GCM', 32, gcm)
 
+/**
+ * ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD).
+ *
+ * Uses ChaCha20 stream cipher with Poly1305 MAC.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const AEAD_ChaCha20Poly1305: HPKE.AEADFactory = () =>
   createAead(0x0003, 'ChaCha20Poly1305', 32, chacha20poly1305)
 
@@ -42,24 +63,80 @@ function createAead(
   }
 }
 
+/**
+ * HKDF-SHA256 key derivation function.
+ *
+ * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-256 as the
+ * hash function with an output length (Nh) of 32 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_HKDF_SHA256: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0001, 'HKDF-SHA256', 32, sha256)
 
+/**
+ * HKDF-SHA384 key derivation function.
+ *
+ * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-384 as the
+ * hash function with an output length (Nh) of 48 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_HKDF_SHA384: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0002, 'HKDF-SHA384', 48, sha384)
 
+/**
+ * HKDF-SHA512 key derivation function.
+ *
+ * A two-stage KDF using HMAC-based Extract-and-Expand as specified in RFC 5869. Uses SHA-512 as the
+ * hash function with an output length (Nh) of 64 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_HKDF_SHA512: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0003, 'HKDF-SHA512', 64, sha512)
 
+/**
+ * SHAKE128 key derivation function.
+ *
+ * A one-stage KDF using the SHAKE128 extendable-output function (XOF) with an output length (Nh) of
+ * 32 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_SHAKE128: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0010, 'SHAKE128', 32, shake128)
 
+/**
+ * SHAKE256 key derivation function.
+ *
+ * A one-stage KDF using the SHAKE256 extendable-output function (XOF) with an output length (Nh) of
+ * 64 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_SHAKE256: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0011, 'SHAKE256', 64, shake256)
 
+/**
+ * TurboSHAKE128 key derivation function.
+ *
+ * A one-stage KDF using the TurboSHAKE128 extendable-output function (XOF) with an output length
+ * (Nh) of 32 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_TurboSHAKE128: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0012, 'TurboSHAKE128', 32, turboshake128, 0x1f)
 
+/**
+ * TurboSHAKE256 key derivation function.
+ *
+ * A one-stage KDF using the TurboSHAKE256 extendable-output function (XOF) with an output length
+ * (Nh) of 64 bytes.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KDF_TurboSHAKE256: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0013, 'TurboSHAKE256', 64, turboshake256, 0x1f)
 
@@ -110,6 +187,14 @@ const Unreachable = () => {
   throw new Error('unreachable')
 }
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using NIST P-256 curve and HKDF-SHA256.
+ *
+ * A Diffie-Hellman based KEM using the NIST P-256 elliptic curve (also known as secp256r1) with
+ * HKDF-SHA256 for key derivation.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
   createDhKemNist({
     id: 0x0010,
@@ -124,6 +209,14 @@ export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
     bitmask: 0xff,
   })
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using NIST P-384 curve and HKDF-SHA384.
+ *
+ * A Diffie-Hellman based KEM using the NIST P-384 elliptic curve (also known as secp384r1) with
+ * HKDF-SHA384 for key derivation.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
   createDhKemNist({
     id: 0x0011,
@@ -139,6 +232,14 @@ export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
     bitmask: 0xff,
   })
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA512.
+ *
+ * A Diffie-Hellman based KEM using the NIST P-521 elliptic curve (also known as secp521r1) with
+ * HKDF-SHA512 for key derivation.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
   createDhKemNist({
     id: 0x0012,
@@ -154,6 +255,14 @@ export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
     bitmask: 0x01,
   })
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using Curve25519 and HKDF-SHA256.
+ *
+ * A Diffie-Hellman based KEM using the X25519 elliptic curve (Curve25519 for ECDH) with HKDF-SHA256
+ * for key derivation.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
   createDhKemX({
     id: 0x0020,
@@ -166,6 +275,14 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
     kdf: KDF_HKDF_SHA256,
   })
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using Curve448 and HKDF-SHA512.
+ *
+ * A Diffie-Hellman based KEM using the X448 elliptic curve (Curve448 for ECDH) with HKDF-SHA512 for
+ * key derivation.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
   createDhKemX({
     id: 0x0021,
@@ -178,6 +295,13 @@ export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
     kdf: KDF_HKDF_SHA512,
   })
 
+/**
+ * Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-512).
+ *
+ * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_ML_KEM_512: HPKE.KEMFactory = () =>
   createPqKem({
     id: 0x0040,
@@ -189,6 +313,13 @@ export const KEM_ML_KEM_512: HPKE.KEMFactory = () =>
     kem: ml_kem512,
   })
 
+/**
+ * Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-768).
+ *
+ * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_ML_KEM_768: HPKE.KEMFactory = () =>
   createPqKem({
     id: 0x0041,
@@ -200,6 +331,13 @@ export const KEM_ML_KEM_768: HPKE.KEMFactory = () =>
     kem: ml_kem768,
   })
 
+/**
+ * Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-1024).
+ *
+ * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
   createPqKem({
     id: 0x0042,
@@ -211,6 +349,14 @@ export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
     kem: ml_kem1024,
   })
 
+/**
+ * Hybrid post-quantum Key Encapsulation Mechanism combining ML-KEM-768 and X25519.
+ *
+ * A hybrid KEM that combines the post-quantum ML-KEM-768 with the classical X25519 ECDH to provide
+ * both post-quantum security and backwards compatibility.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ */
 export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
   createPqKem({
     id: 0x647a,
