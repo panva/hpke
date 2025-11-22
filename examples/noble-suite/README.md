@@ -4,7 +4,7 @@
 
 ## Overview
 
-`@panva/hpke-noble` provides additional algorithms for `@panva/hpke` by conforming to the HPKE interfaces ([KEM](../../docs/interfaces/KEM.md), [KDF](../../docs/interfaces/KDF.md), [AEAD](../../docs/interfaces/AEAD.md)). This approach allows you to:
+`@panva/hpke-noble` provides additional algorithms for `@panva/hpke` by conforming to the HPKE interfaces ([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This approach allows you to:
 
 - Use cryptographic primitives not available in Web Cryptography
 - Support algorithms across all JavaScript runtimes (Node.js, browsers, Deno, Bun, Cloudflare Workers, etc.)
@@ -69,4 +69,4 @@ const suite = new HPKE.CipherSuite(KEM_ML_KEM_768, KDF_SHAKE256, AEAD_ChaCha20Po
 
 ## Example Integration
 
-This package also serves as an example of how to integrate external cryptographic libraries with `@panva/hpke`. If you need to bring your own cryptographic primitives (e.g., hardware-backed implementations, audited libraries, or runtime-specific bindings), you can follow the same pattern by implementing the [KEM](../../docs/interfaces/KEM.md), [KDF](../../docs/interfaces/KDF.md), or [AEAD](../../docs/interfaces/AEAD.md) interfaces.
+This package also serves as an example of how to integrate external cryptographic libraries with `@panva/hpke`. If you need to bring your own cryptographic primitives (e.g., hardware-backed implementations, audited libraries, or runtime-specific bindings), you can follow the same pattern by implementing the [KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md) interfaces.
