@@ -3895,9 +3895,12 @@ async function prepareEncapsG(
   return [ss_PQ, ss_T, ct_PQ, ct_T]
 }
 
-function assertHybridKey(key: Key): asserts key is HybridKey {
+function assertHybridKey(key: Key, extractable?: boolean): asserts key is HybridKey {
   if (!(key instanceof HybridKey) || Object.getPrototypeOf(key) !== HybridKey.prototype) {
     throw new TypeError('unexpected key constructor')
+  }
+  if (extractable && !key.extractable) {
+    throw new TypeError('key must be extractable')
   }
 }
 
@@ -4004,7 +4007,7 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async SerializePublicKey(this: HybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      assertHybridKey(key)
+      assertHybridKey(key, true)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       const ek_PQ = new Uint8Array(
@@ -4035,7 +4038,7 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async SerializePrivateKey(this: HybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      assertHybridKey(key)
+      assertHybridKey(key, true)
 
       return key.getSeed(priv)
     },

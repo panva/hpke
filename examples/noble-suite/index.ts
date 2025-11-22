@@ -416,14 +416,14 @@ function createPqKem(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return key.value(priv)
     },
     async DeserializePublicKey(key) {
       return new NobleKey(priv, 'public', key.slice(), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return (key as NobleKey).seed(priv)
     },
     async DeserializePrivateKey(key, extractable) {
@@ -532,7 +532,7 @@ function createDhKemNist(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return key.value(priv)
     },
     async DeserializePublicKey(key) {
@@ -540,7 +540,7 @@ function createDhKemNist(config: {
       return new NobleKey(priv, 'public', key.slice(), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
@@ -627,14 +627,14 @@ function createDhKemX(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return key.value(priv)
     },
     async DeserializePublicKey(key) {
       return new NobleKey(priv, 'public', key.slice(), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      assertNobleKey(key, algorithm)
+      assertNobleKey(key, algorithm, true)
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
@@ -684,12 +684,19 @@ function createDhKemX(config: {
   }
 }
 
-function assertNobleKey(key: HPKE.Key, algorithm: KeyAlgorithm): asserts key is NobleKey {
+function assertNobleKey(
+  key: HPKE.Key,
+  algorithm: KeyAlgorithm,
+  extractable?: boolean,
+): asserts key is NobleKey {
   if (key.algorithm.name !== algorithm.name) {
     throw new TypeError(`key algorithm must be ${algorithm.name}`)
   }
   if (!(key instanceof NobleKey) || Object.getPrototypeOf(key) !== NobleKey.prototype) {
     throw new TypeError('unexpected key constructor')
+  }
+  if (extractable && !key.extractable) {
+    throw new TypeError('key must be extractable')
   }
 }
 
