@@ -1438,7 +1438,15 @@ export interface Key {
 // Utility Functions
 // ============================================================================
 
-/** @ignore */
+/**
+ * Concatenates multiple Uint8Array buffers into a single Uint8Array. It's exported for use in
+ * custom KEM, KDF, or AEAD implementations.
+ *
+ * @param buffers - Variable number of Uint8Array buffers to concatenate
+ *
+ * @returns A new Uint8Array containing all input buffers concatenated in order
+ * @group Utilities
+ */
 export function concat(...buffers: Uint8Array[]): Uint8Array {
   const size = buffers.reduce((acc, { length }) => acc + length, 0)
   const buf = new Uint8Array(size)
@@ -1450,7 +1458,17 @@ export function concat(...buffers: Uint8Array[]): Uint8Array {
   return buf
 }
 
-/** @ignore */
+/**
+ * Encodes an ASCII string into a Uint8Array.
+ *
+ * This utility function converts ASCII strings to byte arrays. It's exported for use in custom KEM,
+ * KDF, or AEAD implementations.
+ *
+ * @param string - ASCII string to encode
+ *
+ * @returns A Uint8Array containing the ASCII byte values
+ * @group Utilities
+ */
 export function encode(string: string): Uint8Array {
   const bytes = new Uint8Array(string.length)
   for (let i = 0; i < string.length; i++) {
@@ -2183,7 +2201,17 @@ export interface AEAD {
 // HPKE Core Functions - Key Schedule
 // ============================================================================
 
-/** @ignore */
+/**
+ * Integer to Octet String Primitive (I2OSP) as defined in RFC 8017. Converts a non-negative integer
+ * into a byte string of specified length. It's exported for use in custom KEM, KDF, or AEAD
+ * implementations.
+ *
+ * @param n - Non-negative integer to convert
+ * @param w - Desired length of output in bytes
+ *
+ * @returns A Uint8Array of length w containing the big-endian representation of n
+ * @group Utilities
+ */
 export function I2OSP(n: number, w: number): Uint8Array {
   if (w <= 0) {
     throw new Error('w(length) <= 0')

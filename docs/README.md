@@ -88,6 +88,9 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 
 ## Utilities
 
+- [concat](functions/concat.md)
+- [encode](functions/encode.md)
+- [I2OSP](functions/I2OSP.md)
 - [LabeledDerive](functions/LabeledDerive.md)
 - [LabeledExpand](functions/LabeledExpand.md)
 - [LabeledExtract](functions/LabeledExtract.md)
