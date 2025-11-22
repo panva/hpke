@@ -7,7 +7,7 @@ const URL = `http://localhost:${PORT}`
 // Start the server
 function startServer() {
   return new Promise((resolve, reject) => {
-    const server = spawn('npx', ['serve', '-l', String(PORT), '-n'], {
+    const server = spawn('npx', ['serve', '-l', String(PORT), '-n', '-L'], {
       stdio: 'pipe',
     })
 
