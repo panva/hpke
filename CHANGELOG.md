@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.5](https://github.com/panva/hpke/compare/v0.2.4...v0.2.5) (2025-11-22)
+
+
+### Refactor
+
+* capture stacktraces when Error.captureStackTrace is available ([4b76796](https://github.com/panva/hpke/commit/4b76796ffe4cad8c527abad81ae606b75434a2fb))
+
+
+### Documentation
+
+* add JSDoc for exported utilities ([fa3d6bf](https://github.com/panva/hpke/commit/fa3d6bfffa593bbfd9042e66574ecf1197897a48))
+
 ## [0.2.4](https://github.com/panva/hpke/compare/v0.2.3...v0.2.4) (2025-11-21)
 
 
