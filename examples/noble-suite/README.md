@@ -61,7 +61,7 @@ import { KEM_ML_KEM_768, KDF_SHAKE256, AEAD_ChaCha20Poly1305 } from '@panva/hpke
 const suite = new HPKE.CipherSuite(KEM_ML_KEM_768, KDF_SHAKE256, AEAD_ChaCha20Poly1305)
 ```
 
-> [!NOTE]\n
+> [!NOTE]\
 > Built-in implementations (based on Web Cryptography) and `@panva/hpke-noble` implementations can be freely mixed and matched. For example, you could use `KEM_ML_KEM_768` from `@panva/hpke-noble` with `KDF_HKDF_SHA256` and `AEAD_AES_256_GCM` from `@panva/hpke`.
 
 > [!NOTE]\
