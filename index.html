@@ -383,32 +383,25 @@
 
       .progress-bar-container {
         background: rgb(22, 27, 34);
-
         height: 24px;
-        overflow: hidden;
         margin-bottom: 10px;
         position: relative;
-      }
-
-      .progress-bar {
-        height: 100%;
-        background: linear-gradient(90deg, #3fb950, #7ee787);
-        transition: width 0.3s ease;
         display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding-right: 8px;
+        gap: 2px;
+        padding: 2px;
       }
 
-      .progress-bar.failed {
-        background: linear-gradient(90deg, #f85149, #ff7b72);
+      .progress-box {
+        flex: 1;
+        background: rgba(48, 54, 61, 0.5);
       }
 
-      .progress-text {
-        font-size: 12px;
-        font-weight: 600;
-        color: white;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+      .progress-box.filled {
+        background: #3fb950;
+      }
+
+      .progress-box.filled.failed {
+        background: #f85149;
       }
 
       .progress-info {
@@ -542,10 +535,27 @@
         <p class="subtitle-text">
           Testing all encryptions and exports from RFC test vectors with functional implementations
         </p>
-        <div class="progress-bar-container">
-          <div class="progress-bar" id="vectorProgress" style="width: 0%">
-            <span class="progress-text" id="vectorProgressText">0%</span>
-          </div>
+        <div class="progress-bar-container" id="vectorProgressContainer">
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
+          <div class="progress-box"></div>
         </div>
         <div class="progress-info" id="vectorProgressInfo">
           <span>Pending...</span>
@@ -1206,6 +1216,7 @@
         let passedOps = 0
         let failedOps = 0
         let totalOps = 0
+        let lastFailedBox = -1
 
         // Calculate total operations first
         for (const vector of allVectors) {
@@ -1228,9 +1239,33 @@
         }
 
         const updateProgress = () => {
-          const percent = Math.round((completedOps / totalOps) * 100)
-          progressBar.style.width = `${percent}%`
-          progressText.textContent = `${percent}%`
+          const percent = (completedOps / totalOps) * 100
+          const filledBoxes = Math.floor(percent / 5)
+
+          const boxes = document.querySelectorAll('.progress-box')
+          boxes.forEach((box, index) => {
+            const shouldBeFilled = index < filledBoxes
+            const isFilled = box.classList.contains('filled')
+
+            // Only modify classes if state changed
+            if (shouldBeFilled && !isFilled) {
+              box.classList.add('filled')
+            } else if (!shouldBeFilled && isFilled) {
+              box.classList.remove('filled', 'failed')
+            }
+          })
+
+          // Mark the box corresponding to when the first failure occurred
+          if (failedOps > 0 && lastFailedBox === -1) {
+            lastFailedBox = Math.max(0, filledBoxes - 1)
+          }
+          if (lastFailedBox >= 0 && lastFailedBox < boxes.length) {
+            const failedBox = boxes[lastFailedBox]
+            if (!failedBox.classList.contains('failed')) {
+              failedBox.classList.add('failed')
+            }
+          }
+
           progressInfo.innerHTML = `
             <span>Total: ${totalOps} operations</span>
             <span><span class="passed">✓ ${passedOps}</span> <span class="failed">✗ ${failedOps}</span></span>
@@ -1238,6 +1273,12 @@
         }
 
         updateProgress()
+
+        // Update progress every 50ms during execution
+        const progressInterval = setInterval(() => updateProgress(), 50)
+
+        // Cache for recipient key pairs: Map<kemImpl, Map<ikmR_hex, keyPair>>
+        const recipientKeyPairCache = new Map()
 
         // Process all vectors with their implementations
         for (const vector of allVectors) {
@@ -1256,7 +1297,20 @@
                   aeadImpl.factory,
                 )
                 const ikmR = Uint8Array.fromHex(vector.ikmR)
-                const recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
+
+                // Check cache for this kemImpl and ikmR combination
+                if (!recipientKeyPairCache.has(kemImpl)) {
+                  recipientKeyPairCache.set(kemImpl, new Map())
+                }
+                const kemCache = recipientKeyPairCache.get(kemImpl)
+
+                let recipientKeyPair
+                if (kemCache.has(vector.ikmR)) {
+                  recipientKeyPair = kemCache.get(vector.ikmR)
+                } else {
+                  recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
+                  kemCache.set(vector.ikmR, recipientKeyPair)
+                }
                 const enc = Uint8Array.fromHex(vector.enc)
 
                 const options = {
@@ -1281,7 +1335,6 @@
                       failedOps++
                     } finally {
                       completedOps++
-                      updateProgress()
                     }
                   }
                 }
@@ -1304,12 +1357,12 @@
                       failedOps++
                     } finally {
                       completedOps++
-                      updateProgress()
                     }
                   }
                 }
 
-                // Small delay for UI updates
+                updateProgress()
+                // Yield to event loop to allow UI updates
                 await new Promise((resolve) => setTimeout(resolve, 0))
               }
             }
@@ -1317,6 +1370,8 @@
         }
 
         // Final update
+        clearInterval(progressInterval)
+        updateProgress()
         vectorSection.classList.remove('running')
         if (failedOps === 0) {
           if (onlyNative) {
@@ -1326,10 +1381,8 @@
           } else {
             vectorSection.classList.add('passed-both')
           }
-          progressBar.classList.remove('failed')
         } else {
           vectorSection.classList.add('failed')
-          progressBar.classList.add('failed')
         }
         updateProgress()
 
