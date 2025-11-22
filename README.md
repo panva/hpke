@@ -61,11 +61,11 @@ Please note that some suites may not be available depending on the runtime used.
 
 Algorithm implementations exposed by this module are built on top of [Web Cryptography][] (and its extensions, e.g. [Secure Curves][], [Modern Algorithms][]). Runtimes implementing Web Cryptography are not required to support all of its algorithms and so not all algorithms are available in all runtimes, see 
 
-This module is designed to be extensible, you can bring outside-built implementations of any KEM, KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respective interfaces ([KEM](docs/interfaces/KEM.md), [KDF](docs/interfaces/KDF.md), [AEAD](docs/interfaces/AEAD.md)). This allows you to use alternative cryptographic libraries, native bindings, or specialized hardware implementations alongside the built-in Web Cryptography-based algorithms.
+This module is designed to be extensible, you can bring outside-built implementations of any KEM, KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respective interfaces ([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This allows you to use alternative cryptographic libraries, native bindings, or specialized hardware implementations alongside the built-in Web Cryptography-based algorithms.
 
 For extended algorithm support across all runtimes, see [`@panva/hpke-noble`](https://github.com/panva/hpke/tree/main/examples/noble-suite#readme), which provides additional KEM, KDF, and AEAD implementations using Paul Miller's [@noble](https://paulmillr.com/noble/) cryptographic libraries. These implementations can be freely mixed and matched with the built-in algorithms.
 
-Below are the algorithms built in (based on Web Cryptography) and their runtime support matrix, see also [https://panva.github.io/hpke/](https://panva.github.io/hpke/?native)
+Below are the algorithms built in (based on Web Cryptography) and their runtime support matrix.
 
 ### KEM
 
