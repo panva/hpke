@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.6](https://github.com/panva/hpke/compare/v0.2.5...v0.2.6) (2025-11-22)
+
+
+### Fixes
+
+* ensure custom non-extractable Key instances cannot be extracted through a KEM instance ([1a74f06](https://github.com/panva/hpke/commit/1a74f063996dfb4604f8b7ae69a51c1d505f8986))
+
 ## [0.2.5](https://github.com/panva/hpke/compare/v0.2.4...v0.2.5) (2025-11-22)
 
 

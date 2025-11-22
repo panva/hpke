@@ -1,6 +1,6 @@
 {
   "name": "@panva/hpke",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "Hybrid Public Key Encryption (HPKE) for Node.js, Browser, Cloudflare Workers, Deno, Bun, and other Web-interoperable runtimes",
   "keywords": [
     "browser",
