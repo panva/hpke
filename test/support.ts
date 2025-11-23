@@ -172,6 +172,25 @@ function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | 
   return unsupported
 }
 
+function getNobleAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.AEADFactory>(
+  type: string,
+) {
+  const map = new Map<number, { factory: T; name: string; supported: boolean }>()
+
+  const nobleAlgorithms = Object.values(noble).filter(
+    (value) => typeof value === 'function' && value.name.startsWith(`${type}_`),
+  ) as T[]
+
+  for (const algorithm of nobleAlgorithms) {
+    const id = IDs[algorithm.name]
+    if (!id) throw new Error(`missing id for ${algorithm.name}`)
+
+    map.set(id, { factory: algorithm, name: algorithm.name, supported: true })
+  }
+
+  return map
+}
+
 export const KEMS = createAlgorithmMap<HPKE.KEMFactory>('KEM')
 export const KDFS = createAlgorithmMap<HPKE.KDFFactory>('KDF')
 export const AEADS = createAlgorithmMap<HPKE.AEADFactory>('AEAD')
@@ -179,3 +198,7 @@ export const AEADS = createAlgorithmMap<HPKE.AEADFactory>('AEAD')
 export const UNSUPPORTED_KEMS = getUnsupportedAlgorithms<HPKE.KEMFactory>('KEM')
 export const UNSUPPORTED_KDFS = getUnsupportedAlgorithms<HPKE.KDFFactory>('KDF')
 export const UNSUPPORTED_AEADS = getUnsupportedAlgorithms<HPKE.AEADFactory>('AEAD')
+
+export const NOBLE_KEMS = getNobleAlgorithms<HPKE.KEMFactory>('KEM')
+export const NOBLE_KDFS = getNobleAlgorithms<HPKE.KDFFactory>('KDF')
+export const NOBLE_AEADS = getNobleAlgorithms<HPKE.AEADFactory>('AEAD')

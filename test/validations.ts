@@ -1,7 +1,7 @@
 import it, * as test from 'node:test'
 
 import * as HPKE from '../index.ts'
-import { KEMS, AEADS } from './support.ts'
+import { KEMS, NOBLE_KEMS, AEADS } from './support.ts'
 
 const empty = new Uint8Array()
 
@@ -1101,4 +1101,57 @@ test.describe('Validations', () => {
       })
     })
   })
+})
+
+test.describe('Non-extractable key protection (built-in and noble KEMs)', () => {
+  const kems: Array<
+    [string, Map<number, { factory: HPKE.KEMFactory; name: string; supported: boolean }>]
+  > = [
+    ['built-in', KEMS],
+    ['noble', NOBLE_KEMS],
+  ]
+
+  for (const [lib, KEMS] of kems) {
+    for (const [id, { factory, supported, name }] of KEMS) {
+      if (!supported) continue
+
+      it(`${lib}: ${name} - prevents extraction of non-extractable private keys`, async (t: test.TestContext) => {
+        // Create a simple suite with this KEM
+        const suite = new HPKE.CipherSuite(factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_AES_128_GCM)
+
+        // Generate a non-extractable key pair
+        const kp = await suite.GenerateKeyPair(false)
+
+        // Verify the key is marked as non-extractable
+        t.assert.strictEqual(
+          kp.privateKey.extractable,
+          false,
+          'Private key should be non-extractable',
+        )
+
+        // Attempt to serialize via CipherSuite API should fail
+        await t.assert.rejects(
+          suite.SerializePrivateKey(kp.privateKey),
+          { name: 'TypeError', message: '"privateKey" must be extractable' },
+          'CipherSuite.SerializePrivateKey should reject non-extractable keys',
+        )
+
+        // Also verify via direct KEM interface
+        const kem = factory()
+        await t.assert.rejects(
+          kem.SerializePrivateKey(kp.privateKey),
+          (err: Error) => {
+            t.assert.ok(
+              err.name === 'InvalidAccessException' ||
+                err.name === 'InvalidAccessError' ||
+                (err.name === 'TypeError' && err.message === 'key must be extractable'),
+            )
+
+            return true
+          },
+          'KEM.SerializePrivateKey should reject non-extractable keys',
+        )
+      })
+    }
+  }
 })
