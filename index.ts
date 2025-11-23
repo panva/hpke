@@ -839,11 +839,7 @@ export class CipherSuite {
     publicKey: Key,
     plaintext: Uint8Array,
     aad?: Uint8Array,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedKey: Uint8Array; ciphertext: Uint8Array }> {
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
@@ -899,11 +895,7 @@ export class CipherSuite {
     encapsulatedKey: Uint8Array,
     ciphertext: Uint8Array,
     aad?: Uint8Array,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
     this.#validateEncLength(encapsulatedKey)
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
@@ -951,11 +943,7 @@ export class CipherSuite {
     publicKey: Key,
     exporterContext: Uint8Array,
     length: number,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedKey: Uint8Array; exportedSecret: Uint8Array }> {
     const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
     const exportedSecret = await ctx.Export(exporterContext, length)
@@ -1004,11 +992,7 @@ export class CipherSuite {
     encapsulatedKey: Uint8Array,
     exporterContext: Uint8Array,
     length: number,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
     this.#validateEncLength(encapsulatedKey)
     const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
@@ -1059,11 +1043,7 @@ export class CipherSuite {
    */
   async SetupSender(
     publicKey: Key,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedKey: Uint8Array; ctx: SenderContext }> {
     isKey(publicKey, 'public')
 
@@ -1141,11 +1121,7 @@ export class CipherSuite {
   async SetupRecipient(
     privateKey: Key | KeyPair,
     encapsulatedKey: Uint8Array,
-    options?: {
-      info?: Uint8Array
-      psk?: Uint8Array
-      pskId?: Uint8Array
-    },
+    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<RecipientContext> {
     const { skR, pkR } = this.#extractRecipientKeys(privateKey)
     this.#validateEncLength(encapsulatedKey)
@@ -2439,14 +2415,7 @@ function HKDF_SHARED(): KDF_BASE {
  * @group KDF Algorithms
  */
 export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
-  return {
-    id: 0x0001,
-    type: 'KDF',
-    name: 'HKDF-SHA256',
-    Nh: 32,
-    hash: 'SHA-256',
-    ...HKDF_SHARED(),
-  }
+  return { id: 0x0001, type: 'KDF', name: 'HKDF-SHA256', Nh: 32, hash: 'SHA-256', ...HKDF_SHARED() }
 }
 
 /**
@@ -2468,14 +2437,7 @@ export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
  * @group KDF Algorithms
  */
 export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
-  return {
-    id: 0x0002,
-    type: 'KDF',
-    name: 'HKDF-SHA384',
-    Nh: 48,
-    hash: 'SHA-384',
-    ...HKDF_SHARED(),
-  }
+  return { id: 0x0002, type: 'KDF', name: 'HKDF-SHA384', Nh: 48, hash: 'SHA-384', ...HKDF_SHARED() }
 }
 
 /**
@@ -2497,14 +2459,7 @@ export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
  * @group KDF Algorithms
  */
 export const KDF_HKDF_SHA512: KDFFactory = function (): HKDF {
-  return {
-    id: 0x0003,
-    type: 'KDF',
-    name: 'HKDF-SHA512',
-    Nh: 64,
-    hash: 'SHA-512',
-    ...HKDF_SHARED(),
-  }
+  return { id: 0x0003, type: 'KDF', name: 'HKDF-SHA512', Nh: 64, hash: 'SHA-512', ...HKDF_SHARED() }
 }
 
 // ============================================================================
@@ -2616,12 +2571,7 @@ async function getPublicKeyByExport(
     const jwk = await crypto.subtle.exportKey('jwk', key)
     return await crypto.subtle.importKey(
       'jwk',
-      {
-        kty: jwk.kty,
-        crv: jwk.crv,
-        x: jwk.x,
-        y: jwk.y,
-      } as JsonWebKey,
+      { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y } as JsonWebKey,
       key.algorithm,
       true,
       usages,
@@ -2807,14 +2757,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       const dh = new Uint8Array(
         await subtle(
           () =>
-            crypto.subtle.deriveBits(
-              {
-                name: skE.algorithm.name,
-                public: pkR,
-              },
-              skE,
-              this.Ndh << 3,
-            ),
+            crypto.subtle.deriveBits({ name: skE.algorithm.name, public: pkR }, skE, this.Ndh << 3),
           this.name,
         ),
       )
@@ -2857,14 +2800,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       const dh = new Uint8Array(
         await subtle(
           () =>
-            crypto.subtle.deriveBits(
-              {
-                name: skR.algorithm.name,
-                public: pkE,
-              },
-              skR,
-              this.Ndh << 3,
-            ),
+            crypto.subtle.deriveBits({ name: skR.algorithm.name, public: pkE }, skR, this.Ndh << 3),
           this.name,
         ),
       )
@@ -3479,10 +3415,7 @@ function MLKEM_SHARED(): KEM_BASE {
         this.name,
       )) as { sharedKey: ArrayBuffer; ciphertext: ArrayBuffer }
 
-      return {
-        shared_secret: new Uint8Array(sharedKey),
-        enc: new Uint8Array(ciphertext),
-      }
+      return { shared_secret: new Uint8Array(sharedKey), enc: new Uint8Array(ciphertext) }
     },
     async Decap(this: MLKEM, _enc, skR, _pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
@@ -3638,11 +3571,7 @@ function AEAD_SHARED(): AEAD_BASE {
         await subtle(
           async () =>
             crypto.subtle.encrypt(
-              {
-                name: this.algorithm,
-                iv: nonce,
-                additionalData: aad,
-              },
+              { name: this.algorithm, iv: nonce, additionalData: aad },
               await crypto.subtle.importKey(this.keyFormat, key, this.algorithm, false, [
                 'encrypt',
               ]),
@@ -3661,11 +3590,7 @@ function AEAD_SHARED(): AEAD_BASE {
         await subtle(
           async () =>
             crypto.subtle.decrypt(
-              {
-                name: this.algorithm,
-                iv: nonce,
-                additionalData: aad,
-              },
+              { name: this.algorithm, iv: nonce, additionalData: aad },
               await crypto.subtle.importKey(this.keyFormat, key, this.algorithm, false, [
                 'decrypt',
               ]),
@@ -3950,10 +3875,7 @@ async function prepareEncapsG(
     await subtle(
       () =>
         crypto.subtle.deriveBits(
-          {
-            name: PQTKEM.t.algorithm.name,
-            public: ek_T,
-          },
+          { name: PQTKEM.t.algorithm.name, public: ek_T },
           sk_E,
           PQTKEM.t.Nss << 3,
         ),
@@ -4000,10 +3922,7 @@ async function prepareDecapsG(
     await subtle(
       () =>
         crypto.subtle.deriveBits(
-          {
-            name: PQTKEM.t.algorithm.name,
-            public: pub,
-          },
+          { name: PQTKEM.t.algorithm.name, public: pub },
           dk_T,
           PQTKEM.t.Nss << 3,
         ),
@@ -4202,12 +4121,7 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
     Npk: 1216,
     Nsk: 32,
     algorithm: { name: 'MLKEM768-X25519' },
-    pq: {
-      algorithm: { name: 'ML-KEM-768' },
-      Nseed: 64,
-      Npk: 1184,
-      Nct: 1088,
-    },
+    pq: { algorithm: { name: 'ML-KEM-768' }, Nseed: 64, Npk: 1184, Nct: 1088 },
     t: {
       algorithm: { name: 'X25519' },
       Nseed: 32,
@@ -4258,12 +4172,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
     Npk: 1249,
     Nsk: 32,
     algorithm: { name: 'MLKEM768-P256' },
-    pq: {
-      algorithm: { name: 'ML-KEM-768' },
-      Nseed: 64,
-      Npk: 1184,
-      Nct: 1088,
-    },
+    pq: { algorithm: { name: 'ML-KEM-768' }, Nseed: 64, Npk: 1184, Nct: 1088 },
     t: {
       ...P256,
       Nseed: 128,
@@ -4314,12 +4223,7 @@ export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
     Npk: 1665,
     Nsk: 32,
     algorithm: { name: 'MLKEM1024-P384' },
-    pq: {
-      algorithm: { name: 'ML-KEM-1024' },
-      Nseed: 64,
-      Npk: 1568,
-      Nct: 1568,
-    },
+    pq: { algorithm: { name: 'ML-KEM-1024' }, Nseed: 64, Npk: 1568, Nct: 1568 },
     t: {
       ...P384,
       Nseed: 48,

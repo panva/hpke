@@ -34,10 +34,7 @@ const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientPub
 // Sender → Recipient: Send encapsulated key (enc)
 
 // Recipient: Setup recipient context with PSK mode
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey, {
-  psk,
-  pskId,
-})
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey, { psk, pskId })
 
 // Sender: Encrypt message with AAD
 const aad = encoder.encode('authenticated-data')

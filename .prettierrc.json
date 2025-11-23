@@ -8,5 +8,7 @@
   "tsdoc": true,
   "jsdocSeparateReturnsFromParam": true,
   "jsdocSeparateTagGroups": false,
-  "jsdocPrintWidth": 100
+  "jsdocPrintWidth": 100,
+  "proseWrap": "always",
+  "objectWrap": "collapse"
 }

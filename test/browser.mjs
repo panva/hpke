@@ -7,9 +7,7 @@ const URL = `http://localhost:${PORT}`
 // Start the server
 function startServer() {
   return new Promise((resolve, reject) => {
-    const server = spawn('npx', ['serve', '-l', String(PORT), '-n', '-L'], {
-      stdio: 'pipe',
-    })
+    const server = spawn('npx', ['serve', '-l', String(PORT), '-n', '-L'], { stdio: 'pipe' })
 
     let started = false
 
@@ -116,7 +114,9 @@ async function runBrowserTests(browserType, browserName, channel = null) {
     console.log(`  Unexpected passes: ${results.unexpectedPasses}`)
 
     if (results.vectorValidation) {
-      console.log(`  Vector validation: ${results.vectorValidation.passed}/${results.vectorValidation.total} passed`)
+      console.log(
+        `  Vector validation: ${results.vectorValidation.passed}/${results.vectorValidation.total} passed`,
+      )
     }
 
     // Check for unexpected results
@@ -133,7 +133,9 @@ async function runBrowserTests(browserType, browserName, channel = null) {
     }
 
     if (results.vectorValidation && results.vectorValidation.failed > 0) {
-      console.error(`\n  ✗ ${browserName}: ${results.vectorValidation.failed} vector validation failure(s)!`)
+      console.error(
+        `\n  ✗ ${browserName}: ${results.vectorValidation.failed} vector validation failure(s)!`,
+      )
       return { browserName, success: false, results }
     }
 

@@ -450,10 +450,7 @@ test.describe('Validations', () => {
       const pskId = new Uint8Array(32)
       await t.assert.rejects(
         suite.SetupSender(kp.publicKey, { info: empty, psk: shortPsk, pskId }),
-        {
-          message: 'Insufficient PSK length',
-          name: 'TypeError',
-        },
+        { message: 'Insufficient PSK length', name: 'TypeError' },
       )
     })
 
@@ -464,10 +461,7 @@ test.describe('Validations', () => {
       const pskId = new Uint8Array(32)
       await t.assert.rejects(
         suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk: shortPsk, pskId }),
-        {
-          message: 'Insufficient PSK length',
-          name: 'TypeError',
-        },
+        { message: 'Insufficient PSK length', name: 'TypeError' },
       )
     })
 
@@ -498,10 +492,7 @@ test.describe('Validations', () => {
         const { encapsulatedKey: enc } = await suite.SetupSender(kp.publicKey)
         await t.assert.rejects(
           suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk, pskId }),
-          {
-            message: 'Inconsistent PSK inputs',
-            name: 'TypeError',
-          },
+          { message: 'Inconsistent PSK inputs', name: 'TypeError' },
         )
       })
     }
@@ -525,11 +516,7 @@ test.describe('Validations', () => {
           psk,
           pskId,
         })
-        const ctx = await suite.SetupRecipient(kp.privateKey, enc, {
-          info: empty,
-          psk,
-          pskId,
-        })
+        const ctx = await suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk, pskId })
         t.assert.ok(ctx)
       })
     }

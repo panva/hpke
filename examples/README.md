@@ -1,6 +1,7 @@
 # Examples
 
-This directory contains practical examples demonstrating various features and use cases of `@panva/hpke`.
+This directory contains practical examples demonstrating various features and use cases of
+`@panva/hpke`.
 
 ## Basic Examples
 

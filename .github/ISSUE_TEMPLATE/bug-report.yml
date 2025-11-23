@@ -10,7 +10,8 @@ body:
   - type: textarea
     attributes:
       label: What happened?
-      description: A clear and concise description of what the bug is and what you expected to happen instead.
+      description:
+        A clear and concise description of what the bug is and what you expected to happen instead.
     validations:
       required: true
   - type: input
@@ -38,7 +39,9 @@ body:
   - type: input
     attributes:
       label: Runtime Details
-      description: More information about the runtime (e.g. node version, browser vendor and version, electron version, operating system)
+      description:
+        More information about the runtime (e.g. node version, browser vendor and version, electron
+        version, operating system)
     validations:
       required: true
   - type: textarea
@@ -52,7 +55,11 @@ body:
     attributes:
       label: Required
       options:
-        - label: I have searched the issues tracker and discussions for similar topics and couldn't find anything related.
+        - label:
+            I have searched the issues tracker and discussions for similar topics and couldn't find
+            anything related.
           required: true
-        - label: I agree to follow this project's [Code of Conduct](https://github.com/panva/hpke/blob/main/CODE_OF_CONDUCT.md)
+        - label:
+            I agree to follow this project's [Code of
+            Conduct](https://github.com/panva/hpke/blob/main/CODE_OF_CONDUCT.md)
           required: true

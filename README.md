@@ -1,10 +1,14 @@
 # @panva/hpke
 
-`@panva/hpke` is a JavaScript module for Hybrid Public Key Encryption (HPKE). This module is designed to work across various Web-interoperable runtimes including Node.js, browsers, Cloudflare Workers, Deno, Bun, and others.
+`@panva/hpke` is a JavaScript module for Hybrid Public Key Encryption (HPKE). This module is
+designed to work across various Web-interoperable runtimes including Node.js, browsers, Cloudflare
+Workers, Deno, Bun, and others.
 
 ## [💗 Help the project](https://github.com/sponsors/panva)
 
-Support from the community to continue maintaining and improving this module is welcome. If you find this module useful, please consider supporting this project by [becoming a sponsor](https://github.com/sponsors/panva).
+Support from the community to continue maintaining and improving this module is welcome. If you find
+this module useful, please consider supporting this project by
+[becoming a sponsor](https://github.com/sponsors/panva).
 
 ## Dependencies: 0
 
@@ -12,7 +16,9 @@ Support from the community to continue maintaining and improving this module is 
 
 ## [API Reference](docs/README.md)
 
-`@panva/hpke` is distributed via [npmjs.com](https://www.npmjs.com/package/@panva/hpke), [jsdelivr.com](https://www.jsdelivr.com/package/npm/@panva/hpke), and [github.com](https://github.com/panva/hpke).
+`@panva/hpke` is distributed via [npmjs.com](https://www.npmjs.com/package/@panva/hpke),
+[jsdelivr.com](https://www.jsdelivr.com/package/npm/@panva/hpke), and
+[github.com](https://github.com/panva/hpke).
 
 ## Quick Start
 
@@ -40,11 +46,13 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 
 ## [Examples](examples/README.md)
 
-For more advanced examples, including how to integrate external cryptographic libraries, see the [examples directory](examples/README.md).
+For more advanced examples, including how to integrate external cryptographic libraries, see the
+[examples directory](examples/README.md).
 
 ## Supported Runtimes
 
-This module is compatible with JavaScript runtimes that support the utilized Web API globals and standard built-in objects or are Node.js.
+This module is compatible with JavaScript runtimes that support the utilized Web API globals and
+standard built-in objects or are Node.js.
 
 The following runtimes are supported _(this is not an exhaustive list)_:
 
@@ -59,11 +67,24 @@ Please note that some suites may not be available depending on the runtime used.
 
 ## Supported Algorithms
 
-Algorithm implementations exposed by this module are built on top of [Web Cryptography][] (and its extensions, e.g. [Secure Curves][], [Modern Algorithms][]). Runtimes implementing Web Cryptography are not required to support all of its algorithms and so not all algorithms are available in all runtimes, see 
+Algorithm implementations exposed by this module are built on top of [Web Cryptography][] (and its
+extensions, e.g. [Secure Curves][], [Modern Algorithms][]). Runtimes implementing Web Cryptography
+are not required to support all of its algorithms and so not all algorithms are available in all
+runtimes, see
 
-This module is designed to be extensible, you can bring outside-built implementations of any KEM, KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respective interfaces ([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This allows you to use alternative cryptographic libraries, native bindings, or specialized hardware implementations alongside the built-in Web Cryptography-based algorithms.
+This module is designed to be extensible, you can bring outside-built implementations of any KEM,
+KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respective interfaces
+([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md),
+[KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or
+[AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This allows you to use
+alternative cryptographic libraries, native bindings, or specialized hardware implementations
+alongside the built-in Web Cryptography-based algorithms.
 
-For extended algorithm support across all runtimes, see [`@panva/hpke-noble`](https://github.com/panva/hpke/tree/main/examples/noble-suite#readme), which provides these KEM, KDF, and AEAD implementations using Paul Miller's [@noble](https://paulmillr.com/noble/) cryptographic libraries. These implementations can be freely mixed and matched with the built-in algorithms.
+For extended algorithm support across all runtimes, see
+[`@panva/hpke-noble`](https://github.com/panva/hpke/tree/main/examples/noble-suite#readme), which
+provides these KEM, KDF, and AEAD implementations using Paul Miller's
+[@noble](https://paulmillr.com/noble/) cryptographic libraries. These implementations can be freely
+mixed and matched with the built-in algorithms.
 
 Below are the algorithms built in (based on Web Cryptography) and their runtime support matrix.
 
@@ -104,23 +125,19 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | ChaCha20Poly1305 | `0x0003` | ✓[^24.7] |      |     |                    |                   |
 | Export-only      | `0xffff` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
 
+## Specifications
+
+- [Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02)
+- [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03)
+
+The algorithm implementations are being tested using test vectors from their respective
+specifications.
+
 ## Supported Versions
 
 | Version                                         | Security Fixes 🔑 | Other Bug Fixes 🐞 | New Features ⭐ |
 | ----------------------------------------------- | ----------------- | ------------------ | --------------- |
 | [v0.x](https://github.com/panva/hpke/tree/v0.x) | [Security Policy] | ✓                  | ✓               |
-
-## Specifications
-
-<details>
-<summary>Details</summary>
-
-- [Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02)
-- [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03)
-
-The algorithm implementations in `@panva/hpke` have been tested using test vectors from their respective specifications.
-
-</details>
 
 [Web Cryptography]: https://www.w3.org/TR/webcrypto-2/
 [Security Policy]: https://github.com/panva/hpke/security/policy

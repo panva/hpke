@@ -220,10 +220,7 @@ test.describe('IncrementSeq', () => {
         // @ts-expect-error
         contextR.seq = 3.14
       },
-      {
-        message: 'seq must be a non-negative safe integer or a BigInt',
-        name: 'TypeError',
-      },
+      { message: 'seq must be a non-negative safe integer or a BigInt', name: 'TypeError' },
     )
 
     // Reject negative numbers
@@ -232,10 +229,7 @@ test.describe('IncrementSeq', () => {
         // @ts-expect-error
         contextR.seq = -1
       },
-      {
-        message: 'seq must be a non-negative safe integer or a BigInt',
-        name: 'TypeError',
-      },
+      { message: 'seq must be a non-negative safe integer or a BigInt', name: 'TypeError' },
     )
 
     // Reject negative numbers
@@ -244,10 +238,7 @@ test.describe('IncrementSeq', () => {
         // @ts-expect-error
         contextR.seq = -1
       },
-      {
-        message: 'seq must be a non-negative safe integer or a BigInt',
-        name: 'TypeError',
-      },
+      { message: 'seq must be a non-negative safe integer or a BigInt', name: 'TypeError' },
     )
 
     // Reject numbers greater than MAX_SAFE_INTEGER
@@ -256,10 +247,7 @@ test.describe('IncrementSeq', () => {
         // @ts-expect-error
         contextR.seq = Number.MAX_SAFE_INTEGER + 1
       },
-      {
-        message: 'seq must be a non-negative safe integer or a BigInt',
-        name: 'TypeError',
-      },
+      { message: 'seq must be a non-negative safe integer or a BigInt', name: 'TypeError' },
     )
   })
 

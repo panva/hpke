@@ -310,11 +310,7 @@ test.describe('pummel', () => {
                 pkR,
                 exporterContext,
                 L,
-                {
-                  info,
-                  psk,
-                  pskId,
-                },
+                { info, psk, pskId },
               )
               assertExactBuffer(t, enc, 'SendExport.encapsulatedKey')
               assertExactBuffer(t, exported, 'SendExport.exportedSecret')
@@ -570,11 +566,7 @@ test.describe('pummel', () => {
         const psk6Copy = psk.slice()
         const pskId6Copy = pskId.slice()
 
-        const recipientCtx = await suite.SetupRecipient(skR, enc3, {
-          info: setupInfo,
-          psk,
-          pskId,
-        })
+        const recipientCtx = await suite.SetupRecipient(skR, enc3, { info: setupInfo, psk, pskId })
         assertNotMutated(t, enc3, enc3Copy, 'enc in SetupRecipient')
         assertNotMutated(t, setupInfo, setupInfo2Copy, 'info in SetupRecipient')
         assertNotMutated(t, psk, psk6Copy, 'psk in SetupRecipient')

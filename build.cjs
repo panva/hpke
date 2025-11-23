@@ -15,9 +15,7 @@ execSync('npx tsc -p ./examples/noble-suite', { stdio: 'inherit' })
 // ============================================================================
 
 // Transform TypeScript to JavaScript, stripping type annotations only
-let js = amaro.transformSync(fs.readFileSync('./index.ts'), {
-  mode: 'strip-only',
-}).code
+let js = amaro.transformSync(fs.readFileSync('./index.ts'), { mode: 'strip-only' }).code
 
 fs.writeFileSync('index.js', js)
 const indexJsBefore = getFileSizes('index.js')
@@ -72,9 +70,7 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
 {
   const inFile = './examples/noble-suite/index.ts'
   const outFile = './examples/noble-suite/index.js'
-  let js = amaro.transformSync(fs.readFileSync(inFile), {
-    mode: 'strip-only',
-  }).code
+  let js = amaro.transformSync(fs.readFileSync(inFile), { mode: 'strip-only' }).code
 
   // Rewrite import paths from '../../index.ts' to '@panva/hpke'
   js = js.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'@panva/hpke'")

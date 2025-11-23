@@ -130,11 +130,7 @@ function createAlgorithmMap<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.A
 
     const isSupported = supported[algorithm.name]?.() !== false
 
-    map.set(id, {
-      factory: algorithm,
-      supported: isSupported,
-      name: algorithm.name,
-    })
+    map.set(id, { factory: algorithm, supported: isSupported, name: algorithm.name })
   }
 
   // Process noble algorithms - these are always supported and only overwrite if existing is not supported
@@ -169,10 +165,7 @@ function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | 
   for (const algorithm of hpkeAlgorithms) {
     const isSupported = supported[algorithm.name]?.() !== false
     if (!isSupported) {
-      unsupported.push({
-        factory: algorithm,
-        name: algorithm.name,
-      })
+      unsupported.push({ factory: algorithm, name: algorithm.name })
     }
   }
 

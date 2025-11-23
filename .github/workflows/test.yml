@@ -30,7 +30,7 @@ jobs:
       - run: npm clean-install
       - run: node --run build
       - run: node --run build:other
-      - run: node --run format
+      - run: node --run format -- --write false --check --log-level warn
       - run: git diff --exit-code
 
   docs:
@@ -112,7 +112,9 @@ jobs:
       - run: npm upgrade playwright
       - name: get playwright version
         id: playwright-version
-        run: echo "version=$(npm list playwright --json | jq -r '.dependencies.playwright.version')" >> $GITHUB_OUTPUT
+        run:
+          echo "version=$(npm list playwright --json | jq -r '.dependencies.playwright.version')" >>
+          $GITHUB_OUTPUT
       - uses: actions/cache@v4
         with:
           path: ~/Library/Caches/ms-playwright

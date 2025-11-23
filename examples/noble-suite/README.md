@@ -1,13 +1,22 @@
 # @panva/hpke-noble
 
-`@panva/hpke-noble` provides additional HPKE algorithm implementations for use with [`@panva/hpke`](https://github.com/panva/hpke), using Paul Miller's [@noble](https://paulmillr.com/noble/) cryptographic libraries. This package provides cross-runtime support for algorithms not available in Web Cryptography, including post-quantum KEMs, SHAKE-based KDFs, and ChaCha20Poly1305 AEAD.
+`@panva/hpke-noble` provides additional HPKE algorithm implementations for use with
+[`@panva/hpke`](https://github.com/panva/hpke), using Paul Miller's
+[@noble](https://paulmillr.com/noble/) cryptographic libraries. This package provides cross-runtime
+support for algorithms not available in Web Cryptography, including post-quantum KEMs, SHAKE-based
+KDFs, and ChaCha20Poly1305 AEAD.
 
 ## Overview
 
-`@panva/hpke-noble` provides additional algorithms for `@panva/hpke` by conforming to the HPKE interfaces ([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This approach allows you to:
+`@panva/hpke-noble` provides additional algorithms for `@panva/hpke` by conforming to the HPKE
+interfaces ([KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md),
+[KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or
+[AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md)). This approach allows you
+to:
 
 - Use cryptographic primitives not available in Web Cryptography
-- Support algorithms across all JavaScript runtimes (Node.js, browsers, Deno, Bun, Cloudflare Workers, etc.)
+- Support algorithms across all JavaScript runtimes (Node.js, browsers, Deno, Bun, Cloudflare
+  Workers, etc.)
 - Integrate specialized or audited cryptographic libraries
 
 All implementations in this package work across all Web-interoperable JavaScript runtimes.
@@ -62,11 +71,19 @@ const suite = new HPKE.CipherSuite(KEM_ML_KEM_768, KDF_SHAKE256, AEAD_ChaCha20Po
 ```
 
 > [!NOTE]\
-> Built-in implementations (based on Web Cryptography) and `@panva/hpke-noble` implementations can be freely mixed and matched. For example, you could use `KEM_ML_KEM_768` from `@panva/hpke-noble` with `KDF_HKDF_SHA256` and `AEAD_AES_256_GCM` from `@panva/hpke`.
+> Built-in implementations (based on Web Cryptography) and `@panva/hpke-noble` implementations can
+> be freely mixed and matched. For example, you could use `KEM_ML_KEM_768` from `@panva/hpke-noble`
+> with `KDF_HKDF_SHA256` and `AEAD_AES_256_GCM` from `@panva/hpke`.
 
 > [!NOTE]\
-> These implementations are tested using the same test vectors and validation suite as the built-in implementations in `@panva/hpke`, ensuring correctness and interoperability.
+> These implementations are tested using the same test vectors and validation suite as the built-in
+> implementations in `@panva/hpke`, ensuring correctness and interoperability.
 
 ## Example Integration
 
-This package also serves as an example of how to integrate external cryptographic libraries with `@panva/hpke`. If you need to bring your own cryptographic primitives (e.g., hardware-backed implementations, audited libraries, or runtime-specific bindings), you can follow the same pattern by implementing the [KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md), [KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or [AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md) interfaces.
+This package also serves as an example of how to integrate external cryptographic libraries with
+`@panva/hpke`. If you need to bring your own cryptographic primitives (e.g., hardware-backed
+implementations, audited libraries, or runtime-specific bindings), you can follow the same pattern
+by implementing the [KEM](https://github.com/panva/hpke/blob/main/docs/interfaces/KEM.md),
+[KDF](https://github.com/panva/hpke/blob/main/docs/interfaces/KDF.md), or
+[AEAD](https://github.com/panva/hpke/blob/main/docs/interfaces/AEAD.md) interfaces.

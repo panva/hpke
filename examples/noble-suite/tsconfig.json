@@ -1,8 +1,5 @@
 {
   "extends": "../../tsconfig.json",
   "files": ["./index.ts"],
-  "compilerOptions": {
-    "declarationMap": false,
-    "allowImportingTsExtensions": true
-  }
+  "compilerOptions": { "declarationMap": false, "allowImportingTsExtensions": true }
 }

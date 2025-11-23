@@ -16,11 +16,7 @@
   "gitRevision": "main",
   "hideGenerator": true,
   "out": "docs",
-  "plugin": [
-    "typedoc-plugin-markdown",
-    "typedoc-plugin-remark",
-    "./docs-theme.ts"
-  ],
+  "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-remark", "./docs-theme.ts"],
   "readme": "none",
   "sort": ["kind", "static-first", "required-first", "alphabetical"],
   "groupOrder": [
@@ -49,9 +45,7 @@
     "leftAlignHeaders": true
   },
   "theme": "my-markdown",
-  "remarkStringifyOptions": {
-    "bullet": "-"
-  },
+  "remarkStringifyOptions": { "bullet": "-" },
   "remarkPlugins": [
     {
       "applyTo": ["Class", "Interface"],

@@ -62,17 +62,8 @@ interface Vector {
   key: string
   base_nonce: string
   exporter_secret: string
-  encryptions: Array<{
-    aad: string
-    ct: string
-    nonce: string
-    pt: string
-  }>
-  exports: Array<{
-    exporter_context: string
-    L: number
-    exported_value: string
-  }>
+  encryptions: Array<{ aad: string; ct: string; nonce: string; pt: string }>
+  exports: Array<{ exporter_context: string; L: number; exported_value: string }>
 }
 
 const vectors: Vector[] = [
