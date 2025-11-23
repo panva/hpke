@@ -1,5 +1,7 @@
 {
   "$schema": "https://typedoc-plugin-markdown.org/schema.json",
+  "logLevel": "Warn",
+  "treatWarningsAsErrors": true,
   "disableSources": true,
   "hideBreadcrumbs": true,
   "visibilityFilters": {

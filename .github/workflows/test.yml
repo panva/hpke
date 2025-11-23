@@ -44,7 +44,6 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: node --run docs
       - run: git diff --exit-code
       - uses: r-lib/actions/setup-pandoc@v2
         with:
