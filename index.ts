@@ -1327,10 +1327,6 @@ export const MODE_PSK = 0x01
 /**
  * Factory function that returns a KEM implementation.
  *
- * > [!TIP]\
- * > {@link CipherSuite} is not limited to using only these exported KEM implementations. Any function
- * > returning an object conforming to the {@link KEM} interface can be used.
- *
  * The following [Web Cryptography](https://www.w3.org/TR/webcrypto-2/)-based implementations are
  * exported by this module:
  *
@@ -1353,15 +1349,17 @@ export const MODE_PSK = 0x01
  * - {@link KEM_ML_KEM_512 | ML-KEM-512}
  * - {@link KEM_ML_KEM_768 | ML-KEM-768}
  * - {@link KEM_ML_KEM_1024 | ML-KEM-1024}
+ *
+ * > [!TIP]\
+ * > {@link CipherSuite} is not limited to using only these exported KEM implementations. Any function
+ * > returning an object conforming to the {@link KEM} interface can be used. Such implementations not
+ * > reliant on Web Cryptography are exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  */
 export type KEMFactory = () => Readonly<KEM>
 
 /**
  * Factory function that returns a KDF implementation.
- *
- * > [!TIP]\
- * > {@link CipherSuite} is not limited to using only these exported KDF implementations. Any function
- * > returning an object conforming to the {@link KDF} interface can be used.
  *
  * The following [Web Cryptography](https://www.w3.org/TR/webcrypto-2/)-based implementations are
  * exported by this module:
@@ -1371,15 +1369,17 @@ export type KEMFactory = () => Readonly<KEM>
  * - {@link KDF_HKDF_SHA512 | HKDF-SHA512}
  * - {@link KDF_SHAKE128 | SHAKE128}
  * - {@link KDF_SHAKE256 | SHAKE256}
+ *
+ * > [!TIP]\
+ * > {@link CipherSuite} is not limited to using only these exported KDF implementations. Any function
+ * > returning an object conforming to the {@link KDF} interface can be used. Such implementations not
+ * > reliant on Web Cryptography are exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  */
 export type KDFFactory = () => Readonly<KDF>
 
 /**
  * Factory function that returns an AEAD implementation.
- *
- * > [!TIP]\
- * > {@link CipherSuite} is not limited to using only these exported AEAD implementations. Any function
- * > returning an object conforming to the {@link AEAD} interface can be used.
  *
  * The following [Web Cryptography](https://www.w3.org/TR/webcrypto-2/)-based implementations are
  * exported by this module:
@@ -1388,6 +1388,12 @@ export type KDFFactory = () => Readonly<KDF>
  * - {@link AEAD_AES_256_GCM | AES-256-GCM}
  * - {@link AEAD_ChaCha20Poly1305 | ChaCha20Poly1305}
  * - {@link AEAD_EXPORT_ONLY | Export-only}
+ *
+ * > [!TIP]\
+ * > {@link CipherSuite} is not limited to using only these exported AEAD implementations. Any function
+ * > returning an object conforming to the {@link AEAD} interface can be used. Such implementations not
+ * > reliant on Web Cryptography are exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  */
 export type AEADFactory = () => Readonly<AEAD>
 
@@ -2426,6 +2432,10 @@ function HKDF_SHARED(): KDF_BASE {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KDF Algorithms
  */
 export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
@@ -2451,6 +2461,10 @@ export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KDF Algorithms
  */
 export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
@@ -2475,6 +2489,10 @@ export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
  * - HMAC with SHA-512
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KDF Algorithms
  */
@@ -2537,6 +2555,10 @@ function SHAKE_SHARED(): KDF_BASE {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KDF Algorithms
  */
 export const KDF_SHAKE128: KDFFactory = function (): SHAKE {
@@ -2561,6 +2583,10 @@ export const KDF_SHAKE128: KDFFactory = function (): SHAKE {
  * - SHAKE256 (cSHAKE256 without any parameters) digest
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KDF Algorithms
  */
@@ -3138,6 +3164,10 @@ const P256: NistCurveConfig = {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KEM Algorithms
  */
 export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistCurveConfig {
@@ -3187,6 +3217,10 @@ const P384: NistCurveConfig = {
  * - HMAC with SHA-384 (for HKDF)
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */
@@ -3238,6 +3272,10 @@ const P521: NistCurveConfig = {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KEM Algorithms
  */
 export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistCurveConfig {
@@ -3278,6 +3316,10 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistC
  * - HMAC with SHA-256 (for HKDF)
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */
@@ -3320,6 +3362,10 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { p
  * - HMAC with SHA-512 (for HKDF)
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */
@@ -3469,6 +3515,10 @@ function MLKEM_SHARED(): KEM_BASE {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KEM Algorithms
  */
 export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
@@ -3504,6 +3554,10 @@ export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KEM Algorithms
  */
 export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
@@ -3538,6 +3592,10 @@ export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */
@@ -3635,6 +3693,10 @@ function AEAD_SHARED(): AEAD_BASE {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group AEAD Algorithms
  */
 export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
@@ -3662,6 +3724,10 @@ export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group AEAD Algorithms
  */
 export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
@@ -3688,6 +3754,10 @@ export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
  * - ChaCha20-Poly1305 encryption and decryption
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group AEAD Algorithms
  */
@@ -4107,6 +4177,10 @@ function PQTKEM_SHARED(): KEM_BASE {
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */

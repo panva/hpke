@@ -4,10 +4,6 @@
 
 Factory function that returns a KDF implementation.
 
-> \[!TIP]\
-> [CipherSuite](../classes/CipherSuite.md) is not limited to using only these exported KDF implementations. Any function
-> returning an object conforming to the [KDF](../interfaces/KDF.md) interface can be used.
-
 The following [Web Cryptography](https://www.w3.org/TR/webcrypto-2/)-based implementations are
 exported by this module:
 
@@ -16,6 +12,12 @@ exported by this module:
 - [HKDF-SHA512](../variables/KDF_HKDF_SHA512.md)
 - [SHAKE128](../variables/KDF_SHAKE128.md)
 - [SHAKE256](../variables/KDF_SHAKE256.md)
+
+> \[!TIP]\
+> [CipherSuite](../classes/CipherSuite.md) is not limited to using only these exported KDF implementations. Any function
+> returning an object conforming to the [KDF](../interfaces/KDF.md) interface can be used. Such implementations not
+> reliant on Web Cryptography are exported by
+> [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
 
 ## Returns
 

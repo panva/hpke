@@ -4,10 +4,6 @@
 
 Factory function that returns a KEM implementation.
 
-> \[!TIP]\
-> [CipherSuite](../classes/CipherSuite.md) is not limited to using only these exported KEM implementations. Any function
-> returning an object conforming to the [KEM](../interfaces/KEM.md) interface can be used.
-
 The following [Web Cryptography](https://www.w3.org/TR/webcrypto-2/)-based implementations are
 exported by this module:
 
@@ -30,6 +26,12 @@ Post-quantum (PQ):
 - [ML-KEM-512](../variables/KEM_ML_KEM_512.md)
 - [ML-KEM-768](../variables/KEM_ML_KEM_768.md)
 - [ML-KEM-1024](../variables/KEM_ML_KEM_1024.md)
+
+> \[!TIP]\
+> [CipherSuite](../classes/CipherSuite.md) is not limited to using only these exported KEM implementations. Any function
+> returning an object conforming to the [KEM](../interfaces/KEM.md) interface can be used. Such implementations not
+> reliant on Web Cryptography are exported by
+> [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
 
 ## Returns
 

@@ -11,3 +11,7 @@ Depends on the following Web Cryptography algorithms being supported in the runt
 - ChaCha20-Poly1305 encryption and decryption
 
 This is a factory function that must be passed to the [CipherSuite](../classes/CipherSuite.md) constructor.
+
+> \[!TIP]\
+> An implementation of this algorithm not reliant on Web Cryptography is also exported by
+> [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)

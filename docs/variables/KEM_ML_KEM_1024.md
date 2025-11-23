@@ -12,3 +12,7 @@ Depends on the following Web Cryptography algorithms being supported in the runt
 - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
 
 This is a factory function that must be passed to the [CipherSuite](../classes/CipherSuite.md) constructor.
+
+> \[!TIP]\
+> An implementation of this algorithm not reliant on Web Cryptography is also exported by
+> [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
