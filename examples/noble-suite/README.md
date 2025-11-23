@@ -19,13 +19,15 @@ to:
   Workers, etc.)
 - Integrate specialized or audited cryptographic libraries
 
-All implementations in this package work across all Web-interoperable JavaScript runtimes.
+All implementations in this package work across all Web-interoperable JavaScript runtimes. For React
+Native, you may need a polyfill for
+[`crypto.getRandomValues`](https://github.com/LinusU/react-native-get-random-values).
 
 ## Included Implementations
 
 See [https://panva.github.io/hpke/](https://panva.github.io/hpke/?noble)
 
-### KEM
+### Key Encapsulation Mechanisms (KEM)
 
 | Name                       | ID       |
 | -------------------------- | -------- |
@@ -39,7 +41,7 @@ See [https://panva.github.io/hpke/](https://panva.github.io/hpke/?noble)
 | ML-KEM-1024                | `0x0042` |
 | MLKEM768-X25519            | `0x647a` |
 
-### KDF
+### Key Derivation Functions (KDF)
 
 | Name          | ID       |
 | ------------- | -------- |
@@ -51,7 +53,7 @@ See [https://panva.github.io/hpke/](https://panva.github.io/hpke/?noble)
 | TurboSHAKE128 | `0x0012` |
 | TurboSHAKE256 | `0x0013` |
 
-### AEAD
+### Authenticated Encryption (AEAD)
 
 | Name             | ID       |
 | ---------------- | -------- |

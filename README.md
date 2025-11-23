@@ -80,50 +80,49 @@ KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respecti
 alternative cryptographic libraries, native bindings, or specialized hardware implementations
 alongside the built-in Web Cryptography-based algorithms.
 
-For extended algorithm support across all runtimes, see
-[`@panva/hpke-noble`](https://github.com/panva/hpke/tree/main/examples/noble-suite#readme), which
+For extended algorithm support across all runtimes, see [`@panva/hpke-noble`][extensibility], which
 provides these KEM, KDF, and AEAD implementations using Paul Miller's
 [@noble](https://paulmillr.com/noble/) cryptographic libraries. These implementations can be freely
 mixed and matched with the built-in algorithms.
 
 Below are the algorithms built in (based on Web Cryptography) and their runtime support matrix.
 
-### KEM
+### Key Encapsulation Mechanisms (KEM)
 
-| Name                       | ID       | Node.js  | Deno | Bun | Cloudflare Workers | Browsers[^status] |
-| -------------------------- | -------- | -------- | ---- | --- | ------------------ | ----------------- |
-| DHKEM(P-256, HKDF-SHA256)  | `0x0010` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| DHKEM(P-384, HKDF-SHA384)  | `0x0011` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| DHKEM(P-521, HKDF-SHA512)  | `0x0012` | ✓        |      | ✓   | ✓                  | ✓                 |
-| DHKEM(X25519, HKDF-SHA256) | `0x0020` | ✓        | ✓    |     | ✓                  | ✓                 |
-| DHKEM(X448, HKDF-SHA512)   | `0x0021` | ✓        |      |     |                    |                   |
-| ML-KEM-512                 | `0x0040` | ✓[^24.7] |      |     |                    |                   |
-| ML-KEM-768                 | `0x0041` | ✓[^24.7] |      |     |                    |                   |
-| ML-KEM-1024                | `0x0042` | ✓[^24.7] |      |     |                    |                   |
-| MLKEM768-P256              | `0x0050` | ✓[^24.7] |      |     |                    |                   |
-| MLKEM768-X25519            | `0x647a` | ✓[^24.7] |      |     |                    |                   |
-| MLKEM1024-P384             | `0x0051` | ✓[^24.7] |      |     |                    |                   |
+| Name                                           | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :--------------------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
+| DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓     |      |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓     |  ✓   |     |     ✓      |      ✓       |         ✓         |
+| DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓     |      |     |            |              |         ✓         |
+| ML-KEM-512 <sub>`0x0040`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
+| ML-KEM-768 <sub>`0x0041`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
+| ML-KEM-1024 <sub>`0x0042`</sub>                | ✓[^24.7] |      |     |            |              |         ✓         |
+| MLKEM768-P256 <sub>`0x0050`</sub>              | ✓[^24.7] |      |     |            |              |                   |
+| MLKEM768-X25519 <sub>`0x647a`</sub>            | ✓[^24.7] |      |     |            |              |         ✓         |
+| MLKEM1024-P384 <sub>`0x0051`</sub>             | ✓[^24.7] |      |     |            |              |                   |
 
-### KDF
+### Key Derivation Functions (KDF)
 
-| Name          | ID       | Node.js  | Deno | Bun | Cloudflare Workers | Browsers[^status] |
-| ------------- | -------- | -------- | ---- | --- | ------------------ | ----------------- |
-| HKDF-SHA256   | `0x0001` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| HKDF-SHA384   | `0x0002` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| HKDF-SHA512   | `0x0003` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| SHAKE128      | `0x0010` | ✓[^24.7] |      |     |                    |                   |
-| SHAKE256      | `0x0011` | ✓[^24.7] |      |     |                    |                   |
-| TurboSHAKE128 | `0x0012` |          |      |     |                    |                   |
-| TurboSHAKE256 | `0x0013` |          |      |     |                    |                   |
+| Name                              | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :-------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
+| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| SHAKE128 <sub>`0x0010`</sub>      | ✓[^24.7] |      |     |            |              |         ✓         |
+| SHAKE256 <sub>`0x0011`</sub>      | ✓[^24.7] |      |     |            |              |         ✓         |
+| TurboSHAKE128 <sub>`0x0012`</sub> |          |      |     |            |              |         ✓         |
+| TurboSHAKE256 <sub>`0x0013`</sub> |          |      |     |            |              |         ✓         |
 
-### AEAD
+### Authenticated Encryption (AEAD)
 
-| Name             | ID       | Node.js  | Deno | Bun | Cloudflare Workers | Browsers[^status] |
-| ---------------- | -------- | -------- | ---- | --- | ------------------ | ----------------- |
-| AES-128-GCM      | `0x0001` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| AES-256-GCM      | `0x0002` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
-| ChaCha20Poly1305 | `0x0003` | ✓[^24.7] |      |     |                    |                   |
-| Export-only      | `0xffff` | ✓        | ✓    | ✓   | ✓                  | ✓                 |
+| Name                                 | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :----------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
+| AES-128-GCM <sub>`0x0001`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| AES-256-GCM <sub>`0x0002`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| ChaCha20Poly1305 <sub>`0x0003`</sub> | ✓[^24.7] |      |     |            |              |         ✓         |
+| Export-only <sub>`0xffff`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |                   |
 
 ## Specifications
 
@@ -143,7 +142,7 @@ specifications.
 [Security Policy]: https://github.com/panva/hpke/security/policy
 [Secure Curves]: https://wicg.github.io/webcrypto-secure-curves/
 [Modern Algorithms]: https://wicg.github.io/webcrypto-modern-algos/
+[extensibility]: https://github.com/panva/hpke/tree/main/examples/noble-suite#readme
+[browsers]: https://panva.github.io/hpke/
 
 [^24.7]: Available in Node.js versions >= 24.7.0
-
-[^status]: Test browser compatibility live at https://panva.github.io/hpke/
