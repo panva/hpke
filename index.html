@@ -1643,7 +1643,7 @@
                 <span>Both implementations</span>
               </a>
             </div>
-            <div class="legend-item">
+            <div class="legend-item hidden" id="legendUnsupported">
               <div class="legend-color unsupported"></div>
               <span>Unsupported</span>
             </div>
@@ -2291,6 +2291,15 @@
         selectFirstAlgorithm('kem')
         selectFirstAlgorithm('kdf')
         selectFirstAlgorithm('aead')
+
+        // Show unsupported legend only if there are unsupported algorithms
+        const hasUnsupported = document.querySelector('.algo-card.unsupported')
+        const legendUnsupported = document.getElementById('legendUnsupported')
+        if (hasUnsupported) {
+          legendUnsupported.classList.remove('hidden')
+        } else {
+          legendUnsupported.classList.add('hidden')
+        }
 
         // Update demo section once after all three are selected
         updateDemoSection()
