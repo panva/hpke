@@ -346,6 +346,36 @@
         font-weight: 600;
       }
 
+      .download-vector-btn {
+        position: absolute;
+        top: -21px;
+        right: var(--space-md);
+        padding: var(--space-xs) var(--space-md);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-bottom: none;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        z-index: 1;
+        line-height: 1;
+      }
+
+      .download-vector-btn:hover:not(:disabled) {
+        color: var(--color-text-primary);
+        border-color: var(--color-text-tertiary);
+        background: var(--color-bg-primary);
+      }
+
+      .download-vector-btn:disabled {
+        display: none;
+      }
+
       /* ============================================
          Legend Component
          ============================================ */
@@ -1200,6 +1230,21 @@
         margin-top: var(--space-xl);
       }
 
+      .suite-display {
+        margin-bottom: var(--space-md);
+        padding: var(--space-sm);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+        text-align: center;
+      }
+
+      .aad-input-short {
+        flex: 0.5;
+      }
+
       .copy-flash {
         background: var(--color-info);
       }
@@ -1214,7 +1259,8 @@
 
         /* Hide advanced options and AAD input on mobile */
         .advanced-options,
-        .chat-input-container #aadInput {
+        .chat-input-container #aadInput,
+        .download-vector-btn {
           display: none;
         }
 
@@ -1530,7 +1576,8 @@
 
       <div class="demo-section" id="demoSection">
         <div class="section-label">Demo</div>
-        <div id="suiteDisplay" style="margin-bottom: var(--space-md); padding: var(--space-sm); background: var(--color-bg-secondary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-sm); color: var(--color-text-secondary); font-size: var(--font-size-sm); text-align: center;">
+        <button class="download-vector-btn" id="downloadVectorBtn" title="Download test vector" disabled>Download Vector</button>
+        <div id="suiteDisplay" class="suite-display">
           Select KEM, KDF, and AEAD to begin
         </div>
 
@@ -1613,7 +1660,7 @@
           <div class="chat-container hidden" id="chatContainer" role="log" aria-live="polite" aria-label="Encrypted messages"></div>
           <div class="chat-input-container">
             <input type="text" id="messageInput" placeholder="Type a message to encrypt..." aria-label="Message to encrypt">
-            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" style="flex: 0.5;" aria-label="Additional authenticated data">
+            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" class="aad-input-short" aria-label="Additional authenticated data">
             <button id="sendButton" aria-label="Encrypt message">encrypt()</button>
             <button id="refreshContextButton" title="Generate fresh context" disabled aria-label="Reset context">reset()</button>
             <button id="autoPopulateButton" title="Auto-populate with random text" aria-label="Auto-populate with sample text">rand()</button>
@@ -1689,25 +1736,27 @@
     </div>
 
     <script type="module">
-      // Check query string parameters to filter implementations
+      // ============================================================================
+      // CONFIGURATION & INITIALIZATION
+      // ============================================================================
+
       const params = new URLSearchParams(window.location.search)
       const onlyNative = params.has('native')
       const onlyNoble = params.has('noble')
       const ci = params.has('ci')
       const both = (onlyNative && onlyNoble) || (!onlyNative && !onlyNoble)
 
-      // Highlight active filter link
-      if (onlyNative) {
-        document.getElementById('filterNative').classList.add('active')
-        document.getElementById('legendNoble').classList.add('disabled')
-        document.getElementById('legendBoth').classList.add('disabled')
-      } else if (onlyNoble) {
-        document.getElementById('filterNoble').classList.add('active')
-        document.getElementById('legendNative').classList.add('disabled')
-        document.getElementById('legendBoth').classList.add('disabled')
-      } else {
-        document.getElementById('filterBoth').classList.add('active')
+      // Highlight active filter
+      const filterMap = {
+        native: ['filterNative', 'legendNoble', 'legendBoth'],
+        noble: ['filterNoble', 'legendNative', 'legendBoth'],
+        both: ['filterBoth']
       }
+
+      const activeFilter = onlyNative ? 'native' : onlyNoble ? 'noble' : 'both'
+      const [activeLink, ...disabledLegends] = filterMap[activeFilter]
+      document.getElementById(activeLink).classList.add('active')
+      disabledLegends.forEach(id => document.getElementById(id).classList.add('disabled'))
 
       import * as HPKE from '@panva/hpke'
       import * as Noble from '@panva/hpke-noble'
@@ -1727,17 +1776,11 @@
       // name prefixes (KEM_, KDF_, AEAD_)
 
       /** Extracts algorithms from a library object by prefix */
-      function extractAlgorithms(library, prefix, label, isNoble = false) {
-        return Object.keys(library)
-          .filter((key) => key.startsWith(prefix))
-          .map((name) => ({
-            name,
-            displayName: `[${label}] ${name}`,
-            factory: library[name],
-            isNoble,
-          }))
+      const extractAlgorithms = (library, prefix, label, isNoble = false) =>
+        Object.keys(library)
+          .filter(key => key.startsWith(prefix))
+          .map(name => ({ name, displayName: `[${label}] ${name}`, factory: library[name], isNoble }))
           .sort((a, b) => a.name.localeCompare(b.name))
-      }
 
       // Extract native HPKE algorithms
       const KEMS = extractAlgorithms(HPKE, 'KEM_', 'native')
@@ -1749,10 +1792,10 @@
       const NOBLE_KDFS = extractAlgorithms(Noble, 'KDF_', 'extensibility', true)
       const NOBLE_AEADS = extractAlgorithms(Noble, 'AEAD_', 'extensibility', true)
 
-      // Burger menu toggle
-      document.getElementById('burgerMenu').addEventListener('click', () => {
+      // UI Event Handlers
+      document.getElementById('burgerMenu').addEventListener('click', () =>
         document.getElementById('filterLinks').classList.toggle('open')
-      })
+      )
 
       // Combine native and Noble implementations based on query params
       const ALL_KEMS = both ? KEMS.concat(NOBLE_KEMS) : onlyNative ? KEMS : NOBLE_KEMS
@@ -1875,12 +1918,9 @@
       // Browser-specific unsupported algorithms based on Web Crypto API availability
 
       /** Detects the current browser engine and version */
-      function detectBrowser() {
+      const detectBrowser = () => {
         const browser = Bowser.getParser(navigator.userAgent)
-        return {
-          engine: browser.getEngineName(),
-          version: parseInt(browser.getBrowserVersion()),
-        }
+        return { engine: browser.getEngineName(), version: parseInt(browser.getBrowserVersion()) }
       }
 
       const unsupported = {
@@ -1906,19 +1946,74 @@
           break
       }
 
-      /**
-       * Determines if a test is expected to fail based on browser support Noble implementations are
-       * always expected to work (they provide fallbacks)
-       */
-      function isExpectedToFail(test) {
-        // Noble implementations are always expected to pass (they provide fallbacks)
-        if (test.testingComponent === 'kem' && test.kem.isNoble) return false
-        if (test.testingComponent === 'kdf' && test.kdf.isNoble) return false
-        if (test.testingComponent === 'aead' && test.aead.isNoble) return false
+      /** Determines if a test is expected to fail based on browser support */
+      const isExpectedToFail = (test) => {
+        const component = test[test.testingComponent]
+        // Noble implementations provide fallbacks and always pass
+        if (component.isNoble) return false
+        return unsupported[test.testingComponent].includes(component.name)
+      }
 
-        // Check if the component being tested is unsupported in current browser
-        const componentName = test[test.testingComponent].name
-        return unsupported[test.testingComponent].includes(componentName)
+      // ============================================================================
+      // HELPER FUNCTIONS
+      // ============================================================================
+
+      /** Selects the preferred algorithm implementation (native over noble if both pass) */
+      const selectPreferredAlgorithm = (algorithms, algoName, algoType) => {
+        const nativeAlgo = algorithms.find(a => a.name === algoName && !a.isNoble)
+        const nobleAlgo = algorithms.find(a => a.name === algoName && a.isNoble)
+
+        const nativeTest = tests.find(t => {
+          const component = getTestComponent(t)
+          return component.name === algoName && t.testingComponent === algoType && !component.isNoble
+        })
+        const nativePassed = nativeTest?.status === 'passed'
+
+        return (nativePassed && nativeAlgo) || nobleAlgo || nativeAlgo
+      }
+
+      /** Validates hex input and updates element error state */
+      const validateHexInput = (element, minBytes = 0) => {
+        const value = element.value.trim()
+        if (!value) {
+          element.classList.remove('error')
+          return null
+        }
+
+        try {
+          const data = Uint8Array.fromHex(value)
+          if (minBytes > 0 && data.length < minBytes) {
+            element.classList.add('error')
+            return null
+          }
+          element.classList.remove('error')
+          return data
+        } catch {
+          element.classList.add('error')
+          return null
+        }
+      }
+
+      /** Generates random bytes and updates input field */
+      const setRandomHex = (inputId, byteCount) => {
+        const random = crypto.getRandomValues(new Uint8Array(byteCount))
+        document.getElementById(inputId).value = random.toHex()
+        return random
+      }
+
+      /** Sets input to all zeros */
+      const setZeroHex = (inputId, byteCount) => {
+        const zero = '00'.repeat(byteCount)
+        document.getElementById(inputId).value = zero
+        return Uint8Array.fromHex(zero)
+      }
+
+      /** Resets chat and sets up fresh context */
+      const resetAndSetupContext = async () => {
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
       }
 
       // ============================================================================
@@ -1938,34 +2033,17 @@
       // TEST GENERATION
       // ============================================================================
 
-      /**
-       * Generates the full test suite Strategy: Test each component individually with baseline
-       * values for others This avoids testing every combination (which would be thousands of
-       * tests)
-       */
-      function generateTests() {
+      /** Generates the full test suite - tests each component with baseline values for others */
+      const generateTests = () => {
         const testList = []
-
         const testConfigs = [
-          {
-            algorithms: ALL_KEMS,
-            component: 'kem',
-            baselines: { kdf: baselineKDF, aead: baselineAEAD },
-          },
-          {
-            algorithms: ALL_KDFS,
-            component: 'kdf',
-            baselines: { kem: baselineKEM, aead: baselineAEAD },
-          },
-          {
-            algorithms: ALL_AEADS,
-            component: 'aead',
-            baselines: { kem: baselineKEM, kdf: baselineKDF },
-          },
+          { algorithms: ALL_KEMS, component: 'kem', baselines: { kdf: baselineKDF, aead: baselineAEAD } },
+          { algorithms: ALL_KDFS, component: 'kdf', baselines: { kem: baselineKEM, aead: baselineAEAD } },
+          { algorithms: ALL_AEADS, component: 'aead', baselines: { kem: baselineKEM, kdf: baselineKDF } }
         ]
 
-        for (const { algorithms, component, baselines } of testConfigs) {
-          for (const algorithm of algorithms) {
+        testConfigs.forEach(({ algorithms, component, baselines }) => {
+          algorithms.forEach(algorithm => {
             const test = {
               id: testList.length,
               ...baselines,
@@ -1973,12 +2051,12 @@
               testingComponent: component,
               status: 'pending',
               error: null,
+              expectedToFail: false
             }
             test.expectedToFail = isExpectedToFail(test)
             testList.push(test)
-          }
-        }
-
+          })
+        })
         return testList
       }
 
@@ -1987,13 +2065,7 @@
       // ============================================================================
 
       /** Gets the component object from a test based on the test's component type */
-      function getTestComponent(test) {
-        return test.testingComponent === 'kem'
-          ? test.kem
-          : test.testingComponent === 'kdf'
-            ? test.kdf
-            : test.aead
-      }
+      const getTestComponent = (test) => test[test.testingComponent]
 
       /** Determines the display status for an algorithm card */
       function getAlgorithmStatus(algoName, algoType) {
@@ -2160,69 +2232,21 @@
             const algoName = card.getAttribute('data-algo')
             const algoType = card.getAttribute('data-type')
 
-            // Don't allow selection of AEAD_EXPORT_ONLY for demo
-            if (algoName === 'AEAD_EXPORT_ONLY') {
-              return
-            }
-
-            // Only allow selection of passed algorithms
+            // Don't allow selection of AEAD_EXPORT_ONLY for demo or non-passing algorithms
+            if (algoName === 'AEAD_EXPORT_ONLY') return
             const status = getAlgorithmStatus(algoName, algoType)
-            if (status !== 'native' && status !== 'noble' && status !== 'both') {
-              return
-            }
+            if (status !== 'native' && status !== 'noble' && status !== 'both') return
 
             // Remove selection from other cards of same type
             document.querySelectorAll(`.algo-card[data-type="${algoType}"]`).forEach(c => {
               c.classList.remove('selected')
             })
-
-            // Select this card
             card.classList.add('selected')
 
-            // Find the appropriate implementation
-            // Prefer native when it's available and passed, otherwise use noble
-            let selectedAlgo
-            if (algoType === 'kem') {
-              const nativeAlgo = ALL_KEMS.find(a => a.name === algoName && !a.isNoble)
-              const nobleAlgo = ALL_KEMS.find(a => a.name === algoName && a.isNoble)
-
-              // Check if native passed
-              const nativeTest = tests.find(t => {
-                const component = getTestComponent(t)
-                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
-              })
-              const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-              demoState.selectedKEM = selectedAlgo
-            } else if (algoType === 'kdf') {
-              const nativeAlgo = ALL_KDFS.find(a => a.name === algoName && !a.isNoble)
-              const nobleAlgo = ALL_KDFS.find(a => a.name === algoName && a.isNoble)
-
-              // Check if native passed
-              const nativeTest = tests.find(t => {
-                const component = getTestComponent(t)
-                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
-              })
-              const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-              demoState.selectedKDF = selectedAlgo
-            } else if (algoType === 'aead') {
-              const nativeAlgo = ALL_AEADS.find(a => a.name === algoName && !a.isNoble)
-              const nobleAlgo = ALL_AEADS.find(a => a.name === algoName && a.isNoble)
-
-              // Check if native passed
-              const nativeTest = tests.find(t => {
-                const component = getTestComponent(t)
-                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
-              })
-              const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-              demoState.selectedAEAD = selectedAlgo
-            }
-
+            // Select algorithm and update state
+            const algoMap = { kem: ALL_KEMS, kdf: ALL_KDFS, aead: ALL_AEADS }
+            const stateKey = `selected${algoType.toUpperCase()}`
+            demoState[stateKey] = selectPreferredAlgorithm(algoMap[algoType], algoName, algoType)
             updateDemoSection()
           })
         })
@@ -2232,57 +2256,14 @@
           const cards = document.querySelectorAll(`.algo-card[data-type="${type}"]`)
           for (const card of cards) {
             const algoName = card.getAttribute('data-algo')
-            const status = getAlgorithmStatus(algoName, type)
-
-            // Skip AEAD_EXPORT_ONLY
             if (algoName === 'AEAD_EXPORT_ONLY') continue
 
-            // Select first passed algorithm
+            const status = getAlgorithmStatus(algoName, type)
             if (status === 'native' || status === 'noble' || status === 'both') {
-              // Don't trigger click during auto-selection, just mark as selected and set state
               card.classList.add('selected')
-
-              let selectedAlgo
-              if (type === 'kem') {
-                const nativeAlgo = ALL_KEMS.find(a => a.name === algoName && !a.isNoble)
-                const nobleAlgo = ALL_KEMS.find(a => a.name === algoName && a.isNoble)
-
-                // Check if native passed
-                const nativeTest = tests.find(t => {
-                  const component = getTestComponent(t)
-                  return component.name === algoName && t.testingComponent === type && !component.isNoble
-                })
-                const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-                demoState.selectedKEM = selectedAlgo
-              } else if (type === 'kdf') {
-                const nativeAlgo = ALL_KDFS.find(a => a.name === algoName && !a.isNoble)
-                const nobleAlgo = ALL_KDFS.find(a => a.name === algoName && a.isNoble)
-
-                // Check if native passed
-                const nativeTest = tests.find(t => {
-                  const component = getTestComponent(t)
-                  return component.name === algoName && t.testingComponent === type && !component.isNoble
-                })
-                const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-                demoState.selectedKDF = selectedAlgo
-              } else if (type === 'aead') {
-                const nativeAlgo = ALL_AEADS.find(a => a.name === algoName && !a.isNoble)
-                const nobleAlgo = ALL_AEADS.find(a => a.name === algoName && a.isNoble)
-
-                // Check if native passed
-                const nativeTest = tests.find(t => {
-                  const component = getTestComponent(t)
-                  return component.name === algoName && t.testingComponent === type && !component.isNoble
-                })
-                const nativePassed = nativeTest && nativeTest.status === 'passed'
-
-                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
-                demoState.selectedAEAD = selectedAlgo
-              }
+              const algoMap = { kem: ALL_KEMS, kdf: ALL_KDFS, aead: ALL_AEADS }
+              const stateKey = `selected${type.toUpperCase()}`
+              demoState[stateKey] = selectPreferredAlgorithm(algoMap[type], algoName, type)
               break
             }
           }
@@ -2303,7 +2284,9 @@
 
         // Update demo section once after all three are selected
         updateDemoSection()
-      }      // ============================================================================
+      }
+
+      // ============================================================================
       // DEMO SECTION FUNCTIONALITY
       // ============================================================================
 
@@ -2377,23 +2360,15 @@
         }
       }
 
-      // Demo button handlers
+      // IKM button handlers
       document.getElementById('zeroIkmButton').addEventListener('click', async () => {
         if (!demoState.suite) return
-
-        const ikmLength = demoState.suite.KEM.Nsk
-        const zeroIkm = '00'.repeat(ikmLength)
-        document.getElementById('ikmInput').value = zeroIkm
-        await deriveFromIkm(zeroIkm)
+        await deriveFromIkm(setZeroHex('ikmInput', demoState.suite.KEM.Nsk).toHex())
       })
 
       document.getElementById('randomIkmButton').addEventListener('click', async () => {
         if (!demoState.suite) return
-
-        const ikmLength = demoState.suite.KEM.Nsk
-        const randomIkm = crypto.getRandomValues(new Uint8Array(ikmLength))
-        document.getElementById('ikmInput').value = randomIkm.toHex()
-        await deriveFromIkm(randomIkm.toHex())
+        await deriveFromIkm(setRandomHex('ikmInput', demoState.suite.KEM.Nsk).toHex())
       })
 
       async function deriveFromIkm(ikmHex) {
@@ -2432,191 +2407,83 @@
       // Mode selector
       document.querySelectorAll('input[name="mode"]').forEach(radio => {
         radio.addEventListener('change', async (e) => {
-          const pskFields = document.getElementById('pskFields')
-          const content = document.getElementById('advancedOptionsContent')
-
           demoState.mode = e.target.value
+          const pskFields = document.getElementById('pskFields')
 
           if (e.target.value === 'psk') {
             pskFields.classList.remove('hidden')
-            // Set default PSK values if empty, otherwise parse existing values
+            // Initialize PSK values if not present
             if (!document.getElementById('pskInput').value) {
-              const randomPsk = crypto.getRandomValues(new Uint8Array(32))
-              document.getElementById('pskInput').value = randomPsk.toHex()
-              demoState.psk = randomPsk
+              demoState.psk = setRandomHex('pskInput', 32)
             } else {
-              // Parse existing PSK value
-              try {
-                demoState.psk = Uint8Array.fromHex(document.getElementById('pskInput').value.trim())
-              } catch (e) {
-                console.error('Invalid PSK hex:', e.message)
-              }
+              demoState.psk = validateHexInput(document.getElementById('pskInput'), 32)
             }
             if (!document.getElementById('pskIdInput').value) {
-              const randomPskId = crypto.getRandomValues(new Uint8Array(8))
-              document.getElementById('pskIdInput').value = randomPskId.toHex()
-              demoState.pskId = randomPskId
+              demoState.pskId = setRandomHex('pskIdInput', 8)
             } else {
-              // Parse existing PSK ID value
-              try {
-                demoState.pskId = Uint8Array.fromHex(document.getElementById('pskIdInput').value.trim())
-              } catch (e) {
-                console.error('Invalid PSK ID hex:', e.message)
-              }
+              demoState.pskId = validateHexInput(document.getElementById('pskIdInput'), 1)
             }
           } else {
             pskFields.classList.add('hidden')
-            demoState.psk = null
-            demoState.pskId = null
+            demoState.psk = demoState.pskId = null
           }
 
-          const chatContainer = document.getElementById('chatContainer')
-          chatContainer.innerHTML = ''
-          chatContainer.classList.add('hidden')
-          await setupSenderContext()
+          await resetAndSetupContext()
         })
       })
 
       // Info input
       document.getElementById('infoInput').addEventListener('input', async (e) => {
-        const infoHex = e.target.value.trim()
-        const infoInput = document.getElementById('infoInput')
-
-        try {
-          if (infoHex) {
-            demoState.info = Uint8Array.fromHex(infoHex)
-            infoInput.classList.remove('error')
-          } else {
-            demoState.info = null
-            infoInput.classList.remove('error')
-          }
-          const chatContainer = document.getElementById('chatContainer')
-          chatContainer.innerHTML = ''
-          chatContainer.classList.add('hidden')
-          await setupSenderContext()
-        } catch (e) {
-          infoInput.classList.add('error')
-          console.error('Invalid info hex:', e.message)
+        demoState.info = validateHexInput(e.target)
+        if (!e.target.classList.contains('error')) {
+          await resetAndSetupContext()
         }
         updateButtonStates()
       })
 
+      // Info button handlers
       document.getElementById('zeroInfoButton').addEventListener('click', async () => {
-        const zeroInfo = '00'.repeat(32)
-        document.getElementById('infoInput').value = zeroInfo
-        demoState.info = Uint8Array.fromHex(zeroInfo)
-        document.getElementById('infoInput').classList.remove('error')
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-        await setupSenderContext()
+        demoState.info = setZeroHex('infoInput', 32)
+        await resetAndSetupContext()
       })
 
       document.getElementById('randomInfoButton').addEventListener('click', async () => {
-        const randomInfo = crypto.getRandomValues(new Uint8Array(32))
-        document.getElementById('infoInput').value = randomInfo.toHex()
-        demoState.info = randomInfo
-        document.getElementById('infoInput').classList.remove('error')
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-        await setupSenderContext()
+        demoState.info = setRandomHex('infoInput', 32)
+        await resetAndSetupContext()
       })
 
       // PSK input
       document.getElementById('pskInput').addEventListener('input', async (e) => {
-        const pskHex = e.target.value.trim()
-        const pskInput = document.getElementById('pskInput')
-
-        try {
-          if (pskHex) {
-            const psk = Uint8Array.fromHex(pskHex)
-            if (psk.length < 32) {
-              pskInput.classList.add('error')
-              console.error('PSK must be at least 32 bytes')
-              updateButtonStates()
-              return
-            }
-            demoState.psk = psk
-            pskInput.classList.remove('error')
-          } else {
-            demoState.psk = null
-            pskInput.classList.remove('error')
-          }
-          const chatContainer = document.getElementById('chatContainer')
-          chatContainer.innerHTML = ''
-          chatContainer.classList.add('hidden')
-          await setupSenderContext()
-        } catch (e) {
-          pskInput.classList.add('error')
-          console.error('Invalid PSK hex:', e.message)
+        demoState.psk = validateHexInput(e.target, 32)
+        if (!e.target.classList.contains('error')) {
+          await resetAndSetupContext()
         }
         updateButtonStates()
       })
 
       // PSK ID input
       document.getElementById('pskIdInput').addEventListener('input', async (e) => {
-        const pskIdHex = e.target.value.trim()
-        const pskIdInput = document.getElementById('pskIdInput')
-
-        try {
-          if (pskIdHex) {
-            const pskId = Uint8Array.fromHex(pskIdHex)
-            if (pskId.length < 1) {
-              pskIdInput.classList.add('error')
-              console.error('PSK ID must be at least 1 byte')
-              updateButtonStates()
-              return
-            }
-            demoState.pskId = pskId
-            pskIdInput.classList.remove('error')
-          } else {
-            demoState.pskId = null
-            pskIdInput.classList.remove('error')
-          }
-          const chatContainer = document.getElementById('chatContainer')
-          chatContainer.innerHTML = ''
-          chatContainer.classList.add('hidden')
-          await setupSenderContext()
-        } catch (e) {
-          pskIdInput.classList.add('error')
-          console.error('Invalid PSK ID hex:', e.message)
+        demoState.pskId = validateHexInput(e.target, 1)
+        if (!e.target.classList.contains('error')) {
+          await resetAndSetupContext()
         }
         updateButtonStates()
       })
 
       // PSK button handlers
       document.getElementById('zeroPskButton').addEventListener('click', async () => {
-        const zeroPsk = '00'.repeat(32)
-        document.getElementById('pskInput').value = zeroPsk
-        demoState.psk = Uint8Array.fromHex(zeroPsk)
-        document.getElementById('pskInput').classList.remove('error')
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-        await setupSenderContext()
+        demoState.psk = setZeroHex('pskInput', 32)
+        await resetAndSetupContext()
       })
 
       document.getElementById('randomPskButton').addEventListener('click', async () => {
-        const randomPsk = crypto.getRandomValues(new Uint8Array(32))
-        document.getElementById('pskInput').value = randomPsk.toHex()
-        demoState.psk = randomPsk
-        document.getElementById('pskInput').classList.remove('error')
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-        await setupSenderContext()
+        demoState.psk = setRandomHex('pskInput', 32)
+        await resetAndSetupContext()
       })
 
       document.getElementById('randomPskIdButton').addEventListener('click', async () => {
-        const randomPskId = crypto.getRandomValues(new Uint8Array(8))
-        document.getElementById('pskIdInput').value = randomPskId.toHex()
-        demoState.pskId = randomPskId
-        document.getElementById('pskIdInput').classList.remove('error')
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-        await setupSenderContext()
+        demoState.pskId = setRandomHex('pskIdInput', 8)
+        await resetAndSetupContext()
       })
 
       document.getElementById('ikmInput').addEventListener('input', async (e) => {
@@ -2627,86 +2494,51 @@
       })
 
       document.getElementById('refreshContextButton').addEventListener('click', async () => {
-        // Check if this is being called to reset errors
-        const aadInput = document.getElementById('aadInput')
-        const ikmInput = document.getElementById('ikmInput')
-        const infoInput = document.getElementById('infoInput')
-        const pskInput = document.getElementById('pskInput')
-        const pskIdInput = document.getElementById('pskIdInput')
-        const hasInvalidFields = aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
-                                 infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
-                                 pskIdInput.classList.contains('error')
+        const inputIds = ['aadInput', 'ikmInput', 'infoInput', 'pskInput', 'pskIdInput']
+        const inputs = inputIds.map(id => document.getElementById(id))
+        const hasErrors = inputs.some(input => input.classList.contains('error'))
 
-        if (hasInvalidFields) {
+        if (hasErrors) {
           // Reset to clean state
-          // Generate random IKM
-          const ikmLength = demoState.suite.KEM.Nsk
-          const randomIkm = new Uint8Array(ikmLength)
-          crypto.getRandomValues(randomIkm)
-          ikmInput.value = randomIkm.toHex()
-          ikmInput.classList.remove('error')
+          setRandomHex('ikmInput', demoState.suite.KEM.Nsk)
+          inputs.forEach(input => {
+            input.value = ''
+            input.classList.remove('error')
+          })
 
-          // Clear info
-          infoInput.value = ''
-          infoInput.classList.remove('error')
-          demoState.info = null
-
-          // Set to Base mode
-          const modeRadios = document.getElementsByName('mode')
-          modeRadios[0].checked = true // Base mode
+          // Reset to base mode
+          document.getElementsByName('mode')[0].checked = true
           demoState.mode = 'base'
-
-          // Hide PSK fields
-          const pskFields = document.getElementById('pskFields')
-          pskFields.classList.add('hidden')
-
-          // Clear PSK fields
-          pskInput.value = ''
-          pskInput.classList.remove('error')
-          demoState.psk = null
-
-          pskIdInput.value = ''
-          pskIdInput.classList.remove('error')
-          demoState.pskId = null
-
-          // Clear AAD and message
-          aadInput.value = ''
-          aadInput.classList.remove('error')
-
+          demoState.info = demoState.psk = demoState.pskId = null
+          document.getElementById('pskFields').classList.add('hidden')
           messageInput.value = ''
 
-          // Clear chat
           const chatContainer = document.getElementById('chatContainer')
           chatContainer.innerHTML = ''
           chatContainer.classList.add('hidden')
 
-          // Derive new key pair and setup contexts
-          await deriveFromIkm(randomIkm.toHex())
-
+          await deriveFromIkm(document.getElementById('ikmInput').value)
           updateButtonStates()
           return
         }
 
         if (!demoState.suite || !demoState.recipientKeyPair) return
-
-        // Validate PSK mode requirements
         if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
           alert('PSK mode requires both PSK and PSK ID')
           return
         }
 
-        // Setup fresh sender context with same keys
+        // Setup fresh contexts with same keys
         const options = {}
         if (demoState.info) options.info = demoState.info
         if (demoState.mode === 'psk') {
           options.psk = demoState.psk
           options.pskId = demoState.pskId
         }
+
         const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
         demoState.senderContext = result.ctx
         demoState.encapsulatedKey = result.encapsulatedKey
-
-        // Setup fresh recipient context
         demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
 
         document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
@@ -2764,6 +2596,94 @@
         chatContainer.classList.add('hidden')
       }
 
+      /** Creates and appends an encrypted message to the chat */
+      function addEncryptedMessage(seq, plaintext, ciphertext, aad) {
+        const chatContainer = document.getElementById('chatContainer')
+
+        const ciphertextDiv = document.createElement('div')
+        ciphertextDiv.className = 'chat-message ciphertext'
+        ciphertextDiv.dataset.seq = seq
+        ciphertextDiv.dataset.plaintext = plaintext.toHex()
+        ciphertextDiv.dataset.ciphertext = ciphertext.toHex()
+        ciphertextDiv.dataset.decrypted = 'false'
+        if (aad) {
+          ciphertextDiv.dataset.aad = aad.toHex()
+        }
+
+        // Update clickability based on whether this is the next message to decrypt
+        const updateClickability = () => {
+          const isNextToDecrypt = demoState.recipientContext.seq === seq
+          if (isNextToDecrypt) {
+            ciphertextDiv.classList.add('clickable')
+            ciphertextDiv.classList.remove('not-clickable')
+          } else {
+            ciphertextDiv.classList.add('not-clickable')
+            ciphertextDiv.classList.remove('clickable')
+          }
+        }
+
+        updateClickability()
+
+        ciphertextDiv.innerHTML = `
+          <div class="chat-message-label">Ciphertext ${seq}</div>
+          ${aad ? `<div class="chat-message-label">AAD: ${aad.toHex()}</div>` : ''}
+          <div class="chat-message-content">${ciphertext.toHex()}</div>
+        `
+
+        // Add click handler to decrypt
+        ciphertextDiv.addEventListener('click', async function() {
+          if (this.dataset.decrypted === 'true') return
+
+          // Check if this is the next message in sequence
+          if (demoState.recipientContext.seq !== seq) {
+            return
+          }
+
+          try {
+            const ciphertextBytes = Uint8Array.fromHex(this.dataset.ciphertext)
+            const aad = this.dataset.aad ? Uint8Array.fromHex(this.dataset.aad) : null
+            const decrypted = await demoState.recipientContext.Open(ciphertextBytes, aad)
+            const plaintext = new TextDecoder().decode(decrypted)
+
+            // Replace ciphertext with plaintext
+            this.innerHTML = `
+              <div class="chat-message-label">Plaintext ${seq}</div>
+              ${this.dataset.aad ? `<div class="chat-message-label">AAD: ${this.dataset.aad}</div>` : ''}
+              <div class="chat-message-content">${plaintext}</div>
+            `
+            this.classList.remove('ciphertext')
+            this.classList.add('decrypted')
+            this.classList.remove('clickable', 'not-clickable')
+            this.dataset.decrypted = 'true'
+
+            // Scroll this plaintext message to top of chat container with margin
+            const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
+            chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+
+            // Update clickability of all remaining ciphertexts
+            chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
+              if (div.dataset.decrypted === 'false') {
+                const divSeq = parseInt(div.dataset.seq)
+                const isNextToDecrypt = demoState.recipientContext.seq === divSeq
+                if (isNextToDecrypt) {
+                  div.classList.add('clickable')
+                  div.classList.remove('not-clickable')
+                } else {
+                  div.classList.add('not-clickable')
+                  div.classList.remove('clickable')
+                }
+              }
+            })
+          } catch (e) {
+            console.error('Error decrypting:', e)
+            alert('Error decrypting message: ' + e.message)
+          }
+        })
+
+        chatContainer.appendChild(ciphertextDiv)
+        chatContainer.classList.remove('hidden')
+      }
+
       // Message sending
       async function sendMessage() {
         if (!demoState.senderContext) {
@@ -2809,92 +2729,8 @@
           const plaintext = new TextEncoder().encode(message)
           const ciphertext = await demoState.senderContext.Seal(plaintext, aad)
 
-          // Display ciphertext (clickable to decrypt)
-          const ciphertextDiv = document.createElement('div')
-          ciphertextDiv.className = 'chat-message ciphertext'
-          ciphertextDiv.dataset.seq = seq
-          ciphertextDiv.dataset.ciphertext = ciphertext.toHex()
-          ciphertextDiv.dataset.decrypted = 'false'
-          if (aad) {
-            ciphertextDiv.dataset.aad = aad.toHex()
-          }
-
-          // Update clickability based on whether this is the next message to decrypt
-          const updateClickability = () => {
-            const isNextToDecrypt = demoState.recipientContext.seq === seq
-            if (isNextToDecrypt) {
-              ciphertextDiv.classList.add('clickable')
-              ciphertextDiv.classList.remove('not-clickable')
-            } else {
-              ciphertextDiv.classList.add('not-clickable')
-              ciphertextDiv.classList.remove('clickable')
-            }
-          }
-
-          updateClickability()
-
-          ciphertextDiv.innerHTML = `
-          <div class="chat-message-label">Ciphertext ${seq}</div>
-          ${aad ? `<div class="chat-message-label">AAD: ${aad.toHex()}</div>` : ''}
-          <div class="chat-message-content">${ciphertext.toHex()}</div>
-        `
-
-          // Initial clickable state is set by updateClickability
-
-          // Add click handler to decrypt
-          ciphertextDiv.addEventListener('click', async function() {
-            if (this.dataset.decrypted === 'true') return
-
-            // Check if this is the next message in sequence
-            if (demoState.recipientContext.seq !== seq) {
-              return
-            }
-
-            try {
-              const ciphertextBytes = Uint8Array.fromHex(this.dataset.ciphertext)
-              const aad = this.dataset.aad ? Uint8Array.fromHex(this.dataset.aad) : null
-              const decrypted = await demoState.recipientContext.Open(ciphertextBytes, aad)
-              const plaintext = new TextDecoder().decode(decrypted)
-
-              // Replace ciphertext with plaintext
-              this.innerHTML = `
-                <div class="chat-message-label">Plaintext ${seq}</div>
-                ${this.dataset.aad ? `<div class="chat-message-label">AAD: ${this.dataset.aad}</div>` : ''}
-                <div class="chat-message-content">${plaintext}</div>
-              `
-              this.classList.remove('ciphertext')
-              this.classList.add('decrypted')
-              this.classList.remove('clickable', 'not-clickable')
-              this.dataset.decrypted = 'true'
-
-              // Scroll this plaintext message to top of chat container with margin
-              const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
-              chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
-
-              // Update clickability of all remaining ciphertexts
-              chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
-                if (div.dataset.decrypted === 'false') {
-                  const divSeq = parseInt(div.dataset.seq)
-                  const isNextToDecrypt = demoState.recipientContext.seq === divSeq
-                  if (isNextToDecrypt) {
-                    div.classList.add('clickable')
-                    div.classList.remove('not-clickable')
-                  } else {
-                    div.classList.add('not-clickable')
-                    div.classList.remove('clickable')
-                  }
-                }
-              })
-            } catch (e) {
-              console.error('Error decrypting:', e)
-              alert('Error decrypting message: ' + e.message)
-            }
-          })
-
-          chatContainer.appendChild(ciphertextDiv)
-
-          // Show chat container when first message is added
-          chatContainer.classList.remove('hidden')
+          // Add encrypted message to chat
+          addEncryptedMessage(seq, plaintext, ciphertext, aad)
 
           // Clear inputs
           messageInput.value = ''
@@ -2910,25 +2746,21 @@
       const sendButton = document.getElementById('sendButton')
       const refreshContextButton = document.getElementById('refreshContextButton')
 
-      // Update button states based on input and messages
-      function updateButtonStates() {
-        const aadInput = document.getElementById('aadInput')
-        const ikmInput = document.getElementById('ikmInput')
-        const infoInput = document.getElementById('infoInput')
-        const pskInput = document.getElementById('pskInput')
-        const pskIdInput = document.getElementById('pskIdInput')
-        const hasInvalidFields = aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
-                                 infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
-                                 pskIdInput.classList.contains('error')
-        sendButton.disabled = !messageInput.value.trim() || hasInvalidFields
-        document.getElementById('autoPopulateButton').disabled = hasInvalidFields
-        const chatContainer = document.getElementById('chatContainer')
-        const hasMessages = chatContainer.children.length > 0
-        // Enable reset button if there are errors OR if there are messages
-        refreshContextButton.disabled = !hasInvalidFields && !hasMessages
-      }
+      /** Update button states based on input validity and messages */
+      const updateButtonStates = () => {
+        const hasErrors = ['aadInput', 'ikmInput', 'infoInput', 'pskInput', 'pskIdInput']
+          .some(id => document.getElementById(id).classList.contains('error'))
 
-      // Initialize button states
+        sendButton.disabled = !messageInput.value.trim() || hasErrors
+        document.getElementById('autoPopulateButton').disabled = hasErrors
+
+        const hasMessages = document.getElementById('chatContainer').children.length > 0
+        refreshContextButton.disabled = !hasErrors && !hasMessages
+
+        // Enable download button if we have a valid suite and messages
+        const downloadBtn = document.getElementById('downloadVectorBtn')
+        downloadBtn.disabled = !demoState.suite || !hasMessages || hasErrors
+      }      // Initialize button states
       updateButtonStates()
 
       // Update button states on input
@@ -2955,18 +2787,78 @@
 
       // Validate AAD input on change
       aadInput.addEventListener('input', () => {
-        const value = aadInput.value.trim()
-        if (value === '') {
-          aadInput.classList.remove('error')
-        } else {
-          try {
-            Uint8Array.fromHex(value)
-            aadInput.classList.remove('error')
-          } catch (e) {
-            aadInput.classList.add('error')
+        validateHexInput(aadInput)
+        updateButtonStates()
+      })
+
+      // Download vector button handler
+      document.getElementById('downloadVectorBtn').addEventListener('click', async () => {
+        if (!demoState.suite || !demoState.recipientKeyPair) return
+
+        const chatContainer = document.getElementById('chatContainer')
+        const messages = chatContainer.querySelectorAll('.chat-message')
+        if (messages.length === 0) return
+
+        // Collect encryptions from chat messages
+        const encryptions = []
+        for (const msg of messages) {
+          if (msg.classList.contains('ciphertext')) {
+            const pt = msg.dataset.plaintext || ''
+            const aad = msg.dataset.aad || ''
+            const ct = msg.dataset.ciphertext
+            encryptions.push({ pt, aad, ct })
           }
         }
-        updateButtonStates()
+
+        // Get algorithm IDs
+        const kemId = ALGORITHM_IDS[demoState.selectedKEM.name]
+        const kdfId = ALGORITHM_IDS[demoState.selectedKDF.name]
+        const aeadId = ALGORITHM_IDS[demoState.selectedAEAD.name]
+
+        // Get mode (0x00 for base, 0x01 for PSK)
+        const mode = demoState.mode === 'psk' ? 0x01 : 0x00
+
+        // Serialize keys
+        const ikmR = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
+        const pkRm = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
+        const skRm = ikmR // Same for derived keys
+
+        // Build vector object
+        const vector = {
+          mode,
+          kem_id: kemId,
+          kdf_id: kdfId,
+          aead_id: aeadId,
+          info: demoState.info ? demoState.info.toHex() : '',
+          ikmR: ikmR.toHex(),
+          pkRm: pkRm.toHex(),
+          skRm: skRm.toHex(),
+          enc: demoState.encapsulatedKey.toHex(),
+          encryptions
+        }
+
+        // Add PSK fields if in PSK mode
+        if (mode === 0x01) {
+          vector.psk = demoState.psk.toHex()
+          vector.psk_id = demoState.pskId.toHex()
+        }
+
+        // Create filename
+        const kemName = demoState.selectedKEM.name
+        const kdfName = demoState.selectedKDF.name
+        const aeadName = demoState.selectedAEAD.name
+        const filename = `hpke-vector-${kemName}-${kdfName}-${aeadName}.json`
+
+        // Download file
+        const blob = new Blob([JSON.stringify([vector], null, 2)], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
       })
 
       // Auto-populate with random public domain text
@@ -3737,80 +3629,14 @@
         for (const line of lines) {
           const seq = demoState.senderContext.seq
           const plaintext = new TextEncoder().encode(line)
-          const ciphertext = await demoState.senderContext.Seal(plaintext)
 
-          const ciphertextDiv = document.createElement('div')
-          ciphertextDiv.className = 'chat-message ciphertext'
-          ciphertextDiv.dataset.seq = seq
-          ciphertextDiv.dataset.ciphertext = ciphertext.toHex()
-          ciphertextDiv.dataset.decrypted = 'false'
+          // Generate random 8-byte AAD
+          const aad = crypto.getRandomValues(new Uint8Array(8))
+          const ciphertext = await demoState.senderContext.Seal(plaintext, aad)
 
-          const updateClickability = () => {
-            const isNextToDecrypt = demoState.recipientContext.seq === seq
-            if (isNextToDecrypt) {
-              ciphertextDiv.classList.add('clickable')
-              ciphertextDiv.classList.remove('not-clickable')
-            } else {
-              ciphertextDiv.classList.add('not-clickable')
-              ciphertextDiv.classList.remove('clickable')
-            }
-          }
-
-          updateClickability()
-
-          ciphertextDiv.innerHTML = `
-            <div class="chat-message-label">Ciphertext ${seq}</div>
-            <div class="chat-message-content">${ciphertext.toHex()}</div>
-          `
-
-          ciphertextDiv.addEventListener('click', async function() {
-            if (this.dataset.decrypted === 'true') return
-
-            if (demoState.recipientContext.seq !== seq) {
-              return
-            }
-
-            try {
-              const ciphertextBytes = Uint8Array.fromHex(this.dataset.ciphertext)
-              const decrypted = await demoState.recipientContext.Open(ciphertextBytes)
-              const plaintext = new TextDecoder().decode(decrypted)
-
-              this.innerHTML = `
-                <div class="chat-message-label">Plaintext ${seq}</div>
-                <div class="chat-message-content">${plaintext}</div>
-              `
-              this.classList.remove('ciphertext')
-              this.classList.add('decrypted')
-              this.classList.remove('clickable', 'not-clickable')
-              this.dataset.decrypted = 'true'
-
-              // Scroll this plaintext message to top of chat container with margin
-              const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
-              chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
-
-              chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
-                if (div.dataset.decrypted === 'false') {
-                  const divSeq = parseInt(div.dataset.seq)
-                  const isNextToDecrypt = demoState.recipientContext.seq === divSeq
-                  if (isNextToDecrypt) {
-                    div.classList.add('clickable')
-                    div.classList.remove('not-clickable')
-                  } else {
-                    div.classList.add('not-clickable')
-                    div.classList.remove('clickable')
-                  }
-                }
-              })
-            } catch (e) {
-              console.error('Error decrypting:', e)
-              alert('Error decrypting message: ' + e.message)
-            }
-          })
-
-          chatContainer.appendChild(ciphertextDiv)
+          // Add encrypted message to chat
+          addEncryptedMessage(seq, plaintext, ciphertext, aad)
         }
-
-        chatContainer.classList.remove('hidden')
 
         // Update button states
         updateButtonStates()
@@ -3890,15 +3716,9 @@
       }
 
       /** Helper to verify two Uint8Arrays match */
-      function assertUint8ArraysEqual(actual, expected, errorPrefix) {
-        if (actual.length !== expected.length) {
-          throw new Error(`${errorPrefix}: length mismatch`)
-        }
-        for (let i = 0; i < actual.length; i++) {
-          if (actual[i] !== expected[i]) {
-            throw new Error(`${errorPrefix}: content mismatch`)
-          }
-        }
+      const assertUint8ArraysEqual = (actual, expected, errorPrefix) => {
+        if (actual.length !== expected.length) throw new Error(`${errorPrefix}: length mismatch`)
+        if (!actual.every((val, i) => val === expected[i])) throw new Error(`${errorPrefix}: content mismatch`)
       }
 
       /** Runs a single test for a KEM/KDF/AEAD combination */
