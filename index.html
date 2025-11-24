@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>@panva/hpke</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%233fb950'/><stop offset='100%25' style='stop-color:%23388bfd'/></linearGradient></defs><rect x='25' y='45' width='50' height='40' fill='url(%23g)' rx='5'/><path d='M 35 45 L 35 30 A 15 15 0 0 1 65 30 L 65 45' fill='none' stroke='url(%23g)' stroke-width='8'/></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%23fbbf24'/><stop offset='100%25' style='stop-color:%2360a5fa'/></linearGradient></defs><rect x='25' y='45' width='50' height='40' fill='url(%23g)' rx='5'/><path d='M 35 45 L 35 30 A 15 15 0 0 1 65 30 L 65 45' fill='none' stroke='url(%23g)' stroke-width='8'/></svg>">
     <script type="importmap">
       {
         "imports": {
@@ -17,67 +17,186 @@
       }
     </script>
     <style>
-      * {
+      /* ============================================
+         CSS Custom Properties (Design System)
+         ============================================ */
+      :root {
+        /* Colors - Background */
+        --color-bg-primary: #1a1410;
+        --color-bg-secondary: #2a201a;
+        --color-bg-tertiary: #3d3026;
+
+        /* Colors - Text */
+        --color-text-primary: #fef3c7;
+        --color-text-secondary: #a8a29e;
+        --color-text-tertiary: #8a837e;
+
+        /* Colors - Border */
+        --color-border-primary: #3d3026;
+        --color-border-secondary: #2a201a;
+
+        /* Colors - Brand */
+        --color-native: #fbbf24;
+        --color-native-hover: #f59e0b;
+        --color-native-bg: rgba(251, 191, 36, 0.15);
+
+        --color-noble: #60a5fa;
+        --color-noble-hover: #3b82f6;
+        --color-noble-bg: rgba(96, 165, 250, 0.15);
+        --color-noble-button: #60a5fa;
+
+        /* Colors - Semantic */
+        --color-success: #fbbf24;
+        --color-success-hover: #f59e0b;
+        --color-success-text: #fcd34d;
+
+        --color-error: #ef4444;
+        --color-error-bg: rgba(239, 68, 68, 0.15);
+        --color-error-text: #f87171;
+
+        --color-warning: #fb923c;
+        --color-warning-bg: rgba(251, 146, 60, 0.15);
+
+        --color-info: #60a5fa;
+        --color-info-bg: rgba(96, 165, 250, 0.1);
+
+        /* Spacing */
+        --space-xs: 4px;
+        --space-sm: 8px;
+        --space-md: 12px;
+        --space-lg: 16px;
+        --space-xl: 20px;
+        --space-2xl: 30px;
+        --space-3xl: 50px;
+
+        /* Typography */
+        --font-mono: 'Monaco', 'Courier New', monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+        --font-size-xs: 10px;
+        --font-size-sm: 11px;
+        --font-size-base: 12px;
+        --font-size-md: 13px;
+        --font-size-lg: 14px;
+        --font-size-xl: 16px;
+        --font-size-2xl: 18px;
+        --font-size-3xl: 24px;
+        --font-size-4xl: 32px;
+
+        /* Line Heights */
+        --line-height-tight: 1;
+        --line-height-base: 18px;
+        --line-height-relaxed: 1.5;
+
+        /* Transitions */
+        --transition-fast: 0.15s ease;
+        --transition-base: 0.2s ease;
+        --transition-slow: 0.3s ease;
+
+        /* Shadows */
+        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+        --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.3);
+        --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
+
+        /* Border Radius */
+        --radius-sm: 3px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+        --radius-full: 50%;
+      }
+
+      /* ============================================
+         CSS Reset & Base Styles
+         ============================================ */
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
 
-      body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell,
-          sans-serif;
-        padding: 20px;
-        background: rgb(13, 17, 23);
-        min-height: 100vh;
+      .hidden {
+        display: none !important;
       }
 
+      body {
+        font-family: var(--font-sans);
+        padding: var(--space-xl);
+        background: var(--color-bg-primary);
+        min-height: 100vh;
+        color: var(--color-text-primary);
+        line-height: var(--line-height-relaxed);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* ============================================
+         Layout Components
+         ============================================ */
       .container {
         max-width: 1400px;
         margin: 0 auto;
-        background: rgb(22, 27, 34);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        padding: 30px;
+        background: var(--color-bg-secondary);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-2xl);
+        border-radius: var(--radius-md);
       }
 
+      /* ============================================
+         Header Section
+         ============================================ */
       .header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
-        gap: 20px;
+        margin-bottom: var(--space-sm);
+        gap: var(--space-xl);
         position: relative;
       }
 
       .header > div:first-child {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--space-md);
       }
 
       h1 {
-        color: #e6edf3;
+        color: var(--color-text-primary);
         margin: 0;
-        font-size: 32px;
-        line-height: 1;
+        font-size: var(--font-size-4xl);
+        line-height: var(--line-height-tight);
+        font-weight: 700;
       }
 
+      .subtitle {
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-2xl);
+        font-size: var(--font-size-xl);
+        line-height: var(--line-height-relaxed);
+      }
+
+      /* ============================================
+         Social Links
+         ============================================ */
       .social-links {
         display: flex;
-        gap: 16px;
+        gap: var(--space-lg);
         align-items: center;
       }
 
       .social-links a {
-        color: #8b949e;
+        color: var(--color-text-primary);
         text-decoration: none;
         display: inline-flex;
         align-items: center;
-        transition: color 0.2s ease;
+        transition: color var(--transition-base);
       }
 
-      .social-links a:hover {
-        color: #58a6ff;
+      .social-links a:hover,
+      .social-links a:focus {
+        color: var(--color-native);
+        outline: none;
       }
 
       .social-links a svg {
@@ -85,128 +204,184 @@
         height: 24px;
       }
 
+      /* ============================================
+         Filter Navigation
+         ============================================ */
       .filter-links {
         display: flex;
-        gap: 12px;
-        font-size: 13px;
+        gap: var(--space-md);
+        font-size: var(--font-size-md);
         flex-shrink: 0;
       }
 
       .filter-links a {
-        color: #8b949e;
+        color: var(--color-text-secondary);
         text-decoration: none;
-        padding: 6px 12px;
-        border: 2px solid #30363d;
-        transition: all 0.2s ease;
+        padding: var(--space-sm) var(--space-md);
+        border: 2px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-base);
         white-space: nowrap;
-        font-family: 'Monaco', 'Courier New', monospace;
+        font-family: var(--font-mono);
+        font-weight: 500;
       }
 
-      .filter-links a:hover {
-        color: #e6edf3;
+      .filter-links a:hover,
+      .filter-links a:focus {
+        color: var(--color-text-primary);
         transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+        outline: none;
       }
 
       .filter-links a#filterNative.active {
-        color: #e6edf3;
-        border-color: #3fb950;
-        background: rgba(46, 160, 67, 0.15);
+        color: var(--color-text-primary);
+        border-color: var(--color-native);
+        background: var(--color-native-bg);
       }
 
       .filter-links a#filterNoble.active {
-        color: #e6edf3;
-        border-color: #388bfd;
-        background: rgba(56, 139, 253, 0.15);
+        color: var(--color-text-primary);
+        border-color: var(--color-noble);
+        background: var(--color-noble-bg);
       }
 
       .filter-links a#filterBoth.active {
-        color: #e6edf3;
+        color: var(--color-text-primary);
         background: linear-gradient(
           135deg,
-          rgba(46, 160, 67, 0.15) 0%,
-          rgba(46, 160, 67, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 100%
+          var(--color-native-bg) 0%,
+          var(--color-native-bg) 50%,
+          var(--color-noble-bg) 100%
         );
-        border-width: 2px;
-        border-style: solid;
-        border-image: linear-gradient(
-            135deg,
-            #3fb950 0%,
-            #3fb950 50%,
-            #388bfd 100%
-          )
-          1;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        position: relative;
       }
 
+      .filter-links a#filterBoth.active::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: var(--radius-sm);
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          var(--color-native) 0%,
+          var(--color-native) 50%,
+          var(--color-noble) 100%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
+      }
+
+      /* ============================================
+         Burger Menu (Mobile)
+         ============================================ */
       .burger-menu {
         display: none;
         flex-direction: column;
-        gap: 4px;
+        gap: var(--space-xs);
         cursor: pointer;
-        padding: 8px;
-        border: 2px solid #30363d;
+        padding: var(--space-sm);
+        border: 2px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
         background: transparent;
-        transition: all 0.2s ease;
+        transition: all var(--transition-base);
       }
 
-      .burger-menu:hover {
-        border-color: #58a6ff;
+      .burger-menu:hover,
+      .burger-menu:focus {
+        border-color: var(--color-info);
         transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+        outline: none;
       }
 
       .burger-menu span {
         width: 20px;
         height: 2px;
-        background: #8b949e;
-        transition: all 0.2s ease;
+        background: var(--color-text-secondary);
+        transition: all var(--transition-base);
+        border-radius: 1px;
       }
 
-      .burger-menu:hover span {
-        background: #58a6ff;
+      .burger-menu:hover span,
+      .burger-menu:focus span {
+        background: var(--color-info);
       }
 
-      .subtitle {
-        color: #8b949e;
-        margin-bottom: 30px;
-        font-size: 16px;
+      /* ============================================
+         Section Components
+         ============================================ */
+      .components-section,
+      .vector-validation,
+      .demo-section {
+        margin-top: var(--space-3xl);
+        padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-radius: var(--radius-md);
+        position: relative;
       }
 
-      .summary {
-        margin-bottom: 30px;
+      .section-label {
+        position: absolute;
+        top: -26px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-bottom: none;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
       }
 
+      /* ============================================
+         Legend Component
+         ============================================ */
       .legend {
         display: flex;
-        gap: 20px;
-        margin-bottom: 20px;
-        padding: 12px;
-        background: rgba(110, 118, 129, 0.1);
+        gap: var(--space-xl);
+        margin-top: var(--space-xl);
+        margin-bottom: 0;
+        padding: var(--space-md);
+        background: var(--color-bg-secondary);
+        border-radius: var(--radius-sm);
         flex-wrap: wrap;
       }
 
       .legend-item {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: #8b949e;
-        transition: all 0.2s ease;
+        gap: var(--space-sm);
+        font-size: var(--font-size-md);
+        color: var(--color-text-secondary);
+        transition: all var(--transition-base);
       }
 
       .legend-item a {
         display: flex;
         align-items: center;
-        gap: 8px;
-        color: #8b949e;
+        gap: var(--space-sm);
+        color: var(--color-text-secondary);
         text-decoration: none;
         cursor: pointer;
-        transition: all 0.2s ease;
+        transition: all var(--transition-base);
       }
 
-      .legend-item a:hover {
-        color: #e6edf3;
+      .legend-item a:hover,
+      .legend-item a:focus {
+        color: var(--color-text-primary);
+        outline: none;
       }
 
       .legend-item.disabled {
@@ -215,124 +390,180 @@
 
       .legend-item.disabled span {
         text-decoration: line-through;
-        color: #6e7681;
+        color: var(--color-text-tertiary);
       }
 
       .legend-color {
         width: 16px;
         height: 16px;
         border: 2px solid;
+        border-radius: 2px;
       }
 
       .legend-color.native {
-        background: rgba(46, 160, 67, 0.15);
-        border-color: #3fb950;
+        background: var(--color-native-bg);
+        border-color: var(--color-native);
       }
 
       .legend-color.noble {
-        background: rgba(56, 139, 253, 0.15);
-        border-color: #388bfd;
+        background: var(--color-noble-bg);
+        border-color: var(--color-noble);
       }
 
       .legend-color.both {
         background: linear-gradient(
           135deg,
-          rgba(46, 160, 67, 0.15) 0%,
-          rgba(46, 160, 67, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 100%
+          var(--color-native-bg) 0%,
+          var(--color-native-bg) 50%,
+          var(--color-noble-bg) 50%,
+          var(--color-noble-bg) 100%
         );
-        border-color: #3fb950;
-        border-image: linear-gradient(135deg, #3fb950 0%, #3fb950 50%, #388bfd 50%, #388bfd 100%) 1;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        position: relative;
+      }
+
+      .legend-color.both::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: 2px;
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          var(--color-native) 0%,
+          var(--color-native) 50%,
+          var(--color-noble) 50%,
+          var(--color-noble) 100%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
       }
 
       .legend-color.unsupported {
-        background: rgba(248, 81, 73, 0.15);
-        border-color: #f85149;
+        background: var(--color-error-bg);
+        border-color: var(--color-error);
       }
 
+      /* ============================================
+         Algorithm Section
+         ============================================ */
       .algorithm-section {
-        margin-bottom: 25px;
+        margin-bottom: var(--space-lg);
       }
 
       .algorithm-section h3 {
-        font-size: 18px;
-        color: #e6edf3;
-        margin-bottom: 12px;
+        font-size: var(--font-size-lg);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-sm);
         font-weight: 600;
       }
 
       .algorithm-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: var(--space-sm);
       }
 
       .algo-card {
-        padding: 12px;
+        padding: var(--space-sm);
         border: 2px solid;
-        font-size: 13px;
-        font-family: 'Monaco', 'Courier New', monospace;
-        transition: all 0.2s ease;
+        border-radius: var(--radius-sm);
+        font-size: var(--font-size-sm);
+        font-family: var(--font-mono);
+        transition: all var(--transition-base);
+        cursor: pointer;
+        position: relative;
       }
 
-      .algo-card:hover {
+      .algo-card:hover,
+      .algo-card:focus {
         transform: translateY(-2px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+        outline: none;
+      }
+
+      .algo-card[data-algo="AEAD_EXPORT_ONLY"]:hover {
+        transform: none;
+        box-shadow: none;
+        cursor: default;
+      }
+
+      .algo-card.selected::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 0 16px 16px;
+        border-color: transparent transparent var(--color-text-primary) transparent;
       }
 
       .algo-card.native {
-        background: rgba(46, 160, 67, 0.15);
-        border-color: #3fb950;
-        color: #e6edf3;
+        background: var(--color-native-bg);
+        border-color: var(--color-native);
+        color: var(--color-text-primary);
       }
 
       .algo-card.noble {
-        background: rgba(56, 139, 253, 0.15);
-        border-color: #388bfd;
-        color: #e6edf3;
+        background: var(--color-noble-bg);
+        border-color: var(--color-noble);
+        color: var(--color-text-primary);
       }
 
       .algo-card.both {
         background: linear-gradient(
           135deg,
-          rgba(46, 160, 67, 0.15) 0%,
-          rgba(46, 160, 67, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 100%
+          var(--color-native-bg) 0%,
+          var(--color-native-bg) 50%,
+          var(--color-noble-bg) 100%
         );
-        border-color: #3fb950;
-        border-width: 2px;
-        border-style: solid;
-        border-image: linear-gradient(
-            135deg,
-            #3fb950 0%,
-            #3fb950 50%,
-            #388bfd 100%
-          )
-          1;
-        color: #e6edf3;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        color: var(--color-text-primary);
+        position: relative;
+      }
+
+      .algo-card.both::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: var(--radius-sm);
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          var(--color-native) 0%,
+          var(--color-native) 50%,
+          var(--color-noble) 100%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
       }
 
       .algo-card.unsupported {
-        background: rgba(248, 81, 73, 0.15);
-        border-color: #f85149;
-        color: #e6edf3;
+        background: var(--color-error-bg);
+        border-color: var(--color-error);
+        color: var(--color-text-primary);
       }
 
       .algo-card.pending {
-        background: rgba(110, 118, 129, 0.1);
-        border-color: #30363d;
-        color: #e6edf3;
+        background: var(--color-bg-secondary);
+        border-color: var(--color-border-primary);
+        color: var(--color-text-primary);
       }
 
       .algo-card.testing {
-        background: rgba(187, 128, 9, 0.15);
-        border-color: #bb8009;
-        color: #e6edf3;
-      }
-
-      .algo-card {
-        position: relative;
+        background: var(--color-warning-bg);
+        border-color: var(--color-warning);
+        color: var(--color-text-primary);
       }
 
       .algo-card .algo-name {
@@ -340,140 +571,690 @@
         word-break: break-word;
       }
 
-      .vector-validation {
-        margin-bottom: 30px;
-        padding: 20px;
-        background: rgb(13, 17, 23);
-        border: 2px solid #30363d;
-        transition: all 0.2s ease;
+      /* ============================================
+         Vector Validation Section
+         ============================================ */
+      .vector-validation-content {
+        transition: filter var(--transition-slow);
+      }
+
+      .vector-validation-content.blurred {
+        filter: blur(1px);
+        pointer-events: none;
+      }
+
+      .play-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+        cursor: pointer;
+        transition: all var(--transition-slow);
+        border-radius: var(--radius-md);
+      }
+
+      .play-overlay:hover .play-button,
+      .play-overlay:focus .play-button {
+        transform: scale(1.1);
+      }
+
+      .play-button {
+        width: 60px;
+        height: 60px;
+        background: rgba(251, 191, 36, 0.9);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all var(--transition-slow);
+        box-shadow: var(--shadow-md);
+      }
+
+      .play-overlay:hover .play-button,
+      .play-overlay:focus .play-button {
+        background: rgba(251, 191, 36, 1);
+      }
+
+      .play-button.noble {
+        background: rgba(96, 165, 250, 0.9);
+      }
+
+      .play-overlay:hover .play-button.noble,
+      .play-overlay:focus .play-button.noble {
+        background: rgba(96, 165, 250, 1);
+      }
+
+      .play-button.both {
+        background: linear-gradient(
+          135deg,
+          rgba(251, 191, 36, 0.9) 0%,
+          rgba(251, 191, 36, 0.9) 50%,
+          rgba(96, 165, 250, 0.9) 100%
+        );
+      }
+
+      .play-overlay:hover .play-button.both,
+      .play-overlay:focus .play-button.both {
+        background: linear-gradient(
+          135deg,
+          rgba(251, 191, 36, 1) 0%,
+          rgba(251, 191, 36, 1) 50%,
+          rgba(96, 165, 250, 1) 100%
+        );
+      }
+
+      .play-button::after {
+        content: '';
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 12px 0 12px 18px;
+        border-color: transparent transparent transparent #fff;
+        margin-left: 4px;
       }
 
       .vector-validation.running {
-        border-color: #bb8009;
-        background: rgba(187, 128, 9, 0.15);
+        border-color: var(--color-warning);
+        background: var(--color-warning-bg);
       }
 
       .vector-validation.passed-native {
-        border-color: #3fb950;
-        background: rgba(46, 160, 67, 0.15);
+        border-color: var(--color-native);
+        background: var(--color-native-bg);
       }
 
       .vector-validation.passed-noble {
-        border-color: #388bfd;
-        background: rgba(56, 139, 253, 0.15);
+        border-color: var(--color-noble);
+        background: var(--color-noble-bg);
       }
 
       .vector-validation.passed-both {
         background: linear-gradient(
           135deg,
-          rgba(46, 160, 67, 0.15) 0%,
-          rgba(46, 160, 67, 0.15) 50%,
-          rgba(56, 139, 253, 0.15) 100%
+          var(--color-native-bg) 0%,
+          var(--color-native-bg) 50%,
+          var(--color-noble-bg) 100%
         );
-        border-width: 2px;
-        border-style: solid;
-        border-image: linear-gradient(
-            135deg,
-            #3fb950 0%,
-            #3fb950 50%,
-            #388bfd 100%
-          )
-          1;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+        position: relative;
+      }
+
+      .vector-validation.passed-both::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        border-radius: var(--radius-md);
+        padding: 2px;
+        background: linear-gradient(
+          135deg,
+          var(--color-native) 0%,
+          var(--color-native) 50%,
+          var(--color-noble) 100%
+        );
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        pointer-events: none;
       }
 
       .vector-validation.failed {
-        border-color: #f85149;
-        background: rgba(248, 81, 73, 0.15);
+        border-color: var(--color-error);
+        background: var(--color-error-bg);
       }
 
       .vector-validation h3 {
-        font-size: 18px;
-        color: #e6edf3;
-        margin-bottom: 8px;
+        font-size: var(--font-size-2xl);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-sm);
         font-weight: 600;
       }
 
       .vector-validation .subtitle-text {
-        font-size: 13px;
-        color: #8b949e;
-        margin-bottom: 15px;
+        font-size: var(--font-size-md);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-lg);
       }
 
+      /* Progress Bar */
       .progress-bar-container {
-        background: rgb(22, 27, 34);
-        height: 24px;
-        margin-bottom: 10px;
+        background: var(--color-bg-secondary);
+        height: 28px;
+        margin-bottom: var(--space-sm);
         position: relative;
         display: flex;
         gap: 2px;
-        padding: 2px;
+        padding: 3px;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
       }
 
       .progress-box {
         flex: 1;
-        background: rgba(48, 54, 61, 0.5);
+        background: var(--color-bg-tertiary);
+        border-radius: 2px;
       }
 
       .progress-box.filled {
-        background: #3fb950;
+        background: var(--color-native);
       }
 
       .progress-box.filled.failed {
-        background: #f85149;
+        background: var(--color-error);
       }
 
       .progress-info {
         display: flex;
         justify-content: space-between;
-        font-size: 13px;
-        color: #8b949e;
-        font-family: 'Monaco', 'Courier New', monospace;
+        font-size: var(--font-size-md);
+        color: var(--color-text-secondary);
+        font-family: var(--font-mono);
       }
 
       .progress-info .passed {
-        color: #7ee787;
+        color: var(--color-success-text);
+        font-weight: 600;
       }
 
       .progress-info .failed {
-        color: #ff7b72;
+        color: var(--color-error-text);
+        font-weight: 600;
       }
 
+      /* ============================================
+         Demo Section
+         ============================================ */
+      .demo-section:not(.active) input,
+      .demo-section:not(.active) button {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      .demo-section h3 {
+        font-size: var(--font-size-2xl);
+        color: var(--color-text-primary);
+        margin-bottom: var(--space-lg);
+        font-weight: 600;
+      }
+
+      /* ============================================
+         Button Components
+         ============================================ */
+      .demo-controls {
+        display: flex;
+        gap: var(--space-sm);
+        margin-bottom: var(--space-xl);
+        flex-wrap: wrap;
+      }
+
+      .demo-controls button,
+      .ikm-input-wrapper button,
+      .output-wrapper button,
+      .chat-input-container button {
+        padding: var(--space-sm) var(--space-lg);
+        background: var(--color-bg-tertiary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        cursor: pointer;
+        font-size: var(--font-size-md);
+        font-family: var(--font-mono);
+        font-weight: 500;
+        transition: all var(--transition-base);
+      }
+
+      .demo-controls button:hover,
+      .demo-controls button:focus,
+      .ikm-input-wrapper button:hover,
+      .ikm-input-wrapper button:focus,
+      .output-wrapper button:hover,
+      .output-wrapper button:focus,
+      .chat-input-container button:hover,
+      .chat-input-container button:focus {
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-text-tertiary);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+        outline: none;
+      }
+
+      .demo-controls button:disabled,
+      .chat-input-container button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .demo-controls button:disabled:hover,
+      .chat-input-container button:disabled:hover {
+        transform: none;
+        box-shadow: none;
+      }
+
+      /* ============================================
+         Form Input Groups
+         ============================================ */
+      .demo-input-group {
+        margin-bottom: var(--space-lg);
+      }
+
+      .demo-input-group label {
+        display: block;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-md);
+        margin-bottom: var(--space-sm);
+        font-weight: 500;
+      }
+
+      .demo-input-group input,
+      .demo-input-group textarea {
+        width: 100%;
+        padding: var(--space-sm) var(--space-sm);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-base);
+        line-height: var(--line-height-base);
+        transition: all var(--transition-base);
+      }
+
+      .demo-input-group input:focus,
+      .demo-input-group textarea:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px var(--color-info-bg);
+      }
+
+      .demo-input-group input.error {
+        border-color: var(--color-error);
+        background: var(--color-error-bg);
+      }
+
+      .demo-input-group textarea {
+        resize: vertical;
+        min-height: 60px;
+      }
+
+      /* Input Wrappers */
+      .ikm-input-wrapper {
+        display: flex;
+        gap: var(--space-sm);
+        align-items: center;
+      }
+
+      .ikm-input-wrapper input {
+        flex: 1;
+      }
+
+      .ikm-input-wrapper button {
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-base);
+        white-space: nowrap;
+        line-height: var(--line-height-base);
+      }
+
+      /* Advanced Options */
+      .advanced-options {
+        margin-bottom: var(--space-lg);
+      }
+
+      .advanced-options-toggle {
+        width: 100%;
+        padding: var(--space-sm) var(--space-md);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-secondary);
+        cursor: pointer;
+        font-size: var(--font-size-md);
+        font-family: var(--font-mono);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        transition: all var(--transition-base);
+      }
+
+      .advanced-options-toggle:hover {
+        background: var(--color-bg-tertiary);
+        color: var(--color-text-primary);
+      }
+
+      .advanced-options-toggle::after {
+        content: '▼';
+        font-size: var(--font-size-sm);
+        transition: transform var(--transition-base);
+      }
+
+      .advanced-options-toggle.expanded::after {
+        transform: rotate(180deg);
+      }
+
+      .advanced-options-content {
+        margin-top: var(--space-md);
+        padding: var(--space-md);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .mode-selector {
+        display: flex;
+        gap: var(--space-xl);
+        margin-bottom: var(--space-lg);
+      }
+
+      .mode-selector label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        cursor: pointer;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-md);
+        transition: color var(--transition-base);
+      }
+
+      .mode-selector input[type="radio"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+        accent-color: var(--color-native);
+      }
+
+      .mode-selector label:hover {
+        color: var(--color-text-primary);
+      }
+
+      .psk-fields {
+        padding-top: var(--space-md);
+        border-top: 1px solid var(--color-border-primary);
+      }
+
+      .helper-text {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-tertiary);
+        margin-top: var(--space-xs);
+      }
+
+      .output-wrapper {
+        display: flex;
+        gap: var(--space-sm);
+        align-items: flex-start;
+      }
+
+      .output-wrapper .demo-output {
+        flex: 1;
+        min-width: 0;
+        margin-bottom: 0;
+      }
+
+      .output-wrapper button {
+        padding: var(--space-sm) var(--space-md);
+        font-size: var(--font-size-base);
+        white-space: nowrap;
+        flex-shrink: 0;
+        line-height: var(--line-height-base);
+      }
+
+      .demo-output {
+        background: var(--color-bg-secondary);
+        padding: var(--space-sm);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-base);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        margin-bottom: var(--space-lg);
+        transition: all var(--transition-base);
+      }
+
+      .demo-output:hover,
+      .demo-output:focus {
+        border-color: var(--color-info);
+        background: var(--color-info-bg);
+        outline: none;
+      }
+
+      /* ============================================
+         Chat Components
+         ============================================ */
+      .chat-container {
+        margin-top: var(--space-xl);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        background: var(--color-bg-secondary);
+        padding: var(--space-lg);
+        max-height: 400px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+      }
+
+      .chat-container::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      .chat-container::-webkit-scrollbar-track {
+        background: var(--color-bg-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .chat-container::-webkit-scrollbar-thumb {
+        background: var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .chat-container::-webkit-scrollbar-thumb:hover {
+        background: var(--color-text-tertiary);
+      }
+
+      .chat-message {
+        margin-bottom: var(--space-lg);
+        padding: var(--space-sm);
+        background: var(--color-bg-primary);
+        border-left: 3px solid var(--color-success);
+        border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      }
+
+      .chat-message.ciphertext {
+        border-left-color: var(--color-info) !important;
+        cursor: pointer;
+        transition: background var(--transition-base);
+      }
+
+      .chat-message.ciphertext:hover,
+      .chat-message.ciphertext:focus {
+        background: var(--color-info-bg);
+        outline: none;
+      }
+
+      .chat-message.ciphertext[style*="cursor: not-allowed"] {
+        cursor: not-allowed;
+      }
+
+      .chat-message.ciphertext[style*="cursor: not-allowed"]:hover {
+        background: var(--color-bg-primary);
+      }
+
+      .chat-message-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        margin-bottom: var(--space-sm);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+      }
+
+      .chat-message.ciphertext.clickable .chat-message-label:first-of-type::after {
+        content: " (click to decrypt)";
+        color: var(--color-info);
+        font-weight: 600;
+      }
+
+      .chat-message.ciphertext[style*="cursor: not-allowed"] .chat-message-label:first-of-type::after {
+        content: "";
+        color: var(--color-text-tertiary);
+        font-weight: normal;
+      }
+
+      .chat-message-content {
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-base);
+        word-break: break-all;
+        line-height: var(--line-height-relaxed);
+      }
+
+      .chat-message-content::selection,
+      .chat-message-label::selection {
+        background: transparent;
+        color: inherit;
+      }
+
+      .chat-input-container {
+        display: flex;
+        gap: var(--space-sm);
+        margin-top: var(--space-lg);
+      }
+
+      .chat-input-container input {
+        flex: 1;
+        padding: var(--space-sm) var(--space-sm);
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-md);
+        line-height: var(--line-height-base);
+        transition: all var(--transition-base);
+      }
+
+      .chat-input-container input:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+      }
+
+      .chat-input-container button {
+        padding: var(--space-sm) var(--space-xl);
+        font-size: var(--font-size-md);
+        line-height: var(--line-height-base);
+      }
+
+      /* Auto-populate Button */
+      #autoPopulateButton {
+        background: var(--color-bg-tertiary);
+        border: 1px solid var(--color-border-primary);
+      }
+
+      #autoPopulateButton:hover,
+      #autoPopulateButton:focus {
+        background: var(--color-bg-tertiary);
+        border-color: var(--color-text-tertiary);
+      }
+
+      /* ============================================
+         Utility Classes
+         ============================================ */
+      .hidden {
+        display: none !important;
+      }
+
+      .clickable {
+        cursor: pointer;
+        opacity: 1;
+      }
+
+      .not-clickable {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      .decrypted {
+        cursor: default;
+        opacity: 1;
+      }
+
+      .mt-lg {
+        margin-top: var(--space-xl);
+      }
+
+      .copy-flash {
+        background: var(--color-info);
+      }
+
+      /* ============================================
+         Responsive Styles (Mobile)
+         ============================================ */
       @media (max-width: 768px) {
         body {
-          padding: 10px;
+          padding: 0;
+        }
+
+        /* Hide advanced options and AAD input on mobile */
+        .advanced-options,
+        .chat-input-container #aadInput {
+          display: none;
         }
 
         .container {
-          padding: 15px;
+          padding: var(--space-md);
           display: flex;
           flex-direction: column;
+          border-radius: 0;
         }
 
+        /* Header Mobile */
         .header {
           flex-wrap: wrap;
           order: 1;
+          gap: var(--space-md);
         }
 
         h1 {
-          font-size: 24px;
+          font-size: var(--font-size-3xl);
           flex: 1;
         }
 
         .header > div:first-child {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 12px;
+          flex-direction: row;
+          align-items: center;
+          gap: var(--space-sm);
+        }
+
+        .social-links {
+          gap: var(--space-sm);
+        }
+
+        .social-links a svg {
+          width: 20px;
+          height: 20px;
         }
 
         .burger-menu {
           display: flex;
         }
 
+        /* Filter Links Mobile */
         .filter-links {
           display: none;
           flex-direction: column;
           width: 100%;
           order: 3;
+          gap: var(--space-sm);
         }
 
         .filter-links.open {
@@ -482,27 +1263,210 @@
 
         .filter-links a {
           text-align: center;
+          padding: var(--space-md);
         }
 
         .subtitle {
           order: 2;
+          font-size: var(--font-size-md);
+          margin-bottom: var(--space-xl);
         }
 
-        .legend {
+        /* Sections Mobile Ordering */
+        .demo-section {
           order: 3;
+          margin-top: var(--space-xl);
+          margin-bottom: var(--space-xl);
+          padding: var(--space-md);
+        }
+
+        .components-section {
+          order: 4;
+          margin-top: var(--space-xl);
+          margin-bottom: var(--space-xl);
+          padding: var(--space-md);
         }
 
         .vector-validation {
-          order: 4;
+          order: 5;
+          margin-top: var(--space-xl);
+          padding: var(--space-md);
         }
 
         .vector-validation .progress-bar-container {
           order: -1;
-          margin-bottom: 15px;
+          margin-bottom: var(--space-lg);
         }
 
-        .summary {
-          order: 5;
+        /* Typography Mobile */
+        .demo-section h3,
+        .vector-validation h3 {
+          font-size: var(--font-size-xl);
+          margin-bottom: var(--space-md);
+        }
+
+        .algorithm-section h3 {
+          font-size: var(--font-size-md);
+        }
+
+        /* Grid Mobile */
+        .demo-grid,
+        .algorithm-grid {
+          grid-template-columns: 1fr;
+          gap: var(--space-sm);
+        }
+
+        /* Controls Mobile */
+        .demo-controls {
+          gap: var(--space-sm);
+          margin-bottom: var(--space-md);
+        }
+
+        .demo-controls button {
+          font-size: var(--font-size-base);
+          padding: var(--space-sm) var(--space-md);
+        }
+
+        /* Input Groups Mobile */
+        .demo-input-group {
+          margin-bottom: var(--space-md);
+        }
+
+        .demo-input-group label,
+        .demo-output-group label {
+          font-size: var(--font-size-sm);
+          margin-bottom: var(--space-xs);
+        }
+
+        /* Input Wrappers Mobile */
+        .ikm-input-wrapper {
+          display: flex;
+          flex-wrap: wrap;
+          flex-direction: row;
+          justify-content: flex-end;
+          gap: var(--space-sm);
+        }
+
+        .ikm-input-wrapper input {
+          flex: 1 1 100%;
+          font-size: var(--font-size-sm);
+          padding: var(--space-sm);
+        }
+
+        .ikm-input-wrapper button {
+          padding: var(--space-sm) var(--space-md);
+          font-size: var(--font-size-sm);
+        }
+
+        .output-wrapper {
+          flex-direction: column;
+          gap: var(--space-sm);
+        }
+
+        .output-wrapper .demo-output {
+          min-width: 0;
+          width: 100%;
+          margin-bottom: 0;
+          font-size: var(--font-size-sm);
+        }
+
+        .output-wrapper button {
+          width: auto;
+          align-self: flex-end;
+          padding: var(--space-sm) var(--space-md);
+          font-size: var(--font-size-sm);
+        }
+
+        /* Form Inputs Mobile */
+        .demo-input-group input,
+        .demo-input-group textarea {
+          font-size: var(--font-size-lg);
+          padding: var(--space-md) var(--space-sm);
+        }
+
+        .demo-input-group .ikm-input-wrapper input {
+          font-size: var(--font-size-sm);
+          padding: var(--space-sm);
+        }
+
+        .demo-output {
+          font-size: var(--font-size-sm);
+          padding: var(--space-sm);
+          margin-bottom: var(--space-md);
+        }
+
+        /* Chat Mobile */
+        .chat-container {
+          padding: var(--space-sm);
+          max-height: 300px;
+          margin-top: var(--space-md);
+        }
+
+        .chat-message {
+          padding: var(--space-sm);
+          margin-bottom: var(--space-sm);
+        }
+
+        .chat-message-label {
+          font-size: var(--font-size-xs);
+        }
+
+        .chat-message-content {
+          font-size: var(--font-size-sm);
+          word-break: break-word;
+        }
+
+        .chat-input-container {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: flex-end;
+          gap: var(--space-sm);
+          margin-top: var(--space-sm);
+        }
+
+        .chat-input-container input {
+          flex: 1 1 100%;
+          font-size: var(--font-size-lg);
+          padding: var(--space-md) var(--space-sm);
+          margin-right: 0;
+        }
+
+        .chat-input-container button {
+          padding: var(--space-sm) var(--space-md);
+          font-size: var(--font-size-sm);
+        }
+
+        #autoPopulateButton {
+          margin-left: 0;
+        }
+
+        /* Play Button Mobile */
+        .play-button {
+          width: 50px;
+          height: 50px;
+        }
+
+        .play-button::after {
+          border-width: 10px 0 10px 15px;
+        }
+
+        /* Legend Mobile */
+        .legend {
+          gap: var(--space-md);
+          padding: var(--space-sm);
+        }
+
+        .legend-item {
+          font-size: var(--font-size-base);
+        }
+
+        /* Progress Bar Mobile */
+        .progress-bar-container {
+          height: 24px;
+        }
+
+        .progress-info {
+          font-size: var(--font-size-base);
         }
       }
     </style>
@@ -554,40 +1518,136 @@
           <a href="./" id="filterBoth">Both</a>
         </div>
       </div>
-      <p class="subtitle">Test suite for all KEM, KDF, and AEAD implementations in your browser</p>
+      <p class="subtitle">HPKE demo and vector validation test suite for all KEM, KDF, and AEAD implementations in your browser</p>
 
-      <div class="legend">
-        <div class="legend-item" id="legendNative">
-          <a href="?native">
-            <div class="legend-color native"></div>
-            <span>Native (Web Cryptography)</span>
-          </a>
+      <div class="demo-section" id="demoSection">
+        <div class="section-label">Demo</div>
+
+        <div id="ikmInputGroup" class="demo-input-group">
+          <label>Input Keying Material:</label>
+          <div class="ikm-input-wrapper">
+            <input type="text" id="ikmInput" placeholder="Enter IKM in hex format" value="…">
+            <button id="zeroIkmButton" title="Set to zero">0x00…</button>
+            <button id="randomIkmButton" title="Randomize">rand()</button>
+          </div>
         </div>
-        <div class="legend-item" id="legendNoble">
-          <a href="?noble">
-            <div class="legend-color noble"></div>
-            <span>Extensibility (Noble Cryptography)</span>
-          </a>
+
+        <div id="keypairOutput">
+          <div class="demo-input-group">
+            <label>Public Key:</label>
+            <div class="demo-output" id="publicKeyOutput">…</div>
+          </div>
+          <div class="demo-input-group" id="privateKeyOutputGroup">
+            <label>Private Key:</label>
+            <div class="demo-output" id="privateKeyOutput">…</div>
+          </div>
+
+        <div class="advanced-options">
+          <button class="advanced-options-toggle" id="advancedOptionsToggle">
+            Optional
+          </button>
+          <div class="advanced-options-content hidden" id="advancedOptionsContent">
+            <div class="demo-input-group">
+              <label>Info:</label>
+              <div class="ikm-input-wrapper">
+                <input type="text" id="infoInput" placeholder="Enter info in hex format">
+                <button id="zeroInfoButton" title="Set to 32 zero bytes">0x00…</button>
+                <button id="randomInfoButton" title="Generate random 32 bytes">rand()</button>
+              </div>
+              <div class="helper-text">Application-specific context (any size)</div>
+            </div>
+
+            <div class="mode-selector">
+              <label>
+                <input type="radio" name="mode" value="base" id="modeBase" checked>
+                <span>Base Mode</span>
+              </label>
+              <label>
+                <input type="radio" name="mode" value="psk" id="modePsk">
+                <span>PSK Mode</span>
+              </label>
+            </div>
+
+            <div class="psk-fields hidden" id="pskFields">
+              <div class="demo-input-group">
+                <label>Pre-Shared Key (PSK):</label>
+                <div class="ikm-input-wrapper">
+                  <input type="text" id="pskInput" placeholder="Enter PSK in hex format (≥32 bytes)">
+                  <button id="zeroPskButton" title="Set to 32 zero bytes">0x00…</button>
+                  <button id="randomPskButton" title="Generate random 32 bytes">rand()</button>
+                </div>
+                <div class="helper-text">Minimum 32 bytes (64 hex characters)</div>
+              </div>
+
+              <div class="demo-input-group">
+                <label>PSK ID:</label>
+                <div class="ikm-input-wrapper">
+                  <input type="text" id="pskIdInput" placeholder="Enter PSK ID in hex format">
+                  <button id="randomPskIdButton" title="Generate random 8 bytes">rand()</button>
+                </div>
+                <div class="helper-text">Minimum 1 byte (2 hex characters)</div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="legend-item" id="legendBoth">
-          <a href="./">
-            <div class="legend-color both"></div>
-            <span>Both implementations</span>
-          </a>
+
+          <div class="demo-input-group">
+            <label>Encapsulated Key:</label>
+            <div class="demo-output" id="encapsulatedKeyOutput">…</div>
+          </div>
         </div>
-        <div class="legend-item">
-          <div class="legend-color unsupported"></div>
-          <span>Unsupported</span>
+
+        <div id="chatSection">
+          <h3 id="messagesHeading" class="mt-lg">Messages</h3>
+          <div class="chat-container hidden" id="chatContainer"></div>
+          <div class="chat-input-container">
+            <input type="text" id="messageInput" placeholder="Type a message to encrypt...">
+            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" style="flex: 0.5;">
+            <button id="sendButton">encrypt()</button>
+            <button id="refreshContextButton" title="Generate fresh context" disabled>reset()</button>
+            <button id="autoPopulateButton" title="Auto-populate with random text">rand()</button>
+          </div>
         </div>
       </div>
 
-      <div class="summary" id="summary"></div>
+      <div class="components-section" id="componentsSection">
+        <div class="section-label">Algorithm Selection</div>
+        <div id="algorithmCards"></div>
+        <div class="legend">
+            <div class="legend-item" id="legendNative">
+              <a href="?native">
+                <div class="legend-color native"></div>
+                <span>Native (Web Cryptography)</span>
+              </a>
+            </div>
+            <div class="legend-item" id="legendNoble">
+              <a href="?noble">
+                <div class="legend-color noble"></div>
+                <span>Extensibility (Noble Cryptography)</span>
+              </a>
+            </div>
+            <div class="legend-item" id="legendBoth">
+              <a href="./">
+                <div class="legend-color both"></div>
+                <span>Both implementations</span>
+              </a>
+            </div>
+            <div class="legend-item">
+              <div class="legend-color unsupported"></div>
+              <span>Unsupported</span>
+            </div>
+          </div>
+      </div>
 
       <div class="vector-validation" id="vectorValidation">
-        <h3>Test Vector Validation</h3>
-        <p class="subtitle-text">
-          Testing all encryptions and exports from RFC test vectors with functional implementations
-        </p>
+        <div class="section-label">Test Vectors</div>
+        <div class="play-overlay" id="playOverlay">
+          <div class="play-button" id="playButton"></div>
+        </div>
+        <div class="vector-validation-content blurred" id="vectorValidationContent">
+          <p class="subtitle-text">
+            Testing all encryptions and exports from RFC test vectors with functional implementations
+          </p>
         <div class="progress-bar-container" id="vectorProgressContainer">
           <div class="progress-box"></div>
           <div class="progress-box"></div>
@@ -611,7 +1671,8 @@
           <div class="progress-box"></div>
         </div>
         <div class="progress-info" id="vectorProgressInfo">
-          <span>Pending...</span>
+          <span>Pending…</span>
+        </div>
         </div>
       </div>
     </div>
@@ -621,6 +1682,7 @@
       const params = new URLSearchParams(window.location.search)
       const onlyNative = params.has('native')
       const onlyNoble = params.has('noble')
+      const ci = params.has('ci')
       const both = (onlyNative && onlyNoble) || (!onlyNative && !onlyNoble)
 
       // Highlight active filter link
@@ -970,12 +2032,30 @@
         return 'unsupported'
       }
 
+      // ============================================================================
+      // DEMO SECTION STATE
+      // ============================================================================
+      const demoState = {
+        selectedKEM: null,
+        selectedKDF: null,
+        selectedAEAD: null,
+        suite: null,
+        recipientKeyPair: null,
+        senderContext: null,
+        recipientContext: null,
+        encapsulatedKey: null,
+        mode: 'base',
+        info: null,
+        psk: null,
+        pskId: null,
+      }
+
       /**
        * Renders the algorithm summary cards at the top of the page Shows the status of each KEM,
        * KDF, and AEAD algorithm
        */
       function renderAlgorithmSummary() {
-        const summaryDiv = document.getElementById('summary')
+        const summaryDiv = document.getElementById('algorithmCards')
 
         // Get unique algorithm names
         const kemNames = [...new Set(ALL_KEMS.map((k) => k.name))].sort()
@@ -1062,7 +2142,1551 @@
       `,
           )
           .join('')
+
+        // Add click handlers for algorithm selection
+        document.querySelectorAll('.algo-card').forEach(card => {
+          card.addEventListener('click', () => {
+            const algoName = card.getAttribute('data-algo')
+            const algoType = card.getAttribute('data-type')
+
+            // Don't allow selection of AEAD_EXPORT_ONLY for demo
+            if (algoName === 'AEAD_EXPORT_ONLY') {
+              return
+            }
+
+            // Only allow selection of passed algorithms
+            const status = getAlgorithmStatus(algoName, algoType)
+            if (status !== 'native' && status !== 'noble' && status !== 'both') {
+              return
+            }
+
+            // Remove selection from other cards of same type
+            document.querySelectorAll(`.algo-card[data-type="${algoType}"]`).forEach(c => {
+              c.classList.remove('selected')
+            })
+
+            // Select this card
+            card.classList.add('selected')
+
+            // Find the appropriate implementation
+            // Prefer native when it's available and passed, otherwise use noble
+            let selectedAlgo
+            if (algoType === 'kem') {
+              const nativeAlgo = ALL_KEMS.find(a => a.name === algoName && !a.isNoble)
+              const nobleAlgo = ALL_KEMS.find(a => a.name === algoName && a.isNoble)
+
+              // Check if native passed
+              const nativeTest = tests.find(t => {
+                const component = getTestComponent(t)
+                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
+              })
+              const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+              demoState.selectedKEM = selectedAlgo
+            } else if (algoType === 'kdf') {
+              const nativeAlgo = ALL_KDFS.find(a => a.name === algoName && !a.isNoble)
+              const nobleAlgo = ALL_KDFS.find(a => a.name === algoName && a.isNoble)
+
+              // Check if native passed
+              const nativeTest = tests.find(t => {
+                const component = getTestComponent(t)
+                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
+              })
+              const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+              demoState.selectedKDF = selectedAlgo
+            } else if (algoType === 'aead') {
+              const nativeAlgo = ALL_AEADS.find(a => a.name === algoName && !a.isNoble)
+              const nobleAlgo = ALL_AEADS.find(a => a.name === algoName && a.isNoble)
+
+              // Check if native passed
+              const nativeTest = tests.find(t => {
+                const component = getTestComponent(t)
+                return component.name === algoName && t.testingComponent === algoType && !component.isNoble
+              })
+              const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+              selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+              demoState.selectedAEAD = selectedAlgo
+            }
+
+            updateDemoSection()
+          })
+        })
+
+        // Auto-select first available KEM, KDF, and AEAD after rendering
+        const selectFirstAlgorithm = (type) => {
+          const cards = document.querySelectorAll(`.algo-card[data-type="${type}"]`)
+          for (const card of cards) {
+            const algoName = card.getAttribute('data-algo')
+            const status = getAlgorithmStatus(algoName, type)
+
+            // Skip AEAD_EXPORT_ONLY
+            if (algoName === 'AEAD_EXPORT_ONLY') continue
+
+            // Select first passed algorithm
+            if (status === 'native' || status === 'noble' || status === 'both') {
+              // Don't trigger click during auto-selection, just mark as selected and set state
+              card.classList.add('selected')
+
+              let selectedAlgo
+              if (type === 'kem') {
+                const nativeAlgo = ALL_KEMS.find(a => a.name === algoName && !a.isNoble)
+                const nobleAlgo = ALL_KEMS.find(a => a.name === algoName && a.isNoble)
+
+                // Check if native passed
+                const nativeTest = tests.find(t => {
+                  const component = getTestComponent(t)
+                  return component.name === algoName && t.testingComponent === type && !component.isNoble
+                })
+                const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+                demoState.selectedKEM = selectedAlgo
+              } else if (type === 'kdf') {
+                const nativeAlgo = ALL_KDFS.find(a => a.name === algoName && !a.isNoble)
+                const nobleAlgo = ALL_KDFS.find(a => a.name === algoName && a.isNoble)
+
+                // Check if native passed
+                const nativeTest = tests.find(t => {
+                  const component = getTestComponent(t)
+                  return component.name === algoName && t.testingComponent === type && !component.isNoble
+                })
+                const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+                demoState.selectedKDF = selectedAlgo
+              } else if (type === 'aead') {
+                const nativeAlgo = ALL_AEADS.find(a => a.name === algoName && !a.isNoble)
+                const nobleAlgo = ALL_AEADS.find(a => a.name === algoName && a.isNoble)
+
+                // Check if native passed
+                const nativeTest = tests.find(t => {
+                  const component = getTestComponent(t)
+                  return component.name === algoName && t.testingComponent === type && !component.isNoble
+                })
+                const nativePassed = nativeTest && nativeTest.status === 'passed'
+
+                selectedAlgo = (nativePassed && nativeAlgo) ? nativeAlgo : (nobleAlgo || nativeAlgo)
+                demoState.selectedAEAD = selectedAlgo
+              }
+              break
+            }
+          }
+        }
+
+        selectFirstAlgorithm('kem')
+        selectFirstAlgorithm('kdf')
+        selectFirstAlgorithm('aead')
+
+        // Update demo section once after all three are selected
+        updateDemoSection()
+      }      // ============================================================================
+      // DEMO SECTION FUNCTIONALITY
+      // ============================================================================
+
+      function resetDemoState() {
+        // Reset all demo state
+        demoState.recipientKeyPair = null
+        demoState.senderContext = null
+        demoState.encapsulatedKey = null
+
+        // Clear inputs and hide chat container
+        document.getElementById('ikmInput').value = ''
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
       }
+
+      function updateDemoSection() {
+        const demoSection = document.getElementById('demoSection')
+
+        if (demoState.selectedKEM && demoState.selectedKDF && demoState.selectedAEAD) {
+          demoSection.classList.add('active')
+
+          // Set theme class based on filter
+          demoSection.classList.remove('theme-noble', 'theme-both')
+          if (onlyNoble) {
+            demoSection.classList.add('theme-noble')
+          } else if (both) {
+            demoSection.classList.add('theme-both')
+          }
+
+          // Check if suite has changed by comparing the selected factory references with stored ones
+          const suiteChanged = !demoState.lastSelectedKEM ||
+            !demoState.lastSelectedKDF ||
+            !demoState.lastSelectedAEAD ||
+            demoState.selectedKEM.factory !== demoState.lastSelectedKEM ||
+            demoState.selectedKDF.factory !== demoState.lastSelectedKDF ||
+            demoState.selectedAEAD.factory !== demoState.lastSelectedAEAD
+
+          // Only reset and generate new IKM if suite actually changed
+          if (suiteChanged) {
+            // Store current selections
+            demoState.lastSelectedKEM = demoState.selectedKEM.factory
+            demoState.lastSelectedKDF = demoState.selectedKDF.factory
+            demoState.lastSelectedAEAD = demoState.selectedAEAD.factory
+
+            // Create new suite
+            demoState.suite = new HPKE.CipherSuite(
+              demoState.selectedKEM.factory,
+              demoState.selectedKDF.factory,
+              demoState.selectedAEAD.factory
+            )
+
+            // Reset demo state when suite changes
+            resetDemoState()
+
+            // Auto-generate random IKM and keypair
+            const ikmLength = demoState.suite.KEM.Nsk
+            const randomIkm = crypto.getRandomValues(new Uint8Array(ikmLength))
+            document.getElementById('ikmInput').value = randomIkm.toHex()
+            deriveFromIkm(randomIkm.toHex())
+          }
+        } else {
+          demoSection.classList.remove('active')
+        }
+      }
+
+      // Demo button handlers
+      document.getElementById('zeroIkmButton').addEventListener('click', async () => {
+        if (!demoState.suite) return
+
+        const ikmLength = demoState.suite.KEM.Nsk
+        const zeroIkm = '00'.repeat(ikmLength)
+        document.getElementById('ikmInput').value = zeroIkm
+        await deriveFromIkm(zeroIkm)
+      })
+
+      document.getElementById('randomIkmButton').addEventListener('click', async () => {
+        if (!demoState.suite) return
+
+        const ikmLength = demoState.suite.KEM.Nsk
+        const randomIkm = crypto.getRandomValues(new Uint8Array(ikmLength))
+        document.getElementById('ikmInput').value = randomIkm.toHex()
+        await deriveFromIkm(randomIkm.toHex())
+      })
+
+      async function deriveFromIkm(ikmHex) {
+        if (!demoState.suite) return
+
+        const ikmInput = document.getElementById('ikmInput')
+        try {
+          const ikm = Uint8Array.fromHex(ikmHex)
+          demoState.recipientKeyPair = await demoState.suite.DeriveKeyPair(ikm, true)
+          ikmInput.classList.remove('error')
+          await setupSenderContext()
+        } catch (e) {
+          // Highlight input field on error
+          ikmInput.classList.add('error')
+          console.error('Invalid IKM hex:', e.message)
+        }
+      }
+
+      document.getElementById('ikmInput').addEventListener('input', async (e) => {
+        const ikmHex = e.target.value.trim()
+        if (ikmHex) {
+          await deriveFromIkm(ikmHex)
+        }
+      })
+
+      // Advanced options toggle
+      document.getElementById('advancedOptionsToggle').addEventListener('click', () => {
+        const toggle = document.getElementById('advancedOptionsToggle')
+        const content = document.getElementById('advancedOptionsContent')
+
+        toggle.classList.toggle('expanded')
+        content.classList.toggle('hidden')
+      })
+
+      // Mode selector
+      document.querySelectorAll('input[name="mode"]').forEach(radio => {
+        radio.addEventListener('change', async (e) => {
+          const pskFields = document.getElementById('pskFields')
+          const content = document.getElementById('advancedOptionsContent')
+
+          demoState.mode = e.target.value
+
+          if (e.target.value === 'psk') {
+            pskFields.classList.remove('hidden')
+            // Set default PSK values if empty, otherwise parse existing values
+            if (!document.getElementById('pskInput').value) {
+              const randomPsk = crypto.getRandomValues(new Uint8Array(32))
+              document.getElementById('pskInput').value = randomPsk.toHex()
+              demoState.psk = randomPsk
+            } else {
+              // Parse existing PSK value
+              try {
+                demoState.psk = Uint8Array.fromHex(document.getElementById('pskInput').value.trim())
+              } catch (e) {
+                console.error('Invalid PSK hex:', e.message)
+              }
+            }
+            if (!document.getElementById('pskIdInput').value) {
+              const randomPskId = crypto.getRandomValues(new Uint8Array(8))
+              document.getElementById('pskIdInput').value = randomPskId.toHex()
+              demoState.pskId = randomPskId
+            } else {
+              // Parse existing PSK ID value
+              try {
+                demoState.pskId = Uint8Array.fromHex(document.getElementById('pskIdInput').value.trim())
+              } catch (e) {
+                console.error('Invalid PSK ID hex:', e.message)
+              }
+            }
+          } else {
+            pskFields.classList.add('hidden')
+            demoState.psk = null
+            demoState.pskId = null
+          }
+
+          const chatContainer = document.getElementById('chatContainer')
+          chatContainer.innerHTML = ''
+          chatContainer.classList.add('hidden')
+          await setupSenderContext()
+        })
+      })
+
+      // Info input
+      document.getElementById('infoInput').addEventListener('input', async (e) => {
+        const infoHex = e.target.value.trim()
+        const infoInput = document.getElementById('infoInput')
+
+        try {
+          if (infoHex) {
+            demoState.info = Uint8Array.fromHex(infoHex)
+            infoInput.classList.remove('error')
+          } else {
+            demoState.info = null
+            infoInput.classList.remove('error')
+          }
+          const chatContainer = document.getElementById('chatContainer')
+          chatContainer.innerHTML = ''
+          chatContainer.classList.add('hidden')
+          await setupSenderContext()
+        } catch (e) {
+          infoInput.classList.add('error')
+          console.error('Invalid info hex:', e.message)
+        }
+      })
+
+      document.getElementById('zeroInfoButton').addEventListener('click', async () => {
+        const zeroInfo = '00'.repeat(32)
+        document.getElementById('infoInput').value = zeroInfo
+        demoState.info = Uint8Array.fromHex(zeroInfo)
+        document.getElementById('infoInput').classList.remove('error')
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
+      })
+
+      document.getElementById('randomInfoButton').addEventListener('click', async () => {
+        const randomInfo = crypto.getRandomValues(new Uint8Array(32))
+        document.getElementById('infoInput').value = randomInfo.toHex()
+        demoState.info = randomInfo
+        document.getElementById('infoInput').classList.remove('error')
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
+      })
+
+      // PSK input
+      document.getElementById('pskInput').addEventListener('input', async (e) => {
+        const pskHex = e.target.value.trim()
+        const pskInput = document.getElementById('pskInput')
+
+        try {
+          if (pskHex) {
+            const psk = Uint8Array.fromHex(pskHex)
+            if (psk.length < 32) {
+              pskInput.classList.add('error')
+              console.error('PSK must be at least 32 bytes')
+              return
+            }
+            demoState.psk = psk
+            pskInput.classList.remove('error')
+          } else {
+            demoState.psk = null
+            pskInput.classList.remove('error')
+          }
+          const chatContainer = document.getElementById('chatContainer')
+          chatContainer.innerHTML = ''
+          chatContainer.classList.add('hidden')
+          await setupSenderContext()
+        } catch (e) {
+          pskInput.classList.add('error')
+          console.error('Invalid PSK hex:', e.message)
+        }
+      })
+
+      // PSK ID input
+      document.getElementById('pskIdInput').addEventListener('input', async (e) => {
+        const pskIdHex = e.target.value.trim()
+        const pskIdInput = document.getElementById('pskIdInput')
+
+        try {
+          if (pskIdHex) {
+            const pskId = Uint8Array.fromHex(pskIdHex)
+            if (pskId.length < 1) {
+              pskIdInput.classList.add('error')
+              console.error('PSK ID must be at least 1 byte')
+              return
+            }
+            demoState.pskId = pskId
+            pskIdInput.classList.remove('error')
+          } else {
+            demoState.pskId = null
+            pskIdInput.classList.remove('error')
+          }
+          const chatContainer = document.getElementById('chatContainer')
+          chatContainer.innerHTML = ''
+          chatContainer.classList.add('hidden')
+          await setupSenderContext()
+        } catch (e) {
+          pskIdInput.classList.add('error')
+          console.error('Invalid PSK ID hex:', e.message)
+        }
+      })
+
+      // PSK button handlers
+      document.getElementById('zeroPskButton').addEventListener('click', async () => {
+        const zeroPsk = '00'.repeat(32)
+        document.getElementById('pskInput').value = zeroPsk
+        demoState.psk = Uint8Array.fromHex(zeroPsk)
+        document.getElementById('pskInput').classList.remove('error')
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
+      })
+
+      document.getElementById('randomPskButton').addEventListener('click', async () => {
+        const randomPsk = crypto.getRandomValues(new Uint8Array(32))
+        document.getElementById('pskInput').value = randomPsk.toHex()
+        demoState.psk = randomPsk
+        document.getElementById('pskInput').classList.remove('error')
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
+      })
+
+      document.getElementById('randomPskIdButton').addEventListener('click', async () => {
+        const randomPskId = crypto.getRandomValues(new Uint8Array(8))
+        document.getElementById('pskIdInput').value = randomPskId.toHex()
+        demoState.pskId = randomPskId
+        document.getElementById('pskIdInput').classList.remove('error')
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+        await setupSenderContext()
+      })
+
+      document.getElementById('ikmInput').addEventListener('input', async (e) => {
+        const ikmHex = e.target.value.trim()
+        if (ikmHex) {
+          await deriveFromIkm(ikmHex)
+        }
+      })
+
+      document.getElementById('refreshContextButton').addEventListener('click', async () => {
+        if (!demoState.suite || !demoState.recipientKeyPair) return
+
+        // Validate PSK mode requirements
+        if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
+          alert('PSK mode requires both PSK and PSK ID')
+          return
+        }
+
+        // Setup fresh sender context with same keys
+        const options = {}
+        if (demoState.info) options.info = demoState.info
+        if (demoState.mode === 'psk') {
+          options.psk = demoState.psk
+          options.pskId = demoState.pskId
+        }
+        const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
+        demoState.senderContext = result.ctx
+        demoState.encapsulatedKey = result.encapsulatedKey
+
+        // Setup fresh recipient context
+        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+
+        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
+
+        // Clear chat messages and hide container
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+
+        // Update button states
+        updateButtonStates()
+      })
+
+      async function setupSenderContext() {
+        if (!demoState.suite || !demoState.recipientKeyPair) return
+
+        // Validate PSK mode requirements
+        if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
+          // Don't setup context if PSK mode is selected but PSK/PSK ID not provided
+          return
+        }
+
+        // Serialize public key
+        const publicKeyBytes = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
+        document.getElementById('publicKeyOutput').textContent = publicKeyBytes.toHex()
+
+        // Serialize private key if available
+        if (demoState.recipientKeyPair.privateKey) {
+          const privateKeyBytes = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
+          document.getElementById('privateKeyOutput').textContent = privateKeyBytes.toHex()
+          document.getElementById('privateKeyOutputGroup').classList.remove('hidden')
+        } else {
+          document.getElementById('privateKeyOutputGroup').classList.add('hidden')
+        }
+
+        // Setup sender context
+        const options = {}
+        if (demoState.info) options.info = demoState.info
+        if (demoState.mode === 'psk') {
+          options.psk = demoState.psk
+          options.pskId = demoState.pskId
+        }
+        const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
+        demoState.senderContext = result.ctx
+        demoState.encapsulatedKey = result.encapsulatedKey
+
+        // Setup recipient context
+        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+
+        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
+
+        // Clear chat and hide container
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+        chatContainer.classList.add('hidden')
+      }
+
+      // Message sending
+      async function sendMessage() {
+        if (!demoState.senderContext) {
+          console.error('No sender context available')
+          return
+        }
+
+        const messageInput = document.getElementById('messageInput')
+        const message = messageInput.value.trim()
+        if (!message) return
+
+        // Check if AEAD is export-only mode
+        if (demoState.selectedAEAD.name === 'AEAD_EXPORT_ONLY') {
+          alert('Cannot send messages in Export-Only mode. Please select a different AEAD.')
+          return
+        }
+
+        const chatContainer = document.getElementById('chatContainer')
+
+        try {
+          // Get sequence number BEFORE sealing
+          const seq = demoState.senderContext.seq
+
+          // Get AAD if provided
+          const aadInput = document.getElementById('aadInput')
+          let aad = null
+          if (aadInput.value.trim()) {
+            try {
+              aad = Uint8Array.fromHex(aadInput.value.trim())
+              aadInput.classList.remove('error')
+            } catch (e) {
+              aadInput.classList.add('error')
+              alert('Invalid AAD hex format')
+              return
+            }
+          }
+
+          // Encrypt message
+          const plaintext = new TextEncoder().encode(message)
+          const ciphertext = await demoState.senderContext.Seal(plaintext, aad)
+
+          // Display ciphertext (clickable to decrypt)
+          const ciphertextDiv = document.createElement('div')
+          ciphertextDiv.className = 'chat-message ciphertext'
+          ciphertextDiv.dataset.seq = seq
+          ciphertextDiv.dataset.ciphertext = ciphertext.toHex()
+          ciphertextDiv.dataset.decrypted = 'false'
+          if (aad) {
+            ciphertextDiv.dataset.aad = aad.toHex()
+          }
+
+          // Update clickability based on whether this is the next message to decrypt
+          const updateClickability = () => {
+            const isNextToDecrypt = demoState.recipientContext.seq === seq
+            if (isNextToDecrypt) {
+              ciphertextDiv.classList.add('clickable')
+              ciphertextDiv.classList.remove('not-clickable')
+            } else {
+              ciphertextDiv.classList.add('not-clickable')
+              ciphertextDiv.classList.remove('clickable')
+            }
+          }
+
+          updateClickability()
+
+          ciphertextDiv.innerHTML = `
+          <div class="chat-message-label">Ciphertext ${seq}</div>
+          ${aad ? `<div class="chat-message-label">AAD: ${aad.toHex()}</div>` : ''}
+          <div class="chat-message-content">${ciphertext.toHex()}</div>
+        `
+
+          // Initial clickable state is set by updateClickability
+
+          // Add click handler to decrypt
+          ciphertextDiv.addEventListener('click', async function() {
+            if (this.dataset.decrypted === 'true') return
+
+            // Check if this is the next message in sequence
+            if (demoState.recipientContext.seq !== seq) {
+              return
+            }
+
+            try {
+              const ciphertextBytes = Uint8Array.fromHex(this.dataset.ciphertext)
+              const aad = this.dataset.aad ? Uint8Array.fromHex(this.dataset.aad) : null
+              const decrypted = await demoState.recipientContext.Open(ciphertextBytes, aad)
+              const plaintext = new TextDecoder().decode(decrypted)
+
+              // Replace ciphertext with plaintext
+              this.innerHTML = `
+                <div class="chat-message-label">Plaintext ${seq}</div>
+                ${this.dataset.aad ? `<div class="chat-message-label">AAD: ${this.dataset.aad}</div>` : ''}
+                <div class="chat-message-content">${plaintext}</div>
+              `
+              this.classList.remove('ciphertext')
+              this.classList.add('decrypted')
+              this.classList.remove('clickable', 'not-clickable')
+              this.dataset.decrypted = 'true'
+
+              // Scroll this plaintext message to top of chat container with margin
+              const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
+              chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+
+              // Update clickability of all remaining ciphertexts
+              chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
+                if (div.dataset.decrypted === 'false') {
+                  const divSeq = parseInt(div.dataset.seq)
+                  const isNextToDecrypt = demoState.recipientContext.seq === divSeq
+                  if (isNextToDecrypt) {
+                    div.classList.add('clickable')
+                    div.classList.remove('not-clickable')
+                  } else {
+                    div.classList.add('not-clickable')
+                    div.classList.remove('clickable')
+                  }
+                }
+              })
+            } catch (e) {
+              console.error('Error decrypting:', e)
+              alert('Error decrypting message: ' + e.message)
+            }
+          })
+
+          chatContainer.appendChild(ciphertextDiv)
+
+          // Show chat container when first message is added
+          chatContainer.classList.remove('hidden')
+
+          // Clear inputs
+          messageInput.value = ''
+          document.getElementById('aadInput').value = ''
+          updateButtonStates()
+        } catch (e) {
+          console.error('Error sending message:', e)
+          alert('Error encrypting message: ' + e.message)
+        }
+      }
+
+      const messageInput = document.getElementById('messageInput')
+      const sendButton = document.getElementById('sendButton')
+      const refreshContextButton = document.getElementById('refreshContextButton')
+
+      // Update button states based on input and messages
+      function updateButtonStates() {
+        sendButton.disabled = !messageInput.value.trim()
+        const chatContainer = document.getElementById('chatContainer')
+        const hasMessages = chatContainer.children.length > 0
+        refreshContextButton.disabled = !hasMessages
+      }
+
+      // Initialize button states
+      updateButtonStates()
+
+      // Update button states on input
+      messageInput.addEventListener('input', updateButtonStates)
+
+      sendButton.addEventListener('click', (e) => {
+        e.preventDefault()
+        sendMessage()
+      })
+      messageInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          sendMessage()
+        }
+      })
+
+      const aadInput = document.getElementById('aadInput')
+      aadInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          sendMessage()
+        }
+      })
+
+      // Auto-populate with random public domain text
+      document.getElementById('autoPopulateButton').addEventListener('click', async (e) => {
+        e.preventDefault()
+
+        if (!demoState.senderContext) {
+          alert('Please select algorithms and generate a key pair first.')
+          return
+        }
+
+        if (demoState.selectedAEAD.name === 'AEAD_EXPORT_ONLY') {
+          alert('Cannot send messages in Export-Only mode. Please select a different AEAD.')
+          return
+        }
+
+        // Validate PSK mode requirements
+        if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
+          alert('PSK mode requires both PSK and PSK ID')
+          return
+        }
+
+        // Clear existing messages and reset contexts with same keys
+        const chatContainer = document.getElementById('chatContainer')
+        chatContainer.innerHTML = ''
+
+        // Setup fresh sender and recipient contexts
+        const options = {}
+        if (demoState.info) options.info = demoState.info
+        if (demoState.mode === 'psk') {
+          options.psk = demoState.psk
+          options.pskId = demoState.pskId
+        }
+        const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
+        demoState.senderContext = result.ctx
+        demoState.encapsulatedKey = result.encapsulatedKey
+
+        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+
+        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
+
+        const publicDomainTexts = [
+          [
+            "The Raven by Edgar Allan Poe",
+            "Once upon a midnight dreary, while I pondered, weak and weary,",
+            "Over many a quaint and curious volume of forgotten lore—",
+            "While I nodded, nearly napping, suddenly there came a tapping,",
+            "As of some one gently rapping, rapping at my chamber door.",
+            "'Tis some visitor,' I muttered, 'tapping at my chamber door—",
+            "Only this and nothing more.'",
+            "Ah, distinctly I remember it was in the bleak December;",
+            "And each separate dying ember wrought its ghost upon the floor.",
+            "Eagerly I wished the morrow;—vainly I had sought to borrow",
+            "From my books surcease of sorrow—sorrow for the lost Lenore—",
+            "For the rare and radiant maiden whom the angels name Lenore—",
+            "Nameless here for evermore."
+          ],
+          [
+            "A Tale of Two Cities by Charles Dickens",
+            "It was the best of times, it was the worst of times,",
+            "it was the age of wisdom, it was the age of foolishness,",
+            "it was the epoch of belief, it was the epoch of incredulity,",
+            "it was the season of Light, it was the season of Darkness,",
+            "it was the spring of hope, it was the winter of despair,",
+            "we had everything before us, we had nothing before us,",
+            "we were all going direct to Heaven,",
+            "we were all going direct the other way—",
+            "in short, the period was so far like the present period,",
+            "that some of its noisiest authorities insisted on its being received,",
+            "for good or for evil, in the superlative degree of comparison only."
+          ],
+          [
+            "Moby Dick by Herman Melville",
+            "Call me Ishmael.",
+            "Some years ago—never mind how long precisely—",
+            "having little or no money in my purse,",
+            "and nothing particular to interest me on shore,",
+            "I thought I would sail about a little",
+            "and see the watery part of the world.",
+            "It is a way I have of driving off the spleen",
+            "and regulating the circulation.",
+            "Whenever I find myself growing grim about the mouth;",
+            "whenever it is a damp, drizzly November in my soul;",
+            "whenever I find myself involuntarily pausing before coffin warehouses,",
+            "and bringing up the rear of every funeral I meet;"
+          ],
+          [
+            "Pride and Prejudice by Jane Austen",
+            "It is a truth universally acknowledged,",
+            "that a single man in possession of a good fortune,",
+            "must be in want of a wife.",
+            "However little known the feelings or views of such a man may be",
+            "on his first entering a neighbourhood,",
+            "this truth is so well fixed in the minds of the surrounding families,",
+            "that he is considered the rightful property",
+            "of some one or other of their daughters.",
+            "'My dear Mr. Bennet,' said his lady to him one day,",
+            "'have you heard that Netherfield Park is let at last?'",
+            "Mr. Bennet replied that he had not.",
+            "'But it is,' returned she; 'for Mrs. Long has just been here,'"
+          ],
+          [
+            "The Great Gatsby by F. Scott Fitzgerald",
+            "In my younger and more vulnerable years",
+            "my father gave me some advice that I've been turning over in my mind ever since.",
+            "'Whenever you feel like criticizing any one,' he told me,",
+            "'just remember that all the people in this world",
+            "haven't had the advantages that you've had.'",
+            "He didn't say any more, but we've always been unusually communicative",
+            "in a reserved way, and I understood",
+            "that he meant a great deal more than that.",
+            "In consequence, I'm inclined to reserve all judgments,",
+            "a habit that has opened up many curious natures to me",
+            "and also made me the victim of not a few veteran bores."
+          ],
+          [
+            "Frankenstein by Mary Shelley",
+            "You will rejoice to hear that no disaster has accompanied",
+            "the commencement of an enterprise which you have regarded with such evil forebodings.",
+            "I arrived here yesterday, and my first task is to assure my dear sister",
+            "of my welfare and increasing confidence in the success of my undertaking.",
+            "I am already far north of London,",
+            "and as I walk in the streets of Petersburgh,",
+            "I feel a cold northern breeze play upon my cheeks,",
+            "which braces my nerves and fills me with delight.",
+            "Do you understand this feeling?",
+            "This breeze, which has travelled from the regions towards which I am advancing,",
+            "gives me a foretaste of those icy climes."
+          ],
+          [
+            "Alice's Adventures in Wonderland by Lewis Carroll",
+            "Alice was beginning to get very tired",
+            "of sitting by her sister on the bank,",
+            "and of having nothing to do:",
+            "once or twice she had peeped into the book her sister was reading,",
+            "but it had no pictures or conversations in it,",
+            "'and what is the use of a book,' thought Alice",
+            "'without pictures or conversations?'",
+            "So she was considering in her own mind",
+            "(as well as she could, for the hot day made her feel very sleepy and stupid),",
+            "whether the pleasure of making a daisy-chain",
+            "would be worth the trouble of getting up and picking the daisies,"
+          ],
+          [
+            "The Adventures of Sherlock Holmes by Arthur Conan Doyle",
+            "To Sherlock Holmes she is always the woman.",
+            "I have seldom heard him mention her under any other name.",
+            "In his eyes she eclipses and predominates",
+            "the whole of her sex.",
+            "It was not that he felt any emotion akin to love for Irene Adler.",
+            "All emotions, and that one particularly,",
+            "were abhorrent to his cold, precise but admirably balanced mind.",
+            "He was, I take it, the most perfect reasoning and observing machine",
+            "that the world has seen,",
+            "but as a lover he would have placed himself in a false position.",
+            "He never spoke of the softer passions, save with a gibe and a sneer."
+          ],
+          [
+            "The Picture of Dorian Gray by Oscar Wilde",
+            "The studio was filled with the rich odour of roses,",
+            "and when the light summer wind stirred amidst the trees of the garden,",
+            "there came through the open door the heavy scent of the lilac,",
+            "or the more delicate perfume of the pink-flowering thorn.",
+            "From the corner of the divan of Persian saddle-bags",
+            "on which he was lying, smoking, as was his custom,",
+            "innumerable cigarettes, Lord Henry Wotton",
+            "could just catch the gleam of the honey-sweet and honey-coloured blossoms",
+            "of a laburnum, whose tremulous branches seemed hardly able",
+            "to bear the burden of a beauty so flamelike as theirs;"
+          ],
+          [
+            "Dracula by Bram Stoker",
+            "3 May. Bistritz.—Left Munich at 8:35 P.M.,",
+            "on 1st May, arriving at Vienna early next morning;",
+            "should have arrived at 6:46, but train was an hour late.",
+            "Buda-Pesth seems a wonderful place,",
+            "from the glimpse which I got of it from the train",
+            "and the little I could walk through the streets.",
+            "I feared to go very far from the station,",
+            "as we had arrived late and would start as near the correct time as possible.",
+            "The impression I had was that we were leaving the West",
+            "and entering the East;",
+            "the most western of splendid bridges over the Danube,"
+          ],
+          [
+            "The Time Machine by H.G. Wells",
+            "The Time Traveller (for so it will be convenient to speak of him)",
+            "was expounding a recondite matter to us.",
+            "His grey eyes shone and twinkled,",
+            "and his usually pale face was flushed and animated.",
+            "The fire burned brightly,",
+            "and the soft radiance of the incandescent lights",
+            "in the lilies of silver caught the bubbles",
+            "that flashed and passed in our glasses.",
+            "Our chairs, being his patents, embraced and caressed us",
+            "rather than submitted to be sat upon,",
+            "and there was that luxurious after-dinner atmosphere"
+          ],
+          [
+            "The Metamorphosis by Franz Kafka",
+            "One morning, when Gregor Samsa woke from troubled dreams,",
+            "he found himself transformed in his bed into a horrible vermin.",
+            "He lay on his armour-like back,",
+            "and if he lifted his head a little",
+            "he could see his brown belly, slightly domed",
+            "and divided by arches into stiff sections.",
+            "The bedding was hardly able to cover it",
+            "and seemed ready to slide off any moment.",
+            "His many legs, pitifully thin compared with the size of the rest of him,",
+            "waved about helplessly as he looked.",
+            "'What's happened to me?' he thought."
+          ],
+          [
+            "The Jungle Book by Rudyard Kipling",
+            "It was seven o'clock of a very warm evening in the Seeonee hills",
+            "when Father Wolf woke up from his day's rest,",
+            "scratched himself, yawned, and spread out his paws",
+            "one after the other to get rid of the sleepy feeling in their tips.",
+            "Mother Wolf lay with her big gray nose",
+            "dropped across her four tumbling, squealing cubs,",
+            "and the moon shone into the mouth of the cave where they all lived.",
+            "'Augrh!' said Father Wolf. 'It is time to hunt again.'",
+            "He was going to spring down hill",
+            "when a little shadow with a bushy tail crossed the threshold",
+            "and whined: 'Good luck go with you, O Chief of the Wolves.'"
+          ],
+          [
+            "The Strange Case of Dr Jekyll and Mr Hyde by Robert Louis Stevenson",
+            "Mr. Utterson the lawyer was a man of a rugged countenance",
+            "that was never lighted by a smile;",
+            "cold, scanty and embarrassed in discourse;",
+            "backward in sentiment; lean, long, dusty, dreary",
+            "and yet somehow lovable.",
+            "At friendly meetings, and when the wine was to his taste,",
+            "something eminently human beaconed from his eye;",
+            "something indeed which never found its way into his talk,",
+            "but which spoke not only in these silent symbols of the after-dinner face,",
+            "but more often and loudly in the acts of his life."
+          ],
+          [
+            "Twenty Thousand Leagues Under the Sea by Jules Verne",
+            "The year 1866 was signalised by a remarkable incident,",
+            "a mysterious and puzzling phenomenon,",
+            "which doubtless no one has yet forgotten.",
+            "Not to mention rumours which agitated the maritime population",
+            "and excited the public mind, even in the interior of continents,",
+            "seafaring men were particularly excited.",
+            "Merchants, common sailors, captains of vessels, skippers,",
+            "both of Europe and America, naval officers of all countries,",
+            "and the Governments of several States on the two continents,",
+            "were deeply interested in the matter."
+          ],
+          [
+            "The War of the Worlds by H.G. Wells",
+            "No one would have believed in the last years of the nineteenth century",
+            "that this world was being watched keenly and closely",
+            "by intelligences greater than man's and yet as mortal as his own;",
+            "that as men busied themselves about their various concerns",
+            "they were scrutinised and studied,",
+            "perhaps almost as narrowly as a man with a microscope",
+            "might scrutinise the transient creatures",
+            "that swarm and multiply in a drop of water.",
+            "With infinite complacency men went to and fro over this globe",
+            "about their little affairs, serene in their assurance",
+            "of their empire over matter."
+          ],
+          [
+            "The Count of Monte Cristo by Alexandre Dumas",
+            "On the 24th of February, 1815,",
+            "the look-out at Notre-Dame de la Garde signalled",
+            "the three-master, the Pharaon from Smyrna, Trieste, and Naples.",
+            "As usual, a pilot put off immediately,",
+            "and rounding the Château d'If,",
+            "got on board the vessel between Cape Morgiou and Rion island.",
+            "Immediately, and according to custom,",
+            "the ramparts of Fort Saint-Jean were covered with spectators;",
+            "it is always an event at Marseilles for a ship to come into port,",
+            "especially when this ship, like the Pharaon,",
+            "has been built, rigged, and laden at the old Phocée docks,"
+          ],
+          [
+            "Wuthering Heights by Emily Brontë",
+            "1801.—I have just returned from a visit to my landlord—",
+            "the solitary neighbour that I shall be troubled with.",
+            "This is certainly a beautiful country!",
+            "In all England, I do not believe that I could have fixed",
+            "on a situation so completely removed from the stir of society.",
+            "A perfect misanthropist's heaven:",
+            "and Mr. Heathcliff and I are such a suitable pair",
+            "to divide the desolation between us.",
+            "A capital fellow!",
+            "He little imagined how my heart warmed towards him",
+            "when I beheld his black eyes withdraw so suspiciously under their brows,"
+          ],
+          [
+            "Anna Karenina by Leo Tolstoy",
+            "All happy families are alike;",
+            "each unhappy family is unhappy in its own way.",
+            "Everything was in confusion in the Oblonskys' house.",
+            "The wife had discovered that the husband was carrying on an intrigue",
+            "with a French girl, who had been a governess in their family,",
+            "and she had announced to her husband",
+            "that she could not go on living in the same house with him.",
+            "This position of affairs had now lasted three days,",
+            "and not only the husband and wife themselves,",
+            "but all the members of their family and household, were painfully conscious of it."
+          ],
+          [
+            "The Odyssey by Homer (Samuel Butler translation)",
+            "Tell me, O muse, of that ingenious hero",
+            "who travelled far and wide after he had sacked",
+            "the famous town of Troy.",
+            "Many cities did he visit, and many were the nations",
+            "with whose manners and customs he was acquainted;",
+            "moreover he suffered much by sea",
+            "while trying to save his own life",
+            "and bring his men safely home;",
+            "but do what he might he could not save his men,",
+            "for they perished through their own sheer folly",
+            "in eating the cattle of the Sun-god Hyperion;"
+          ],
+          [
+            "The Iliad by Homer (Samuel Butler translation)",
+            "Sing, O goddess, the anger of Achilles son of Peleus,",
+            "that brought countless ills upon the Achaeans.",
+            "Many a brave soul did it send hurrying down to Hades,",
+            "and many a hero did it yield a prey to dogs and vultures,",
+            "for so were the counsels of Jove fulfilled",
+            "from the day on which the son of Atreus, king of men,",
+            "and great Achilles, first fell out with one another.",
+            "And which of the gods was it that set them on to quarrel?",
+            "It was the son of Jove and Leto;",
+            "for he was angry with the king",
+            "and sent a pestilence upon the host to plague the people,"
+          ],
+          [
+            "Don Quixote by Miguel de Cervantes",
+            "In a village of La Mancha, the name of which I have no desire to call to mind,",
+            "there lived not long since one of those gentlemen",
+            "that keep a lance in the lance-rack,",
+            "an old buckler, a lean hack, and a greyhound for coursing.",
+            "An olla of rather more beef than mutton,",
+            "a salad on most nights, scraps on Saturdays,",
+            "lentils on Fridays, and a pigeon or so extra on Sundays,",
+            "made away with three-quarters of his income.",
+            "The rest of it went in a doublet of fine cloth",
+            "and velvet breeches and shoes to match for holidays,",
+            "while on week-days he made a brave figure in his best homespun."
+          ],
+          [
+            "The Divine Comedy by Dante Alighieri (Longfellow translation)",
+            "Midway upon the journey of our life",
+            "I found myself within a forest dark,",
+            "For the straightforward pathway had been lost.",
+            "Ah me! how hard a thing it is to say",
+            "What was this forest savage, rough, and stern,",
+            "Which in the very thought renews the fear.",
+            "So bitter is it, death is little more;",
+            "But of the good to treat, which there I found,",
+            "Speak will I of the other things I saw there.",
+            "I cannot well repeat how there I entered,",
+            "So full was I of slumber at the moment"
+          ],
+          [
+            "Gulliver's Travels by Jonathan Swift",
+            "My father had a small estate in Nottinghamshire:",
+            "I was the third of five sons.",
+            "He sent me to Emanuel College in Cambridge at fourteen years old,",
+            "where I resided three years, and applied myself close to my studies;",
+            "but the charge of maintaining me,",
+            "although I had a very scanty allowance,",
+            "being too great for a narrow fortune,",
+            "I was bound apprentice to Mr. James Bates,",
+            "an eminent surgeon in London,",
+            "with whom I continued four years.",
+            "My father now and then sending me small sums of money,"
+          ],
+          [
+            "Robinson Crusoe by Daniel Defoe",
+            "I was born in the year 1632, in the city of York,",
+            "of a good family, though not of that country,",
+            "my father being a foreigner of Bremen,",
+            "who settled first at Hull.",
+            "He got a good estate by merchandise,",
+            "and leaving off his trade, lived afterwards at York,",
+            "from whence he had married my mother,",
+            "whose relations were named Robinson,",
+            "a very good family in that country,",
+            "and from whom I was called Robinson Kreutznaer;",
+            "but, by the usual corruption of words in England,"
+          ],
+          [
+            "The Three Musketeers by Alexandre Dumas",
+            "On the first Monday of the month of April, 1625,",
+            "the market town of Meung, in which the author of ROMANCE OF THE ROSE was born,",
+            "appeared to be in as perfect a state of revolution",
+            "as if the Huguenots had just made a second La Rochelle of it.",
+            "Many citizens, seeing the women flying toward the High Street,",
+            "leaving their children crying at the open doors,",
+            "hastened to don the cuirass,",
+            "and supporting their somewhat uncertain courage",
+            "with a musket or a partisan,",
+            "directed their steps toward the hostelry of the Jolly Miller,",
+            "before which was gathered, increasing every minute, a compact group,"
+          ],
+          [
+            "The Scarlet Letter by Nathaniel Hawthorne",
+            "A throng of bearded men, in sad-coloured garments",
+            "and grey steeple-crowned hats, inter-mixed with women,",
+            "some wearing hoods, and others bareheaded,",
+            "was assembled in front of a wooden edifice,",
+            "the door of which was heavily timbered with oak,",
+            "and studded with iron spikes.",
+            "The founders of a new colony, whatever Utopia of human virtue",
+            "and happiness they might originally project,",
+            "have invariably recognised it among their earliest practical necessities",
+            "to allot a portion of the virgin soil as a cemetery,",
+            "and another portion as the site of a prison."
+          ],
+          [
+            "Heart of Darkness by Joseph Conrad",
+            "The Nellie, a cruising yawl, swung to her anchor",
+            "without a flutter of the sails, and was at rest.",
+            "The flood had made, the wind was nearly calm,",
+            "and being bound down the river,",
+            "the only thing for it was to come to and wait for the turn of the tide.",
+            "The sea-reach of the Thames stretched before us",
+            "like the beginning of an interminable waterway.",
+            "In the offing the sea and the sky were welded together",
+            "without a joint, and in the luminous space",
+            "the tanned sails of the barges drifting up with the tide",
+            "seemed to stand still in red clusters of canvas"
+          ],
+          [
+            "The Adventures of Tom Sawyer by Mark Twain",
+            "'Tom!'",
+            "No answer.",
+            "'Tom!'",
+            "No answer.",
+            "'What's gone with that boy, I wonder? You TOM!'",
+            "No answer.",
+            "The old lady pulled her spectacles down",
+            "and looked over them about the room;",
+            "then she put them up and looked out under them.",
+            "She seldom or never looked through them",
+            "for so small a thing as a boy;"
+          ],
+          [
+            "The Wonderful Wizard of Oz by L. Frank Baum",
+            "Dorothy lived in the midst of the great Kansas prairies,",
+            "with Uncle Henry, who was a farmer,",
+            "and Aunt Em, who was the farmer's wife.",
+            "Their house was small,",
+            "for the lumber to build it had to be carried by wagon many miles.",
+            "There were four walls, a floor and a roof,",
+            "which made one room;",
+            "and this room contained a rusty looking cookstove,",
+            "a cupboard for the dishes, a table, three or four chairs,",
+            "and the beds.",
+            "Uncle Henry and Aunt Em had a big bed in one corner,"
+          ],
+          [
+            "Treasure Island by Robert Louis Stevenson",
+            "Squire Trelawney, Dr. Livesey, and the rest of these gentlemen",
+            "having asked me to write down the whole particulars about Treasure Island,",
+            "from the beginning to the end,",
+            "keeping nothing back but the bearings of the island,",
+            "and that only because there is still treasure not yet lifted,",
+            "I take up my pen in the year of grace 17—",
+            "and go back to the time when my father kept the Admiral Benbow inn",
+            "and the brown old seaman with the sabre cut",
+            "first took up his lodging under our roof.",
+            "I remember him as if it were yesterday,",
+            "as he came plodding to the inn door,"
+          ],
+          [
+            "The Republic by Plato (Jowett translation)",
+            "I went down yesterday to the Piraeus",
+            "with Glaucon the son of Ariston,",
+            "that I might offer up my prayers to the goddess;",
+            "and also because I wanted to see",
+            "in what manner they would celebrate the festival,",
+            "which was a new thing.",
+            "I was delighted with the procession of the inhabitants;",
+            "but that of the Thracians was equally, if not more, beautiful.",
+            "When we had finished our prayers and viewed the spectacle,",
+            "we turned in the direction of the city;",
+            "and at that instant Polemarchus the son of Cephalus chanced to catch sight of us"
+          ],
+          [
+            "The Prince by Niccolò Machiavelli",
+            "All states, all powers, that have held and hold rule over men",
+            "have been and are either republics or principalities.",
+            "Principalities are either hereditary,",
+            "in which the family has been long established;",
+            "or they are new.",
+            "The new are either entirely new,",
+            "as was Milan to Francesco Sforza,",
+            "or they are, as it were, members annexed",
+            "to the hereditary state of the prince who has acquired them,",
+            "as was the kingdom of Naples to that of the King of Spain."
+          ],
+          [
+            "Meditations by Marcus Aurelius (Long translation)",
+            "From my grandfather Verus I learned good morals and the government of my temper.",
+            "From the reputation and remembrance of my father, modesty and a manly character.",
+            "From my mother, piety and beneficence,",
+            "and abstinence, not only from evil deeds, but even from evil thoughts;",
+            "and further, simplicity in my way of living,",
+            "far removed from the habits of the rich.",
+            "From my great-grandfather, not to have frequented public schools,",
+            "and to have had good teachers at home,",
+            "and to know that on such things a man should spend liberally."
+          ],
+          [
+            "The Art of War by Sun Tzu (Giles translation)",
+            "Sun Tzu said: The art of war is of vital importance to the State.",
+            "It is a matter of life and death,",
+            "a road either to safety or to ruin.",
+            "Hence it is a subject of inquiry which can on no account be neglected.",
+            "The art of war, then, is governed by five constant factors,",
+            "to be taken into account in one's deliberations,",
+            "when seeking to determine the conditions obtaining in the field.",
+            "These are: (1) The Moral Law; (2) Heaven; (3) Earth; (4) The Commander; (5) Method and discipline.",
+            "The Moral Law causes the people to be in complete accord with their ruler,",
+            "so that they will follow him regardless of their lives,",
+            "undismayed by any danger."
+          ],
+          [
+            "Leaves of Grass by Walt Whitman",
+            "I celebrate myself, and sing myself,",
+            "And what I assume you shall assume,",
+            "For every atom belonging to me as good belongs to you.",
+            "I loafe and invite my soul,",
+            "I lean and loafe at my ease observing a spear of summer grass.",
+            "My tongue, every atom of my blood, form'd from this soil, this air,",
+            "Born here of parents born here from parents the same, and their parents the same,",
+            "I, now thirty-seven years old in perfect health begin,",
+            "Hoping to cease not till death.",
+            "Creeds and schools in abeyance,",
+            "Retiring back a while sufficed at what they are, but never forgotten,"
+          ],
+          [
+            "Paradise Lost by John Milton",
+            "Of Man's first disobedience, and the fruit",
+            "Of that forbidden tree whose mortal taste",
+            "Brought death into the World, and all our woe,",
+            "With loss of Eden, till one greater Man",
+            "Restore us, and regain the blissful Seat,",
+            "Sing, Heavenly Muse, that, on the secret top",
+            "Of Oreb, or of Sinai, didst inspire",
+            "That shepherd who first taught the chosen seed",
+            "In the beginning how the heavens and earth",
+            "Rose out of Chaos: or, if Sion hill",
+            "Delight thee more, and Siloa's brook that flowed"
+          ],
+          [
+            "Beowulf (Hall translation)",
+            "Lo! the Spear-Danes' glory through splendid achievements",
+            "The folk-kings' former fame we have heard of,",
+            "How princes displayed then their prowess-in-battle.",
+            "Oft Scyld the Scefing from scathers in numbers",
+            "From many a people their mead-benches tore.",
+            "Since first he found him friendless and wretched,",
+            "The earl had had terror: comfort he got for it,",
+            "Waxed 'neath the welkin, world-honor gained,",
+            "Till all his neighbors o'er sea were compelled to",
+            "Bow to his bidding and bring him their tribute:",
+            "An excellent atheling!"
+          ],
+          [
+            "The Canterbury Tales by Geoffrey Chaucer (Modern English)",
+            "When April with his showers sweet with fruit",
+            "The drought of March has pierced unto the root",
+            "And bathed each vein with liquor that has power",
+            "To generate therein and sire the flower;",
+            "When Zephyr also has, with his sweet breath,",
+            "Quickened again, in every holt and heath,",
+            "The tender shoots and buds, and the young sun",
+            "Into the Ram one half his course has run,",
+            "And many little birds make melody",
+            "That sleep through all the night with open eye",
+            "(So Nature pricks them on to ramp and rage)"
+          ],
+          [
+            "The Declaration of Independence",
+            "When in the Course of human events,",
+            "it becomes necessary for one people",
+            "to dissolve the political bands",
+            "which have connected them with another,",
+            "and to assume among the powers of the earth,",
+            "the separate and equal station",
+            "to which the Laws of Nature and of Nature's God entitle them,",
+            "a decent respect to the opinions of mankind",
+            "requires that they should declare the causes",
+            "which impel them to the separation."
+          ],
+          [
+            "The Communist Manifesto by Karl Marx and Friedrich Engels",
+            "A spectre is haunting Europe—the spectre of communism.",
+            "All the powers of old Europe have entered into a holy alliance",
+            "to exorcise this spectre:",
+            "Pope and Tsar, Metternich and Guizot,",
+            "French Radicals and German police-spies.",
+            "Where is the party in opposition that has not been decried as communistic",
+            "by its opponents in power?",
+            "Where is the opposition that has not hurled back",
+            "the branding reproach of communism,",
+            "against the more advanced opposition parties,",
+            "as well as against its reactionary adversaries?"
+          ],
+          [
+            "Common Sense by Thomas Paine",
+            "Perhaps the sentiments contained in the following pages,",
+            "are not yet sufficiently fashionable to procure them general favour;",
+            "a long habit of not thinking a thing wrong,",
+            "gives it a superficial appearance of being right,",
+            "and raises at first a formidable outcry in defense of custom.",
+            "But the tumult soon subsides.",
+            "Time makes more converts than reason.",
+            "As a long and violent abuse of power,",
+            "is generally the Means of calling the right of it in question",
+            "(and in Matters too which might never have been thought of,",
+            "had not the Sufferers been aggravated into the inquiry)"
+          ],
+          [
+            "Walden by Henry David Thoreau",
+            "When I wrote the following pages, or rather the bulk of them,",
+            "I lived alone, in the woods,",
+            "a mile from any neighbor,",
+            "in a house which I had built myself,",
+            "on the shore of Walden Pond, in Concord, Massachusetts,",
+            "and earned my living by the labor of my hands only.",
+            "I lived there two years and two months.",
+            "At present I am a sojourner in civilized life again.",
+            "I should not obtrude my affairs so much on the notice of my readers",
+            "if very particular inquiries had not been made by my townsmen",
+            "concerning my mode of life,"
+          ],
+          [
+            "Civil Disobedience by Henry David Thoreau",
+            "I heartily accept the motto,",
+            "'That government is best which governs least;'",
+            "and I should like to see it acted up to more rapidly and systematically.",
+            "Carried out, it finally amounts to this,",
+            "which also I believe—",
+            "'That government is best which governs not at all;'",
+            "and when men are prepared for it, that will be the kind of government",
+            "which they will have.",
+            "Government is at best but an expedient;",
+            "but most governments are usually, and all governments are sometimes, inexpedient."
+          ],
+          [
+            "The Federalist Papers (No. 10) by James Madison",
+            "Among the numerous advantages promised by a well-constructed Union,",
+            "none deserves to be more accurately developed",
+            "than its tendency to break and control the violence of faction.",
+            "The friend of popular governments never finds himself",
+            "so much alarmed for their character and fate,",
+            "as when he contemplates their propensity to this dangerous vice.",
+            "He will not fail, therefore, to set a due value",
+            "on any plan which, without violating the principles to which he is attached,",
+            "provides a proper cure for it.",
+            "The instability, injustice, and confusion",
+            "introduced into the public councils,"
+          ],
+          [
+            "The Souls of Black Folk by W.E.B. Du Bois",
+            "Between me and the other world there is ever an unasked question:",
+            "unasked by some through feelings of delicacy;",
+            "by others through the difficulty of rightly framing it.",
+            "All, nevertheless, flutter round it.",
+            "They approach me in a half-hesitant sort of way,",
+            "eye me curiously or compassionately,",
+            "and then, instead of saying directly,",
+            "How does it feel to be a problem?",
+            "they say, I know an excellent colored man in my town;",
+            "or, I fought at Mechanicsville;",
+            "or, Do not these Southern outrages make your blood boil?"
+          ],
+          [
+            "A Room of One's Own by Virginia Woolf",
+            "But, you may say, we asked you to speak about women and fiction—",
+            "what has that got to do with a room of one's own?",
+            "I will try to explain.",
+            "When you asked me to speak about women and fiction",
+            "I sat down on the banks of a river and began to wonder",
+            "what the words meant.",
+            "They might mean simply a few remarks about Fanny Burney;",
+            "a few more about Jane Austen;",
+            "a tribute to the Brontës and a sketch of Haworth Parsonage under snow;",
+            "some witticisms if possible about Miss Mitford;",
+            "a respectful allusion to George Eliot;"
+          ],
+          [
+            "Narrative of the Life of Frederick Douglass",
+            "I was born in Tuckahoe, near Hillsborough,",
+            "and about twelve miles from Easton, in Talbot county, Maryland.",
+            "I have no accurate knowledge of my age,",
+            "never having seen any authentic record containing it.",
+            "By far the larger part of the slaves",
+            "know as little of their ages as horses know of theirs,",
+            "and it is the wish of most masters within my knowledge",
+            "to keep their slaves thus ignorant.",
+            "I do not remember to have ever met a slave",
+            "who could tell of his birthday."
+          ],
+          [
+            "Up From Slavery by Booker T. Washington",
+            "I was born a slave on a plantation in Franklin County, Virginia.",
+            "I am not quite sure of the exact place or exact date of my birth,",
+            "but at any rate I suspect I must have been born",
+            "somewhere and at some time.",
+            "As nearly as I have been able to learn,",
+            "I was born near a cross-roads post-office called Hale's Ford,",
+            "and the year was 1858 or 1859.",
+            "I do not know the month or the day.",
+            "The earliest impressions I can now recall",
+            "are of the plantation and the slave quarters—",
+            "the latter being the part of the plantation"
+          ],
+          [
+            "The Yellow Wallpaper by Charlotte Perkins Gilman",
+            "It is very seldom that mere ordinary people like John and myself",
+            "secure ancestral halls for the summer.",
+            "A colonial mansion, a hereditary estate, I would say a haunted house,",
+            "and reach the height of romantic felicity—",
+            "but that would be asking too much of fate!",
+            "Still I will proudly declare that there is something queer about it.",
+            "Else, why should it be let so cheaply?",
+            "And why have stood so long untenanted?",
+            "John laughs at me, of course, but one expects that in marriage.",
+            "John is practical in the extreme."
+          ],
+          [
+            "Siddhartha by Hermann Hesse",
+            "In the shade of the house, in the sunshine of the riverbank near the boats,",
+            "in the shade of the Sal-wood forest,",
+            "in the shade of the fig tree is where Siddhartha grew up,",
+            "the handsome son of the Brahman,",
+            "the young falcon, together with his friend Govinda,",
+            "son of a Brahman.",
+            "The sun tanned his light shoulders by the banks of the river",
+            "when bathing, performing the sacred ablutions,",
+            "the sacred offerings.",
+            "In the mango grove, shade poured into his black eyes,",
+            "when playing as a boy,"
+          ]
+        ]
+
+        // Pick a random text
+        const randomTextIndex = Math.floor(Math.random() * publicDomainTexts.length)
+        const lines = publicDomainTexts[randomTextIndex]
+
+        // Encrypt title first, then each line
+        for (const line of lines) {
+          const seq = demoState.senderContext.seq
+          const plaintext = new TextEncoder().encode(line)
+          const ciphertext = await demoState.senderContext.Seal(plaintext)
+
+          const ciphertextDiv = document.createElement('div')
+          ciphertextDiv.className = 'chat-message ciphertext'
+          ciphertextDiv.dataset.seq = seq
+          ciphertextDiv.dataset.ciphertext = ciphertext.toHex()
+          ciphertextDiv.dataset.decrypted = 'false'
+
+          const updateClickability = () => {
+            const isNextToDecrypt = demoState.recipientContext.seq === seq
+            if (isNextToDecrypt) {
+              ciphertextDiv.classList.add('clickable')
+              ciphertextDiv.classList.remove('not-clickable')
+            } else {
+              ciphertextDiv.classList.add('not-clickable')
+              ciphertextDiv.classList.remove('clickable')
+            }
+          }
+
+          updateClickability()
+
+          ciphertextDiv.innerHTML = `
+            <div class="chat-message-label">Ciphertext ${seq}</div>
+            <div class="chat-message-content">${ciphertext.toHex()}</div>
+          `
+
+          ciphertextDiv.addEventListener('click', async function() {
+            if (this.dataset.decrypted === 'true') return
+
+            if (demoState.recipientContext.seq !== seq) {
+              return
+            }
+
+            try {
+              const ciphertextBytes = Uint8Array.fromHex(this.dataset.ciphertext)
+              const decrypted = await demoState.recipientContext.Open(ciphertextBytes)
+              const plaintext = new TextDecoder().decode(decrypted)
+
+              this.innerHTML = `
+                <div class="chat-message-label">Plaintext ${seq}</div>
+                <div class="chat-message-content">${plaintext}</div>
+              `
+              this.classList.remove('ciphertext')
+              this.classList.add('decrypted')
+              this.classList.remove('clickable', 'not-clickable')
+              this.dataset.decrypted = 'true'
+
+              // Scroll this plaintext message to top of chat container with margin
+              const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
+              chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+
+              chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
+                if (div.dataset.decrypted === 'false') {
+                  const divSeq = parseInt(div.dataset.seq)
+                  const isNextToDecrypt = demoState.recipientContext.seq === divSeq
+                  if (isNextToDecrypt) {
+                    div.classList.add('clickable')
+                    div.classList.remove('not-clickable')
+                  } else {
+                    div.classList.add('not-clickable')
+                    div.classList.remove('clickable')
+                  }
+                }
+              })
+            } catch (e) {
+              console.error('Error decrypting:', e)
+              alert('Error decrypted message: ' + e.message)
+            }
+          })
+
+          chatContainer.appendChild(ciphertextDiv)
+        }
+
+        chatContainer.classList.remove('hidden')
+
+        // Update button states
+        updateButtonStates()
+
+        // Scroll to first decryptable message (seq === 0)
+        const firstMessage = chatContainer.querySelector('.chat-message[data-seq="0"]')
+        if (firstMessage) {
+          const offsetTop = firstMessage.offsetTop - chatContainer.offsetTop - 15
+          chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+        }
+      })
 
       // ============================================================================
       // TEST EXECUTION
@@ -1205,9 +3829,26 @@
 
       /** Runs all tests */
       async function runAllTests() {
-        for (const test of tests) {
+        // Prioritize baseline algorithms to enable demo section faster
+        const priorityTests = tests.filter(t => {
+          const component = getTestComponent(t)
+          return (
+            (t.testingComponent === 'kem' && component.name === 'KEM_DHKEM_P256_HKDF_SHA256') ||
+            (t.testingComponent === 'kdf' && component.name === 'KDF_HKDF_SHA256') ||
+            (t.testingComponent === 'aead' && component.name === 'AEAD_AES_128_GCM')
+          )
+        })
+        const otherTests = tests.filter(t => !priorityTests.includes(t))
+
+        // Run priority tests first
+        for (const test of priorityTests) {
           await runTest(test)
-          // Small delay to allow UI updates
+          await new Promise((resolve) => setTimeout(resolve, 10))
+        }
+
+        // Then run remaining tests
+        for (const test of otherTests) {
+          await runTest(test)
           await new Promise((resolve) => setTimeout(resolve, 10))
         }
 
@@ -1449,10 +4090,64 @@
 
       /** Initializes the test suite and starts execution */
       async function init() {
+        // Set play button color based on filter
+        const playButton = document.getElementById('playButton')
+        if (onlyNoble) {
+          playButton.classList.add('noble')
+        } else if (both) {
+          playButton.classList.add('both')
+        }
+        // Default (onlyNative) uses the default green color
+
         tests = generateTests()
         renderAlgorithmSummary()
+
+        // Run tests in background without blocking UI
         await runAllTests()
-        await runVectorValidation()
+
+        // Set up click-to-copy for demo outputs
+        const demoOutputs = ['publicKeyOutput', 'privateKeyOutput', 'encapsulatedKeyOutput']
+        const copyTimeouts = {}
+        demoOutputs.forEach(id => {
+          const element = document.getElementById(id)
+          element.addEventListener('click', async () => {
+            const text = element.textContent
+            if (text) {
+              try {
+                await navigator.clipboard.writeText(text)
+                // Clear any pending timeout for this element
+                if (copyTimeouts[id]) {
+                  clearTimeout(copyTimeouts[id])
+                }
+                element.classList.add('copy-flash')
+                copyTimeouts[id] = setTimeout(() => {
+                  element.classList.remove('copy-flash')
+                  delete copyTimeouts[id]
+                }, 200)
+              } catch (err) {
+                console.error('Failed to copy:', err)
+              }
+            }
+          })
+        })
+
+        // Set up play button click handler
+        document.getElementById('playOverlay').addEventListener('click', async () => {
+          const overlay = document.getElementById('playOverlay')
+          const content = document.getElementById('vectorValidationContent')
+
+          // Remove overlay and blur
+          overlay.classList.add('hidden')
+          content.classList.remove('blurred')
+
+          // Start validation
+          await runVectorValidation()
+        })
+
+        // Auto-click play button in CI mode
+        if (ci) {
+          document.getElementById('playOverlay').click()
+        }
       }
 
       init()

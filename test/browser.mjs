@@ -2,7 +2,7 @@ import { chromium, firefox, webkit } from 'playwright'
 import { spawn } from 'node:child_process'
 
 const PORT = 3000
-const URL = `http://localhost:${PORT}`
+const goTo = new URL(`http://localhost:${PORT}?ci`)
 
 // Start the server
 function startServer() {
@@ -99,7 +99,7 @@ async function runBrowserTests(browserType, browserName, channel = null) {
   })
 
   try {
-    await page.goto(URL, { waitUntil: 'networkidle' })
+    await page.goto(goTo.href, { waitUntil: 'networkidle' })
 
     const userAgent = await page.evaluate(() => navigator.userAgent)
     console.log(`  User Agent: ${userAgent}`)
