@@ -377,7 +377,7 @@ export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
 /**
  * Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
  *
- * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
  */
 export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
   createPqKem({
@@ -393,7 +393,7 @@ export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
 /**
  * Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
  *
- * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
  */
 export const KEM_MLKEM1024_P384: HPKE.KEMFactory = () =>
   createPqKem({
