@@ -4153,6 +4153,10 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
  * @group KEM Algorithms
  */
 export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
@@ -4203,6 +4207,10 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
  * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
  */

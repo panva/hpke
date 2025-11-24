@@ -39,7 +39,9 @@ See [https://panva.github.io/hpke/](https://panva.github.io/hpke/?noble)
 | ML-KEM-512                 | `0x0040` |
 | ML-KEM-768                 | `0x0041` |
 | ML-KEM-1024                | `0x0042` |
+| MLKEM768-P256              | `0x0050` |
 | MLKEM768-X25519            | `0x647a` |
+| MLKEM1024-P384             | `0x0051` |
 
 ### Key Derivation Functions (KDF)
 

@@ -3,15 +3,24 @@ import type * as HPKE from '../../index.ts'
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { gcm } from '@noble/ciphers/aes.js'
-import { shake128, shake256 } from '@noble/hashes/sha3.js'
+import { sha3_256, shake128, shake256 } from '@noble/hashes/sha3.js'
 import { turboshake128, turboshake256 } from '@noble/hashes/sha3-addons.js'
 import { extract, expand } from '@noble/hashes/hkdf.js'
 import { sha256, sha384, sha512 } from '@noble/hashes/sha2.js'
 import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js'
-import { XWing } from '@noble/post-quantum/hybrid.js'
+import { combineKEMS, XWing } from '@noble/post-quantum/hybrid.js'
 import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
 import { p256, p384, p521 } from '@noble/curves/nist.js'
+import type { ECDSA } from '@noble/curves/abstract/weierstrass.js'
+import {
+  abytes,
+  cleanBytes,
+  concatBytes,
+  randomBytes,
+  type KEM,
+} from '@noble/post-quantum/utils.js'
+import { asciiToBytes, bytesToNumberBE, bytesToNumberLE } from '@noble/curves/utils.js'
 
 /**
  * AES-128-GCM Authenticated Encryption with Associated Data (AEAD).
@@ -350,10 +359,7 @@ export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
   })
 
 /**
- * Hybrid post-quantum Key Encapsulation Mechanism combining ML-KEM-768 and X25519.
- *
- * A hybrid KEM that combines the post-quantum ML-KEM-768 with the classical X25519 ECDH to provide
- * both post-quantum security and backwards compatibility.
+ * Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
  */
@@ -367,6 +373,119 @@ export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
     Nsk: 32,
     kem: XWing,
   })
+
+/**
+ * Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ */
+export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
+  createPqKem({
+    id: 0x0050,
+    name: 'MLKEM768-P256',
+    Nsecret: 32,
+    Nenc: 1153,
+    Npk: 1249,
+    Nsk: 32,
+    kem: concreteHybridKem('MLKEM768-P256', ml_kem768, p256, 128),
+  })
+
+/**
+ * Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ */
+export const KEM_MLKEM1024_P384: HPKE.KEMFactory = () =>
+  createPqKem({
+    id: 0x0051,
+    name: 'MLKEM1024-P384',
+    Nsecret: 32,
+    Nenc: 1665,
+    Npk: 1665,
+    Nsk: 32,
+    kem: concreteHybridKem('MLKEM1024-P384', ml_kem1024, p384, 48),
+  })
+
+function nistCurveKem(curve: ECDSA, scalarLen: number, elemLen: number, nseed: number): KEM {
+  const Fn = curve.Point.Fn
+  if (!Fn) throw new Error('No Point.Fn')
+  const order = Fn.ORDER
+
+  function rejectionSampling(seed: Uint8Array): { secretKey: Uint8Array; publicKey: Uint8Array } {
+    let start = 0
+    let end = scalarLen
+    let sk = Fn.isLE
+      ? bytesToNumberLE(seed.subarray(start, end))
+      : bytesToNumberBE(seed.subarray(start, end))
+
+    while (sk === 0n || sk >= order) {
+      start = end
+      end = end + scalarLen
+      if (end > seed.length) {
+        throw new Error('Rejection sampling failed')
+      }
+      sk = Fn.isLE
+        ? bytesToNumberLE(seed.subarray(start, end))
+        : bytesToNumberBE(seed.subarray(start, end))
+    }
+
+    const secretKey = Fn.toBytes(Fn.create(sk))
+    const publicKey = curve.getPublicKey(secretKey, false)
+    return { secretKey, publicKey }
+  }
+
+  return {
+    lengths: {
+      secretKey: scalarLen,
+      publicKey: elemLen,
+      seed: nseed,
+      msg: nseed,
+      cipherText: elemLen,
+    },
+    keygen(seed: Uint8Array = randomBytes(nseed)) {
+      abytes(seed, nseed, 'seed')
+      return rejectionSampling(seed)
+    },
+    getPublicKey(secretKey: Uint8Array) {
+      return curve.getPublicKey(secretKey, false)
+    },
+    encapsulate(publicKey: Uint8Array, rand: Uint8Array = randomBytes(nseed)) {
+      abytes(rand, nseed, 'rand')
+      const { secretKey: ek } = rejectionSampling(rand)
+      const sharedSecret = this.decapsulate(publicKey, ek)
+      const cipherText = curve.getPublicKey(ek, false)
+      cleanBytes(ek)
+      return { sharedSecret, cipherText }
+    },
+    decapsulate(cipherText: Uint8Array, secretKey: Uint8Array) {
+      const fullSecret = curve.getSharedSecret(secretKey, cipherText)
+      return fullSecret.subarray(1)
+    },
+  }
+}
+
+function concreteHybridKem(label: string, mlkem: KEM, curve: ECDSA, nseed: number): KEM {
+  const { secretKey: scalarLen, publicKeyUncompressed: elemLen } = curve.lengths
+  if (!scalarLen || !elemLen) throw new Error('wrong curve')
+  const curveKem = nistCurveKem(curve, scalarLen, elemLen, nseed)
+  const mlkemSeedLen = 64
+  const totalSeedLen = mlkemSeedLen + nseed
+
+  return combineKEMS(
+    32,
+    32,
+    (seed: Uint8Array) => {
+      abytes(seed, 32)
+      const expanded = shake256(seed, { dkLen: totalSeedLen })
+      const mlkemSeed = expanded.subarray(0, mlkemSeedLen)
+      const curveSeed = expanded.subarray(mlkemSeedLen, totalSeedLen)
+      return concatBytes(mlkemSeed, curveSeed)
+    },
+    (pk, ct, ss) => sha3_256(concatBytes(ss[0]!, ss[1]!, ct[1]!, pk[1]!, asciiToBytes(label))),
+    mlkem,
+    curveKem,
+  )
+}
 
 function createPqKem(config: {
   id: number

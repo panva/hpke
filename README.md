@@ -99,9 +99,9 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | ML-KEM-512 <sub>`0x0040`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
 | ML-KEM-768 <sub>`0x0041`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
 | ML-KEM-1024 <sub>`0x0042`</sub>                | ✓[^24.7] |      |     |            |              |         ✓         |
-| MLKEM768-P256 <sub>`0x0050`</sub>              | ✓[^24.7] |      |     |            |              |                   |
+| MLKEM768-P256 <sub>`0x0050`</sub>              | ✓[^24.7] |      |     |            |              |         ✓         |
 | MLKEM768-X25519 <sub>`0x647a`</sub>            | ✓[^24.7] |      |     |            |              |         ✓         |
-| MLKEM1024-P384 <sub>`0x0051`</sub>             | ✓[^24.7] |      |     |            |              |                   |
+| MLKEM1024-P384 <sub>`0x0051`</sub>             | ✓[^24.7] |      |     |            |              |         ✓         |
 
 ### Key Derivation Functions (KDF)
 
