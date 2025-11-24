@@ -879,6 +879,11 @@
         background: var(--color-error-bg);
       }
 
+      .chat-input-container input.error {
+        border-color: var(--color-error);
+        background: var(--color-error-bg);
+      }
+
       .demo-input-group textarea {
         resize: vertical;
         min-height: 60px;
@@ -1526,7 +1531,7 @@
         <div id="ikmInputGroup" class="demo-input-group">
           <label>Input Keying Material:</label>
           <div class="ikm-input-wrapper">
-            <input type="text" id="ikmInput" placeholder="Enter IKM in hex format" value="…">
+            <input type="text" id="ikmInput" placeholder="IKM in hex format" value="…">
             <button id="zeroIkmButton" title="Set to zero">0x00…</button>
             <button id="randomIkmButton" title="Randomize">rand()</button>
           </div>
@@ -1550,7 +1555,7 @@
             <div class="demo-input-group">
               <label>Info:</label>
               <div class="ikm-input-wrapper">
-                <input type="text" id="infoInput" placeholder="Enter info in hex format">
+                <input type="text" id="infoInput" placeholder="Info in hex format">
                 <button id="zeroInfoButton" title="Set to 32 zero bytes">0x00…</button>
                 <button id="randomInfoButton" title="Generate random 32 bytes">rand()</button>
               </div>
@@ -1572,7 +1577,7 @@
               <div class="demo-input-group">
                 <label>Pre-Shared Key (PSK):</label>
                 <div class="ikm-input-wrapper">
-                  <input type="text" id="pskInput" placeholder="Enter PSK in hex format (≥32 bytes)">
+                  <input type="text" id="pskInput" placeholder="PSK in hex format (≥32 bytes)">
                   <button id="zeroPskButton" title="Set to 32 zero bytes">0x00…</button>
                   <button id="randomPskButton" title="Generate random 32 bytes">rand()</button>
                 </div>
@@ -1582,7 +1587,7 @@
               <div class="demo-input-group">
                 <label>PSK ID:</label>
                 <div class="ikm-input-wrapper">
-                  <input type="text" id="pskIdInput" placeholder="Enter PSK ID in hex format">
+                  <input type="text" id="pskIdInput" placeholder="PSK ID in hex format">
                   <button id="randomPskIdButton" title="Generate random 8 bytes">rand()</button>
                 </div>
                 <div class="helper-text">Minimum 1 byte (2 hex characters)</div>
@@ -2383,6 +2388,7 @@
           ikmInput.classList.add('error')
           console.error('Invalid IKM hex:', e.message)
         }
+        updateButtonStates()
       }
 
       document.getElementById('ikmInput').addEventListener('input', async (e) => {
@@ -2470,6 +2476,7 @@
           infoInput.classList.add('error')
           console.error('Invalid info hex:', e.message)
         }
+        updateButtonStates()
       })
 
       document.getElementById('zeroInfoButton').addEventListener('click', async () => {
@@ -2505,6 +2512,7 @@
             if (psk.length < 32) {
               pskInput.classList.add('error')
               console.error('PSK must be at least 32 bytes')
+              updateButtonStates()
               return
             }
             demoState.psk = psk
@@ -2521,6 +2529,7 @@
           pskInput.classList.add('error')
           console.error('Invalid PSK hex:', e.message)
         }
+        updateButtonStates()
       })
 
       // PSK ID input
@@ -2534,6 +2543,7 @@
             if (pskId.length < 1) {
               pskIdInput.classList.add('error')
               console.error('PSK ID must be at least 1 byte')
+              updateButtonStates()
               return
             }
             demoState.pskId = pskId
@@ -2550,6 +2560,7 @@
           pskIdInput.classList.add('error')
           console.error('Invalid PSK ID hex:', e.message)
         }
+        updateButtonStates()
       })
 
       // PSK button handlers
@@ -2594,6 +2605,65 @@
       })
 
       document.getElementById('refreshContextButton').addEventListener('click', async () => {
+        // Check if this is being called to reset errors
+        const aadInput = document.getElementById('aadInput')
+        const ikmInput = document.getElementById('ikmInput')
+        const infoInput = document.getElementById('infoInput')
+        const pskInput = document.getElementById('pskInput')
+        const pskIdInput = document.getElementById('pskIdInput')
+        const hasInvalidFields = aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
+                                 infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
+                                 pskIdInput.classList.contains('error')
+
+        if (hasInvalidFields) {
+          // Reset to clean state
+          // Generate random IKM
+          const randomIkm = new Uint8Array(32)
+          crypto.getRandomValues(randomIkm)
+          ikmInput.value = randomIkm.toHex()
+          ikmInput.classList.remove('error')
+
+          // Clear info
+          infoInput.value = ''
+          infoInput.classList.remove('error')
+          demoState.info = null
+
+          // Set to Base mode
+          const modeRadios = document.getElementsByName('mode')
+          modeRadios[0].checked = true // Base mode
+          demoState.mode = 'base'
+
+          // Hide PSK fields
+          const pskFields = document.getElementById('pskFields')
+          pskFields.classList.add('hidden')
+
+          // Clear PSK fields
+          pskInput.value = ''
+          pskInput.classList.remove('error')
+          demoState.psk = null
+
+          pskIdInput.value = ''
+          pskIdInput.classList.remove('error')
+          demoState.pskId = null
+
+          // Clear AAD and message
+          aadInput.value = ''
+          aadInput.classList.remove('error')
+
+          messageInput.value = ''
+
+          // Clear chat
+          const chatContainer = document.getElementById('chatContainer')
+          chatContainer.innerHTML = ''
+          chatContainer.classList.add('hidden')
+
+          // Derive new key pair and setup contexts
+          await deriveFromIkm(randomIkm.toHex())
+
+          updateButtonStates()
+          return
+        }
+
         if (!demoState.suite || !demoState.recipientKeyPair) return
 
         // Validate PSK mode requirements
@@ -2688,6 +2758,18 @@
           return
         }
 
+        // Check for any invalid fields
+        const aadInput = document.getElementById('aadInput')
+        const ikmInput = document.getElementById('ikmInput')
+        const infoInput = document.getElementById('infoInput')
+        const pskInput = document.getElementById('pskInput')
+        const pskIdInput = document.getElementById('pskIdInput')
+        if (aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
+            infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
+            pskIdInput.classList.contains('error')) {
+          return
+        }
+
         const chatContainer = document.getElementById('chatContainer')
 
         try {
@@ -2695,17 +2777,9 @@
           const seq = demoState.senderContext.seq
 
           // Get AAD if provided
-          const aadInput = document.getElementById('aadInput')
           let aad = null
           if (aadInput.value.trim()) {
-            try {
-              aad = Uint8Array.fromHex(aadInput.value.trim())
-              aadInput.classList.remove('error')
-            } catch (e) {
-              aadInput.classList.add('error')
-              alert('Invalid AAD hex format')
-              return
-            }
+            aad = Uint8Array.fromHex(aadInput.value.trim())
           }
 
           // Encrypt message
@@ -2815,10 +2889,20 @@
 
       // Update button states based on input and messages
       function updateButtonStates() {
-        sendButton.disabled = !messageInput.value.trim()
+        const aadInput = document.getElementById('aadInput')
+        const ikmInput = document.getElementById('ikmInput')
+        const infoInput = document.getElementById('infoInput')
+        const pskInput = document.getElementById('pskInput')
+        const pskIdInput = document.getElementById('pskIdInput')
+        const hasInvalidFields = aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
+                                 infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
+                                 pskIdInput.classList.contains('error')
+        sendButton.disabled = !messageInput.value.trim() || hasInvalidFields
+        document.getElementById('autoPopulateButton').disabled = hasInvalidFields
         const chatContainer = document.getElementById('chatContainer')
         const hasMessages = chatContainer.children.length > 0
-        refreshContextButton.disabled = !hasMessages
+        // Enable reset button if there are errors OR if there are messages
+        refreshContextButton.disabled = !hasInvalidFields && !hasMessages
       }
 
       // Initialize button states
@@ -2846,6 +2930,22 @@
         }
       })
 
+      // Validate AAD input on change
+      aadInput.addEventListener('input', () => {
+        const value = aadInput.value.trim()
+        if (value === '') {
+          aadInput.classList.remove('error')
+        } else {
+          try {
+            Uint8Array.fromHex(value)
+            aadInput.classList.remove('error')
+          } catch (e) {
+            aadInput.classList.add('error')
+          }
+        }
+        updateButtonStates()
+      })
+
       // Auto-populate with random public domain text
       document.getElementById('autoPopulateButton').addEventListener('click', async (e) => {
         e.preventDefault()
@@ -2857,6 +2957,18 @@
 
         if (demoState.selectedAEAD.name === 'AEAD_EXPORT_ONLY') {
           alert('Cannot send messages in Export-Only mode. Please select a different AEAD.')
+          return
+        }
+
+        // Check for any invalid fields
+        const aadInput = document.getElementById('aadInput')
+        const ikmInput = document.getElementById('ikmInput')
+        const infoInput = document.getElementById('infoInput')
+        const pskInput = document.getElementById('pskInput')
+        const pskIdInput = document.getElementById('pskIdInput')
+        if (aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
+            infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
+            pskIdInput.classList.contains('error')) {
           return
         }
 
