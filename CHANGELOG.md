@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.7](https://github.com/panva/hpke/compare/v0.2.6...v0.2.7) (2025-11-24)
+
+
+### Features
+
+* add the remaining hybrids to extensibility ([6472e8e](https://github.com/panva/hpke/commit/6472e8e01aff94684b44b14e923cb4c2ba161573))
+
 ## [0.2.6](https://github.com/panva/hpke/compare/v0.2.5...v0.2.6) (2025-11-22)
 
 
