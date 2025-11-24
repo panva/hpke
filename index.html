@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <meta name="description" content="HPKE demo and vector validation test suite for all KEM, KDF, and AEAD implementations in your browser." />
     <title>@panva/hpke</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%23fbbf24'/><stop offset='100%25' style='stop-color:%2360a5fa'/></linearGradient></defs><rect x='25' y='45' width='50' height='40' fill='url(%23g)' rx='5'/><path d='M 35 45 L 35 30 A 15 15 0 0 1 65 30 L 65 45' fill='none' stroke='url(%23g)' stroke-width='8'/></svg>">
     <script type="importmap">
@@ -22,43 +23,43 @@
          ============================================ */
       :root {
         /* Colors - Background */
-        --color-bg-primary: #1a1410;
-        --color-bg-secondary: #2a201a;
-        --color-bg-tertiary: #3d3026;
+        --color-bg-primary: #1d1e26;
+        --color-bg-secondary: #282a36;
+        --color-bg-tertiary: #333447;
 
         /* Colors - Text */
-        --color-text-primary: #fef3c7;
-        --color-text-secondary: #a8a29e;
-        --color-text-tertiary: #8a837e;
+        --color-text-primary: #f8f8f2;
+        --color-text-secondary: #a599e9;
+        --color-text-tertiary: #8b82d9;
 
         /* Colors - Border */
-        --color-border-primary: #3d3026;
-        --color-border-secondary: #2a201a;
+        --color-border-primary: #333447;
+        --color-border-secondary: #282a36;
 
         /* Colors - Brand */
-        --color-native: #fbbf24;
-        --color-native-hover: #f59e0b;
-        --color-native-bg: rgba(251, 191, 36, 0.15);
+        --color-native: #ff6ac1;
+        --color-native-hover: #ff5cb3;
+        --color-native-bg: rgba(255, 106, 193, 0.15);
 
-        --color-noble: #60a5fa;
-        --color-noble-hover: #3b82f6;
-        --color-noble-bg: rgba(96, 165, 250, 0.15);
-        --color-noble-button: #60a5fa;
+        --color-noble: #9effff;
+        --color-noble-hover: #87f3f3;
+        --color-noble-bg: rgba(158, 255, 255, 0.15);
+        --color-noble-button: #9effff;
 
         /* Colors - Semantic */
-        --color-success: #fbbf24;
-        --color-success-hover: #f59e0b;
-        --color-success-text: #fcd34d;
+        --color-success: #5af78e;
+        --color-success-hover: #4ae57e;
+        --color-success-text: #5af78e;
 
-        --color-error: #ef4444;
-        --color-error-bg: rgba(239, 68, 68, 0.15);
-        --color-error-text: #f87171;
+        --color-error: #ff5c57;
+        --color-error-bg: rgba(255, 92, 87, 0.15);
+        --color-error-text: #ff6e6a;
 
-        --color-warning: #fb923c;
-        --color-warning-bg: rgba(251, 146, 60, 0.15);
+        --color-warning: #f3f99d;
+        --color-warning-bg: rgba(243, 249, 157, 0.15);
 
-        --color-info: #60a5fa;
-        --color-info-bg: rgba(96, 165, 250, 0.1);
+        --color-info: #9effff;
+        --color-info-bg: rgba(158, 255, 255, 0.1);
 
         /* Spacing */
         --space-xs: 4px;
@@ -486,7 +487,8 @@
         outline: none;
       }
 
-      .algo-card[data-algo="AEAD_EXPORT_ONLY"]:hover {
+      .algo-card[data-algo="AEAD_EXPORT_ONLY"]:hover,
+      .algo-card.unsupported:hover {
         transform: none;
         box-shadow: none;
         cursor: default;
@@ -550,8 +552,9 @@
 
       .algo-card.unsupported {
         background: var(--color-error-bg);
-        border-color: var(--color-error);
+        border-color: var(--color-error-bg);
         color: var(--color-text-primary);
+        text-decoration: line-through;
       }
 
       .algo-card.pending {
@@ -606,7 +609,7 @@
       .play-button {
         width: 60px;
         height: 60px;
-        background: rgba(251, 191, 36, 0.9);
+        background: rgba(255, 106, 193, 0.9);
         border-radius: var(--radius-full);
         display: flex;
         align-items: center;
@@ -617,24 +620,24 @@
 
       .play-overlay:hover .play-button,
       .play-overlay:focus .play-button {
-        background: rgba(251, 191, 36, 1);
+        background: rgba(255, 106, 193, 1);
       }
 
       .play-button.noble {
-        background: rgba(96, 165, 250, 0.9);
+        background: rgba(158, 255, 255, 0.9);
       }
 
       .play-overlay:hover .play-button.noble,
       .play-overlay:focus .play-button.noble {
-        background: rgba(96, 165, 250, 1);
+        background: rgba(158, 255, 255, 1);
       }
 
       .play-button.both {
         background: linear-gradient(
           135deg,
-          rgba(251, 191, 36, 0.9) 0%,
-          rgba(251, 191, 36, 0.9) 50%,
-          rgba(96, 165, 250, 0.9) 100%
+          rgba(255, 106, 193, 0.9) 0%,
+          rgba(255, 106, 193, 0.9) 50%,
+          rgba(158, 255, 255, 0.9) 100%
         );
       }
 
@@ -642,9 +645,9 @@
       .play-overlay:focus .play-button.both {
         background: linear-gradient(
           135deg,
-          rgba(251, 191, 36, 1) 0%,
-          rgba(251, 191, 36, 1) 50%,
-          rgba(96, 165, 250, 1) 100%
+          rgba(255, 106, 193, 1) 0%,
+          rgba(255, 106, 193, 1) 50%,
+          rgba(158, 255, 255, 1) 100%
         );
       }
 
@@ -1527,6 +1530,9 @@
 
       <div class="demo-section" id="demoSection">
         <div class="section-label">Demo</div>
+        <div id="suiteDisplay" style="margin-bottom: var(--space-md); padding: var(--space-sm); background: var(--color-bg-secondary); border: 1px solid var(--color-border-primary); border-radius: var(--radius-sm); color: var(--color-text-secondary); font-size: var(--font-size-sm); text-align: center;">
+          Select KEM, KDF, and AEAD to begin
+        </div>
 
         <div id="ikmInputGroup" class="demo-input-group">
           <label>Input Keying Material:</label>
@@ -1604,13 +1610,13 @@
 
         <div id="chatSection">
           <h3 id="messagesHeading" class="mt-lg">Messages</h3>
-          <div class="chat-container hidden" id="chatContainer"></div>
+          <div class="chat-container hidden" id="chatContainer" role="log" aria-live="polite" aria-label="Encrypted messages"></div>
           <div class="chat-input-container">
-            <input type="text" id="messageInput" placeholder="Type a message to encrypt...">
-            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" style="flex: 0.5;">
-            <button id="sendButton">encrypt()</button>
-            <button id="refreshContextButton" title="Generate fresh context" disabled>reset()</button>
-            <button id="autoPopulateButton" title="Auto-populate with random text">rand()</button>
+            <input type="text" id="messageInput" placeholder="Type a message to encrypt..." aria-label="Message to encrypt">
+            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" style="flex: 0.5;" aria-label="Additional authenticated data">
+            <button id="sendButton" aria-label="Encrypt message">encrypt()</button>
+            <button id="refreshContextButton" title="Generate fresh context" disabled aria-label="Reset context">reset()</button>
+            <button id="autoPopulateButton" title="Auto-populate with random text" aria-label="Auto-populate with sample text">rand()</button>
           </div>
         </div>
       </div>
@@ -2307,9 +2313,16 @@
 
       function updateDemoSection() {
         const demoSection = document.getElementById('demoSection')
+        const suiteDisplay = document.getElementById('suiteDisplay')
 
         if (demoState.selectedKEM && demoState.selectedKDF && demoState.selectedAEAD) {
           demoSection.classList.add('active')
+
+          // Update suite display
+          const kemName = ALGORITHM_NAMES[demoState.selectedKEM.name] || demoState.selectedKEM.name
+          const kdfName = ALGORITHM_NAMES[demoState.selectedKDF.name] || demoState.selectedKDF.name
+          const aeadName = ALGORITHM_NAMES[demoState.selectedAEAD.name] || demoState.selectedAEAD.name
+          suiteDisplay.innerHTML = `${kemName} + ${kdfName} + ${aeadName}`
 
           // Set theme class based on filter
           demoSection.classList.remove('theme-noble', 'theme-both')
@@ -3781,7 +3794,7 @@
               })
             } catch (e) {
               console.error('Error decrypting:', e)
-              alert('Error decrypted message: ' + e.message)
+              alert('Error decrypting message: ' + e.message)
             }
           })
 
