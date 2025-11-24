@@ -2618,7 +2618,8 @@
         if (hasInvalidFields) {
           // Reset to clean state
           // Generate random IKM
-          const randomIkm = new Uint8Array(32)
+          const ikmLength = demoState.suite.KEM.Nsk
+          const randomIkm = new Uint8Array(ikmLength)
           crypto.getRandomValues(randomIkm)
           ikmInput.value = randomIkm.toHex()
           ikmInput.classList.remove('error')
