@@ -162,9 +162,7 @@ test.describe('Validations', () => {
       it(`${suite.KEM.name} rejects invalid encapsulated key length`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const invalidEnc = new Uint8Array(10) // Wrong length
-        await t.assert.rejects(suite.Open(kp.privateKey, invalidEnc, empty, { aad: empty }), {
-          name: 'DecapError',
-        })
+        await t.assert.rejects(suite.Open(kp.privateKey, invalidEnc, empty), { name: 'DecapError' })
       })
     })
   }
@@ -224,7 +222,7 @@ test.describe('Validations', () => {
     it('Single-shot Seal rejects Export-only AEAD', async (t: test.TestContext) => {
       const kp = await getKeyPair(suite)
       const pt = new Uint8Array(16)
-      await t.assert.rejects(suite.Seal(kp.publicKey, pt, { aad: empty }), {
+      await t.assert.rejects(suite.Seal(kp.publicKey, pt), {
         name: 'TypeError',
         message: 'Export-only AEAD cannot be used with Seal',
       })
@@ -234,7 +232,7 @@ test.describe('Validations', () => {
       const kp = await getKeyPair(suite)
       const fakeEnc = new Uint8Array(suite.KEM.Nenc)
       const fakeCt = new Uint8Array(16)
-      await t.assert.rejects(suite.Open(kp.privateKey, fakeEnc, fakeCt, { aad: empty }), {
+      await t.assert.rejects(suite.Open(kp.privateKey, fakeEnc, fakeCt), {
         name: 'TypeError',
         message: 'Export-only AEAD cannot be used with Open',
       })
@@ -347,9 +345,7 @@ test.describe('Validations', () => {
       it(`${KEM.name} Decap rejects public key`, async (t: test.TestContext) => {
         const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32, {
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32)
         // Try to use public key instead of private key
         await t.assert.rejects(suite.ReceiveExport(kp.publicKey, enc, empty, 32), {
           name: 'TypeError',
@@ -409,9 +405,7 @@ test.describe('Validations', () => {
         }
 
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32, {
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32)
         const wrongKp = await getKeyPair(
           new HPKE.CipherSuite(differentKEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY),
         )
@@ -439,10 +433,10 @@ test.describe('Validations', () => {
       const kp = await getKeyPair(suite)
       const shortPsk = new Uint8Array(31) // One byte short
       const pskId = new Uint8Array(32)
-      await t.assert.rejects(
-        suite.SetupSender(kp.publicKey, { info: empty, psk: shortPsk, pskId }),
-        { message: 'Insufficient PSK length', name: 'TypeError' },
-      )
+      await t.assert.rejects(suite.SetupSender(kp.publicKey, { psk: shortPsk, pskId }), {
+        message: 'Insufficient PSK length',
+        name: 'TypeError',
+      })
     })
 
     it('SetupRecipient rejects PSK shorter than 32 bytes', async (t: test.TestContext) => {
@@ -450,10 +444,10 @@ test.describe('Validations', () => {
       const { encapsulatedKey: enc } = await suite.SetupSender(kp.publicKey)
       const shortPsk = new Uint8Array(31) // One byte short
       const pskId = new Uint8Array(32)
-      await t.assert.rejects(
-        suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk: shortPsk, pskId }),
-        { message: 'Insufficient PSK length', name: 'TypeError' },
-      )
+      await t.assert.rejects(suite.SetupRecipient(kp.privateKey, enc, { psk: shortPsk, pskId }), {
+        message: 'Insufficient PSK length',
+        name: 'TypeError',
+      })
     })
 
     const invalidCases = [
@@ -472,7 +466,7 @@ test.describe('Validations', () => {
     for (const { name, psk, pskId } of invalidCases) {
       it(`SetupSender rejects ${name}`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        await t.assert.rejects(suite.SetupSender(kp.publicKey, { info: empty, psk, pskId }), {
+        await t.assert.rejects(suite.SetupSender(kp.publicKey, { psk, pskId }), {
           message: 'Inconsistent PSK inputs',
           name: 'TypeError',
         })
@@ -481,33 +475,25 @@ test.describe('Validations', () => {
       it(`SetupRecipient rejects ${name}`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const { encapsulatedKey: enc } = await suite.SetupSender(kp.publicKey)
-        await t.assert.rejects(
-          suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk, pskId }),
-          { message: 'Inconsistent PSK inputs', name: 'TypeError' },
-        )
+        await t.assert.rejects(suite.SetupRecipient(kp.privateKey, enc, { psk, pskId }), {
+          message: 'Inconsistent PSK inputs',
+          name: 'TypeError',
+        })
       })
     }
 
     for (const { name, psk, pskId } of validCases) {
       it(`SetupSender accepts ${name}`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc, ctx } = await suite.SetupSender(kp.publicKey, {
-          info: empty,
-          psk,
-          pskId,
-        })
+        const { encapsulatedKey: enc, ctx } = await suite.SetupSender(kp.publicKey, { psk, pskId })
         t.assert.ok(enc)
         t.assert.ok(ctx)
       })
 
       it(`SetupRecipient accepts ${name}`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.SetupSender(kp.publicKey, {
-          info: empty,
-          psk,
-          pskId,
-        })
-        const ctx = await suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk, pskId })
+        const { encapsulatedKey: enc } = await suite.SetupSender(kp.publicKey, { psk, pskId })
+        const ctx = await suite.SetupRecipient(kp.privateKey, enc, { psk, pskId })
         t.assert.ok(ctx)
       })
     }
@@ -527,7 +513,7 @@ test.describe('Validations', () => {
           if (value === null || value === undefined) continue
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, { aad: empty, info: value }),
+            suite.Seal(kp.publicKey, empty, { info: value }),
             { name: 'TypeError', message: '"info" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -552,7 +538,7 @@ test.describe('Validations', () => {
         for (const { name, value } of notUint8Array) {
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, value, { aad: empty }),
+            suite.Seal(kp.publicKey, value),
             { name: 'TypeError', message: '"plaintext" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -566,7 +552,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, { aad: empty, info: empty, psk: value, pskId }),
+            suite.Seal(kp.publicKey, empty, { psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -580,7 +566,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, { aad: empty, info: empty, psk, pskId: value }),
+            suite.Seal(kp.publicKey, empty, { psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -591,15 +577,12 @@ test.describe('Validations', () => {
     test.describe('Single-Shot Open API', () => {
       it('rejects non-Uint8Array info', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, {
-          aad: empty,
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty)
         for (const { name, value } of notUint8Array) {
           if (value === null || value === undefined) continue
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, empty, { aad: empty, info: value }),
+            suite.Open(kp.privateKey, enc, empty, { info: value }),
             { name: 'TypeError', message: '"info" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -608,10 +591,7 @@ test.describe('Validations', () => {
 
       it('rejects non-Uint8Array aad', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
-          aad: empty,
-          info: empty,
-        })
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty)
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null extractable is valid (defaults to empty)
           await t.assert.rejects(
@@ -625,14 +605,11 @@ test.describe('Validations', () => {
 
       it('rejects non-Uint8Array ct', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, {
-          aad: empty,
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty)
         for (const { name, value } of notUint8Array) {
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, value, { aad: empty }),
+            suite.Open(kp.privateKey, enc, value),
             { name: 'TypeError', message: '"ciphertext" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -642,15 +619,12 @@ test.describe('Validations', () => {
       it('rejects non-Uint8Array psk', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const pskId = new Uint8Array(32)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
-          aad: empty,
-          info: empty,
-        })
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty)
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, ct, { aad: empty, info: empty, psk: value, pskId }),
+            suite.Open(kp.privateKey, enc, ct, { psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -660,15 +634,12 @@ test.describe('Validations', () => {
       it('rejects non-Uint8Array pskId', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const psk = new Uint8Array(32)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
-          aad: empty,
-          info: empty,
-        })
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty)
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, ct, { aad: empty, info: empty, psk, pskId: value }),
+            suite.Open(kp.privateKey, enc, ct, { psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -757,7 +728,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.SetupSender(kp.publicKey, { info: empty, psk: value, pskId }),
+            suite.SetupSender(kp.publicKey, { psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -771,7 +742,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.SetupSender(kp.publicKey, { info: empty, psk, pskId: value }),
+            suite.SetupSender(kp.publicKey, { psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -802,7 +773,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk: value, pskId }),
+            suite.SetupRecipient(kp.privateKey, enc, { psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -817,7 +788,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.SetupRecipient(kp.privateKey, enc, { info: empty, psk, pskId: value }),
+            suite.SetupRecipient(kp.privateKey, enc, { psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -939,9 +910,7 @@ test.describe('Validations', () => {
     test.describe('Single-Shot ReceiveExport API', () => {
       it('rejects non-Uint8Array exporterContext', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32, {
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32)
         for (const { name, value } of notUint8Array) {
           await t.assert.rejects(
             // @ts-expect-error
@@ -954,9 +923,7 @@ test.describe('Validations', () => {
 
       it('rejects invalid L values', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32, {
-          info: empty,
-        })
+        const { encapsulatedKey: enc } = await suite.SendExport(kp.publicKey, empty, 32)
         const invalidLValues = [
           { name: 'null', value: null },
           { name: 'undefined', value: undefined },
