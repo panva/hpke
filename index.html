@@ -36,16 +36,6 @@
         --color-border-primary: #333447;
         --color-border-secondary: #282a36;
 
-        /* Colors - Brand */
-        --color-native: #ff6ac1;
-        --color-native-hover: #ff5cb3;
-        --color-native-bg: rgba(255, 106, 193, 0.15);
-
-        --color-noble: #9effff;
-        --color-noble-hover: #87f3f3;
-        --color-noble-bg: rgba(158, 255, 255, 0.15);
-        --color-noble-button: #9effff;
-
         /* Colors - Semantic */
         --color-success: #5af78e;
         --color-success-hover: #4ae57e;
@@ -196,7 +186,7 @@
 
       .social-links a:hover,
       .social-links a:focus {
-        color: var(--color-native);
+        color: var(--color-info);
         outline: none;
       }
 
@@ -231,52 +221,13 @@
       .filter-links a:focus {
         color: var(--color-text-primary);
         transform: translateY(-2px);
-        box-shadow: var(--shadow-sm);
         outline: none;
       }
 
-      .filter-links a#filterNative.active {
+      .filter-links a.active {
         color: var(--color-text-primary);
-        border-color: var(--color-native);
-        background: var(--color-native-bg);
-      }
-
-      .filter-links a#filterNoble.active {
-        color: var(--color-text-primary);
-        border-color: var(--color-noble);
-        background: var(--color-noble-bg);
-      }
-
-      .filter-links a#filterBoth.active {
-        color: var(--color-text-primary);
-        background: linear-gradient(
-          135deg,
-          var(--color-native-bg) 0%,
-          var(--color-native-bg) 50%,
-          var(--color-noble-bg) 100%
-        );
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        position: relative;
-      }
-
-      .filter-links a#filterBoth.active::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        border-radius: var(--radius-sm);
-        padding: 2px;
-        background: linear-gradient(
-          135deg,
-          var(--color-native) 0%,
-          var(--color-native) 50%,
-          var(--color-noble) 100%
-        );
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
+        border-color: var(--color-info);
+        background: var(--color-info-bg);
       }
 
       /* ============================================
@@ -431,47 +382,9 @@
         border-radius: 2px;
       }
 
-      .legend-color.native {
-        background: var(--color-native-bg);
-        border-color: var(--color-native);
-      }
-
-      .legend-color.noble {
-        background: var(--color-noble-bg);
-        border-color: var(--color-noble);
-      }
-
-      .legend-color.both {
-        background: linear-gradient(
-          135deg,
-          var(--color-native-bg) 0%,
-          var(--color-native-bg) 50%,
-          var(--color-noble-bg) 50%,
-          var(--color-noble-bg) 100%
-        );
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        position: relative;
-      }
-
-      .legend-color.both::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        border-radius: 2px;
-        padding: 2px;
-        background: linear-gradient(
-          135deg,
-          var(--color-native) 0%,
-          var(--color-native) 50%,
-          var(--color-noble) 50%,
-          var(--color-noble) 100%
-        );
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
+      .legend-color.supported {
+        background: rgba(90, 247, 142, 0.15);
+        border-color: var(--color-success);
       }
 
       .legend-color.unsupported {
@@ -505,6 +418,12 @@
         letter-spacing: 0.5px;
       }
 
+      .algo-select-group label .pkg-name {
+        text-transform: none;
+        color: var(--color-text-tertiary);
+        font-weight: 400;
+      }
+
       .algo-select-wrapper {
         position: relative;
       }
@@ -529,23 +448,7 @@
 
       .algo-select:focus {
         outline: none;
-        border-color: var(--color-info);
-        box-shadow: 0 0 0 3px var(--color-info-bg);
-      }
-
-      .algo-select.native {
-        border-color: var(--color-native);
-        background: var(--color-native-bg);
-      }
-
-      .algo-select.noble {
-        border-color: var(--color-noble);
-        background: var(--color-noble-bg);
-      }
-
-      .algo-select.both {
-        border-color: var(--color-native);
-        background: linear-gradient(135deg, var(--color-native-bg) 0%, var(--color-noble-bg) 100%);
+        border-color: var(--color-text-tertiary);
       }
 
       .algo-select-wrapper::after {
@@ -656,11 +559,6 @@
 
       @keyframes fadeIn {
         to { opacity: 1; }
-      }
-
-      .key-display-value:hover {
-        border-color: var(--color-info);
-        background: var(--color-info-bg);
       }
 
       .key-display-value.placeholder {
@@ -809,117 +707,6 @@
         font-weight: 600;
       }
 
-      .algorithm-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: var(--space-sm);
-      }
-
-      .algo-card {
-        padding: var(--space-sm);
-        border: 2px solid;
-        border-radius: var(--radius-sm);
-        font-size: var(--font-size-sm);
-        font-family: var(--font-mono);
-        transition: all var(--transition-base);
-        cursor: pointer;
-        position: relative;
-      }
-
-      .algo-card:hover,
-      .algo-card:focus {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-sm);
-        outline: none;
-      }
-
-      .algo-card[data-algo="AEAD_EXPORT_ONLY"]:hover,
-      .algo-card.unsupported:hover {
-        transform: none;
-        box-shadow: none;
-        cursor: default;
-      }
-
-      .algo-card.selected::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 0;
-        height: 0;
-        border-style: solid;
-        border-width: 0 0 16px 16px;
-        border-color: transparent transparent var(--color-text-primary) transparent;
-      }
-
-      .algo-card.native {
-        background: var(--color-native-bg);
-        border-color: var(--color-native);
-        color: var(--color-text-primary);
-      }
-
-      .algo-card.noble {
-        background: var(--color-noble-bg);
-        border-color: var(--color-noble);
-        color: var(--color-text-primary);
-      }
-
-      .algo-card.both {
-        background: linear-gradient(
-          135deg,
-          var(--color-native-bg) 0%,
-          var(--color-native-bg) 50%,
-          var(--color-noble-bg) 100%
-        );
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        color: var(--color-text-primary);
-        position: relative;
-      }
-
-      .algo-card.both::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        border-radius: var(--radius-sm);
-        padding: 2px;
-        background: linear-gradient(
-          135deg,
-          var(--color-native) 0%,
-          var(--color-native) 50%,
-          var(--color-noble) 100%
-        );
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
-      }
-
-      .algo-card.unsupported {
-        background: var(--color-error-bg);
-        border-color: var(--color-error-bg);
-        color: var(--color-text-primary);
-        text-decoration: line-through;
-      }
-
-      .algo-card.pending {
-        background: var(--color-bg-secondary);
-        border-color: var(--color-border-primary);
-        color: var(--color-text-primary);
-      }
-
-      .algo-card.testing {
-        background: var(--color-warning-bg);
-        border-color: var(--color-warning);
-        color: var(--color-text-primary);
-      }
-
-      .algo-card .algo-name {
-        font-weight: 600;
-        word-break: break-word;
-      }
-
       /* ============================================
          Vector Validation Section
          ============================================ */
@@ -955,7 +742,7 @@
       .play-button {
         width: 60px;
         height: 60px;
-        background: rgba(255, 106, 193, 0.9);
+        background: var(--color-text-secondary);
         border-radius: var(--radius-full);
         display: flex;
         align-items: center;
@@ -966,35 +753,7 @@
 
       .play-overlay:hover .play-button,
       .play-overlay:focus .play-button {
-        background: rgba(255, 106, 193, 1);
-      }
-
-      .play-button.noble {
-        background: rgba(158, 255, 255, 0.9);
-      }
-
-      .play-overlay:hover .play-button.noble,
-      .play-overlay:focus .play-button.noble {
-        background: rgba(158, 255, 255, 1);
-      }
-
-      .play-button.both {
-        background: linear-gradient(
-          135deg,
-          rgba(255, 106, 193, 0.9) 0%,
-          rgba(255, 106, 193, 0.9) 50%,
-          rgba(158, 255, 255, 0.9) 100%
-        );
-      }
-
-      .play-overlay:hover .play-button.both,
-      .play-overlay:focus .play-button.both {
-        background: linear-gradient(
-          135deg,
-          rgba(255, 106, 193, 1) 0%,
-          rgba(255, 106, 193, 1) 50%,
-          rgba(158, 255, 255, 1) 100%
-        );
+        background: var(--color-text-tertiary);
       }
 
       .play-button::after {
@@ -1278,7 +1037,7 @@
         width: 16px;
         height: 16px;
         cursor: pointer;
-        accent-color: var(--color-native);
+        accent-color: var(--color-info);
       }
 
       .mode-selector label:hover {
@@ -1665,13 +1424,6 @@
           font-size: var(--font-size-md);
         }
 
-        /* Grid Mobile */
-        .demo-grid,
-        .algorithm-grid {
-          grid-template-columns: 1fr;
-          gap: var(--space-sm);
-        }
-
         /* Controls Mobile */
         .demo-controls {
           gap: var(--space-sm);
@@ -1869,9 +1621,9 @@
           <span></span>
         </button>
         <div class="filter-links" id="filterLinks">
-          <a href="?native" id="filterNative">Web Cryptography</a>
-          <a href="?noble" id="filterNoble">Noble Cryptography</a>
-          <a href="./" id="filterBoth">Both</a>
+          <a href="?native" id="filterNative">@panva/hpke</a>
+          <a href="?noble" id="filterNoble">@panva/hpke-noble</a>
+          <a href="./" id="filterBoth">both</a>
         </div>
       </div>
       <p class="subtitle">HPKE demo and vector validation test suite for all KEM, KDF, and AEAD implementations in your browser</p>
@@ -1883,7 +1635,7 @@
         <!-- Algorithm Selector -->
         <div class="algorithm-selector" id="algorithmSelector">
           <div class="algo-select-group">
-            <label for="kemSelect">KEM</label>
+            <label for="kemSelect" id="kemLabel">KEM</label>
             <div class="algo-select-wrapper">
               <select id="kemSelect" class="algo-select">
                 <option value="" disabled selected>Select KEM...</option>
@@ -1891,7 +1643,7 @@
             </div>
           </div>
           <div class="algo-select-group">
-            <label for="kdfSelect">KDF</label>
+            <label for="kdfSelect" id="kdfLabel">KDF</label>
             <div class="algo-select-wrapper">
               <select id="kdfSelect" class="algo-select">
                 <option value="" disabled selected>Select KDF...</option>
@@ -1899,7 +1651,7 @@
             </div>
           </div>
           <div class="algo-select-group">
-            <label for="aeadSelect">AEAD</label>
+            <label for="aeadSelect" id="aeadLabel">AEAD</label>
             <div class="algo-select-wrapper">
               <select id="aeadSelect" class="algo-select">
                 <option value="" disabled selected>Select AEAD...</option>
@@ -2002,7 +1754,7 @@
         <div class="message-input-section">
           <div class="message-input-row">
             <div class="message-input-group">
-              <label for="messageInput">Message</label>
+              <label for="messageInput">Plaintext</label>
               <input type="text" id="messageInput" placeholder="Type a message to encrypt..." aria-label="Message to encrypt">
             </div>
             <div class="aad-input-group">
@@ -2449,29 +2201,14 @@
           return 'pending'
         }
 
-        // Priority: native passed > noble passed > unsupported
-        const nativeTest = relatedTests.find((t) => !getTestComponent(t).isNoble)
-        const nobleTest = relatedTests.find((t) => getTestComponent(t).isNoble)
+        // Check if any test passed
+        const anyPassed = relatedTests.some((t) => t.status === 'passed')
 
-        const nativePassed = nativeTest && nativeTest.status === 'passed'
-        const noblePassed = nobleTest && nobleTest.status === 'passed'
-
-        // If both native and noble tests passed, show as both
-        if (nativePassed && noblePassed) {
-          return 'both'
+        if (anyPassed) {
+          return 'supported'
         }
 
-        // If native test passed, show as native
-        if (nativePassed) {
-          return 'native'
-        }
-
-        // If noble test passed, show as noble
-        if (noblePassed) {
-          return 'noble'
-        }
-
-        // Both failed or no passing tests
+        // All failed or no passing tests
         return 'unsupported'
       }
 
@@ -2581,13 +2318,14 @@
           aeadSelect.appendChild(opt)
         })
 
-        // Update select styling based on status
-        const updateSelectStyle = (select) => {
-          const selectedOption = select.options[select.selectedIndex]
-          if (selectedOption && selectedOption.dataset.status) {
-            select.className = 'algo-select ' + selectedOption.dataset.status
+        // Update label to show package name based on selected algorithm
+        const updateLabel = (labelId, selectedAlgo, defaultText) => {
+          const label = document.getElementById(labelId)
+          if (selectedAlgo) {
+            const pkg = selectedAlgo.isNoble ? '@panva/hpke-noble' : '@panva/hpke'
+            label.innerHTML = `${defaultText} <span class="pkg-name">(${pkg})</span>`
           } else {
-            select.className = 'algo-select'
+            label.textContent = defaultText
           }
         }
 
@@ -2595,21 +2333,21 @@
         kemSelect.addEventListener('change', () => {
           const algoName = kemSelect.value
           demoState.selectedKEM = selectPreferredAlgorithm(ALL_KEMS, algoName, 'kem')
-          updateSelectStyle(kemSelect)
+          updateLabel('kemLabel', demoState.selectedKEM, 'KEM')
           updateDemoSection()
         })
 
         kdfSelect.addEventListener('change', () => {
           const algoName = kdfSelect.value
           demoState.selectedKDF = selectPreferredAlgorithm(ALL_KDFS, algoName, 'kdf')
-          updateSelectStyle(kdfSelect)
+          updateLabel('kdfLabel', demoState.selectedKDF, 'KDF')
           updateDemoSection()
         })
 
         aeadSelect.addEventListener('change', () => {
           const algoName = aeadSelect.value
           demoState.selectedAEAD = selectPreferredAlgorithm(ALL_AEADS, algoName, 'aead')
-          updateSelectStyle(aeadSelect)
+          updateLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
           updateDemoSection()
         })
 
@@ -2620,7 +2358,6 @@
             select.value = opt.value
             const stateKey = `selected${type.toUpperCase()}`
             demoState[stateKey] = selectPreferredAlgorithm(algorithms, opt.value, type)
-            updateSelectStyle(select)
             break
           }
         }
@@ -2628,6 +2365,11 @@
         autoSelectFirst(kemSelect, ALL_KEMS, 'kem')
         autoSelectFirst(kdfSelect, ALL_KDFS, 'kdf')
         autoSelectFirst(aeadSelect, ALL_AEADS, 'aead')
+
+        // Update labels after auto-selection
+        updateLabel('kemLabel', demoState.selectedKEM, 'KEM')
+        updateLabel('kdfLabel', demoState.selectedKDF, 'KDF')
+        updateLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
 
         // Update demo section once after all three are selected
         updateDemoSection()
@@ -4310,15 +4052,7 @@
 
       /** Initializes the test suite and starts execution */
       async function init() {
-        // Set play button color based on filter
-        const playButton = document.getElementById('playButton')
         const playOverlay = document.getElementById('playOverlay')
-        if (onlyNoble) {
-          playButton.classList.add('noble')
-        } else if (both) {
-          playButton.classList.add('both')
-        }
-        // Default (onlyNative) uses the default green color
 
         tests = generateTests()
         renderAlgorithmSummary()
@@ -4329,31 +4063,20 @@
         // Show play button now that tests are complete
         playOverlay.classList.remove('hidden')
 
-        // Set up click-to-copy for demo outputs
-        const demoOutputs = ['publicKeyOutput', 'privateKeyOutput', 'encapsulatedKeyOutput']
-        const copyTimeouts = {}
-        demoOutputs.forEach(id => {
-          const element = document.getElementById(id)
-          element.addEventListener('click', async () => {
-            const text = element.textContent
-            if (text && !element.classList.contains('placeholder')) {
-              try {
-                await navigator.clipboard.writeText(text)
-                // Clear any pending timeout for this element
-                if (copyTimeouts[id]) {
-                  clearTimeout(copyTimeouts[id])
-                }
-                element.classList.add('copy-flash')
-                copyTimeouts[id] = setTimeout(() => {
-                  element.classList.remove('copy-flash')
-                  delete copyTimeouts[id]
-                }, 200)
-              } catch (err) {
-                console.error('Failed to copy:', err)
-              }
-            }
-          })
-        })
+        // Helper function to copy text and show "Copied!" on button
+        const copyWithFeedback = async (btn, text) => {
+          try {
+            await navigator.clipboard.writeText(text)
+            btn.classList.add('copied')
+            btn.textContent = 'Copied!'
+            setTimeout(() => {
+              btn.classList.remove('copied')
+              btn.textContent = 'Copy'
+            }, 1500)
+          } catch (err) {
+            console.error('Failed to copy:', err)
+          }
+        }
 
         // Set up copy button handlers
         document.querySelectorAll('.copy-btn').forEach(btn => {
@@ -4362,17 +4085,19 @@
             const targetId = btn.dataset.copy
             const targetEl = document.getElementById(targetId)
             if (targetEl && !targetEl.classList.contains('placeholder')) {
-              try {
-                await navigator.clipboard.writeText(targetEl.textContent)
-                btn.classList.add('copied')
-                btn.textContent = 'Copied!'
-                setTimeout(() => {
-                  btn.classList.remove('copied')
-                  btn.textContent = 'Copy'
-                }, 1500)
-              } catch (err) {
-                console.error('Failed to copy:', err)
-              }
+              await copyWithFeedback(btn, targetEl.textContent)
+            }
+          })
+        })
+
+        // Set up click-to-copy on key display values
+        document.querySelectorAll('.key-display-value').forEach(valueEl => {
+          valueEl.addEventListener('click', async () => {
+            if (valueEl.classList.contains('placeholder')) return
+            // Find the associated copy button by matching data-copy attribute to this element's id
+            const btn = document.querySelector(`.copy-btn[data-copy="${valueEl.id}"]`)
+            if (btn) {
+              await copyWithFeedback(btn, valueEl.textContent)
             }
           })
         })
