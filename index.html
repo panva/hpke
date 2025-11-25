@@ -1858,7 +1858,7 @@
       // Extract native HPKE algorithms
       const KEMS = extractAlgorithms(HPKE, 'KEM_', 'native')
       const KDFS = extractAlgorithms(HPKE, 'KDF_', 'native')
-      const AEADS = extractAlgorithms(HPKE, 'AEAD_', 'native')
+      const AEADS = extractAlgorithms(HPKE, 'AEAD_', 'native').filter((x) => x.name !== 'AEAD_EXPORT_ONLY')
 
       // Extract Noble (extensibility) algorithms
       const NOBLE_KEMS = extractAlgorithms(Noble, 'KEM_', 'extensibility', true)
