@@ -2476,8 +2476,8 @@
         if (!demoState.suite) return
 
         if (!ikmHex) {
-          // Empty IKM - reset keys and context
-          elements.ikmInput.classList.remove('error')
+          // Empty IKM - show error and reset keys and context
+          elements.ikmInput.classList.add('error')
           demoState.recipientKeyPair = null
           setPlaceholder(elements.publicKeyOutput)
           setPlaceholder(elements.privateKeyOutput)
