@@ -2023,7 +2023,7 @@
 
       <div class="vector-validation" id="vectorValidation">
         <div class="section-label">RFC Test Vectors</div>
-        <div class="play-overlay" id="playOverlay">
+        <div class="play-overlay hidden" id="playOverlay">
           <div class="play-button" id="playButton"></div>
         </div>
         <div class="vector-validation-content blurred" id="vectorValidationContent">
@@ -4307,6 +4307,7 @@
       async function init() {
         // Set play button color based on filter
         const playButton = document.getElementById('playButton')
+        const playOverlay = document.getElementById('playOverlay')
         if (onlyNoble) {
           playButton.classList.add('noble')
         } else if (both) {
@@ -4319,6 +4320,9 @@
 
         // Run tests in background without blocking UI
         await runAllTests()
+
+        // Show play button now that tests are complete
+        playOverlay.classList.remove('hidden')
 
         // Set up click-to-copy for demo outputs
         const demoOutputs = ['publicKeyOutput', 'privateKeyOutput', 'encapsulatedKeyOutput']
