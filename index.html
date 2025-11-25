@@ -480,8 +480,319 @@
       }
 
       /* ============================================
-         Algorithm Section
+         Algorithm Selector (Dropdowns)
          ============================================ */
+      .algorithm-selector {
+        display: flex;
+        gap: var(--space-lg);
+        margin-bottom: var(--space-lg);
+        flex-wrap: wrap;
+      }
+
+      .algo-select-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .algo-select-group label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .algo-select-wrapper {
+        position: relative;
+      }
+
+      .algo-select {
+        width: 100%;
+        padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-sm);
+        background: var(--color-bg-secondary);
+        border: 2px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-md);
+        cursor: pointer;
+        appearance: none;
+        transition: all var(--transition-base);
+      }
+
+      .algo-select:hover {
+        border-color: var(--color-text-tertiary);
+      }
+
+      .algo-select:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px var(--color-info-bg);
+      }
+
+      .algo-select.native {
+        border-color: var(--color-native);
+        background: var(--color-native-bg);
+      }
+
+      .algo-select.noble {
+        border-color: var(--color-noble);
+        background: var(--color-noble-bg);
+      }
+
+      .algo-select.both {
+        border-color: var(--color-native);
+        background: linear-gradient(135deg, var(--color-native-bg) 0%, var(--color-noble-bg) 100%);
+      }
+
+      .algo-select-wrapper::after {
+        content: '▼';
+        position: absolute;
+        right: var(--space-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: var(--font-size-xs);
+        color: var(--color-text-secondary);
+        pointer-events: none;
+      }
+
+      .algo-select option {
+        background: var(--color-bg-secondary);
+        color: var(--color-text-primary);
+        padding: var(--space-sm);
+      }
+
+      .algo-select option:disabled {
+        color: var(--color-text-tertiary);
+      }
+
+      /* ============================================
+         IKM Section (Key Derivation)
+         ============================================ */
+      .ikm-section {
+        margin-bottom: var(--space-lg);
+        padding: var(--space-lg);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .ikm-section .demo-input-group {
+        margin-bottom: 0;
+      }
+
+      /* ============================================
+         Demo Layout Sections
+         ============================================ */
+      .keys-section,
+      .context-section {
+        margin-bottom: var(--space-lg);
+        padding: var(--space-lg);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .section-title {
+        font-size: var(--font-size-sm);
+        font-weight: 600;
+        color: var(--color-text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: var(--space-md);
+      }
+
+      .keys-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-lg);
+      }
+
+      .context-section .key-display {
+        margin-bottom: 0;
+      }
+
+      /* Key Material Display */
+      .key-display {
+        margin-bottom: var(--space-lg);
+      }
+
+      .key-display-label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-xs);
+      }
+
+      .key-display-label span {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .key-display-value {
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        padding: var(--space-md);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-base);
+        color: var(--color-text-primary);
+        word-break: break-all;
+        line-height: var(--line-height-relaxed);
+        min-height: 60px;
+        max-height: calc(var(--line-height-relaxed) * 2em + var(--space-md) * 2);
+        overflow: hidden;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        opacity: 0;
+        animation: fadeIn var(--transition-slow) forwards;
+      }
+
+      @keyframes fadeIn {
+        to { opacity: 1; }
+      }
+
+      .key-display-value:hover {
+        border-color: var(--color-info);
+        background: var(--color-info-bg);
+      }
+
+      .key-display-value.placeholder {
+        color: var(--color-text-tertiary);
+      }
+
+      .copy-btn {
+        padding: var(--space-xs) var(--space-sm);
+        background: transparent;
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-xs);
+        font-family: var(--font-mono);
+        cursor: pointer;
+        transition: all var(--transition-base);
+      }
+
+      .copy-btn:hover {
+        border-color: var(--color-info);
+        color: var(--color-info);
+      }
+
+      .copy-btn.copied {
+        border-color: var(--color-success);
+        color: var(--color-success);
+      }
+
+      /* Context Options (inside context-section) */
+      .context-options {
+        margin-bottom: var(--space-lg);
+      }
+
+      /* Message Input Section (Full Width) */
+      .message-input-section {
+        margin-top: var(--space-xl);
+        padding: var(--space-lg);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .message-input-row {
+        display: flex;
+        gap: var(--space-md);
+        align-items: flex-end;
+      }
+
+      .message-input-group {
+        flex: 3;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+      }
+
+      .aad-input-group {
+        flex: 1;
+        min-width: 150px;
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+      }
+
+      .message-input-group label,
+      .aad-input-group label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .message-input-group input,
+      .aad-input-group input {
+        padding: var(--space-sm) var(--space-md);
+        background: var(--color-bg-primary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+        color: var(--color-text-primary);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-base);
+        transition: all var(--transition-base);
+      }
+
+      .message-input-group input:focus,
+      .aad-input-group input:focus {
+        outline: none;
+        border-color: var(--color-info);
+        box-shadow: 0 0 0 3px var(--color-info-bg);
+      }
+
+      .message-actions {
+        display: flex;
+        gap: var(--space-sm);
+        flex-shrink: 0;
+      }
+
+      /* Messages Display Section */
+      .messages-display-section {
+        margin-top: var(--space-xl);
+        padding: var(--space-lg);
+        background: var(--color-bg-secondary);
+        border: 1px solid var(--color-border-primary);
+        border-radius: var(--radius-sm);
+      }
+
+      .messages-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-md);
+      }
+
+      .messages-title {
+        font-size: var(--font-size-lg);
+        font-weight: 600;
+        color: var(--color-text-primary);
+      }
+
+      .helper-text {
+        text-align: center;
+        color: var(--color-text-tertiary);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-md);
+      }
+
+      /* Legacy Messages Section (keep for compatibility) */
+      .messages-section {
+        margin-top: var(--space-xl);
+      }
+
+      /* Algorithm Section (Legacy - for vector validation display) */
       .algorithm-section {
         margin-bottom: var(--space-lg);
       }
@@ -691,56 +1002,7 @@
         margin-left: 4px;
       }
 
-      .vector-validation.running {
-        border-color: var(--color-warning);
-        background: var(--color-warning-bg);
-      }
 
-      .vector-validation.passed-native {
-        border-color: var(--color-native);
-        background: var(--color-native-bg);
-      }
-
-      .vector-validation.passed-noble {
-        border-color: var(--color-noble);
-        background: var(--color-noble-bg);
-      }
-
-      .vector-validation.passed-both {
-        background: linear-gradient(
-          135deg,
-          var(--color-native-bg) 0%,
-          var(--color-native-bg) 50%,
-          var(--color-noble-bg) 100%
-        );
-        border: 2px solid transparent;
-        background-clip: padding-box;
-        position: relative;
-      }
-
-      .vector-validation.passed-both::before {
-        content: '';
-        position: absolute;
-        inset: -2px;
-        border-radius: var(--radius-md);
-        padding: 2px;
-        background: linear-gradient(
-          135deg,
-          var(--color-native) 0%,
-          var(--color-native) 50%,
-          var(--color-noble) 100%
-        );
-        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        -webkit-mask-composite: xor;
-        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-        mask-composite: exclude;
-        pointer-events: none;
-      }
-
-      .vector-validation.failed {
-        border-color: var(--color-error);
-        background: var(--color-error-bg);
-      }
 
       .vector-validation h3 {
         font-size: var(--font-size-2xl);
@@ -775,7 +1037,7 @@
       }
 
       .progress-box.filled {
-        background: var(--color-native);
+        background: var(--color-text-secondary);
       }
 
       .progress-box.filled.failed {
@@ -830,7 +1092,8 @@
       .demo-controls button,
       .ikm-input-wrapper button,
       .output-wrapper button,
-      .chat-input-container button {
+      .chat-input-container button,
+      .message-actions button {
         padding: var(--space-sm) var(--space-lg);
         background: var(--color-bg-tertiary);
         border: 1px solid var(--color-border-primary);
@@ -850,7 +1113,9 @@
       .output-wrapper button:hover,
       .output-wrapper button:focus,
       .chat-input-container button:hover,
-      .chat-input-container button:focus {
+      .chat-input-container button:focus,
+      .message-actions button:hover,
+      .message-actions button:focus {
         background: var(--color-bg-tertiary);
         border-color: var(--color-text-tertiary);
         transform: translateY(-1px);
@@ -859,7 +1124,8 @@
       }
 
       .demo-controls button:disabled,
-      .chat-input-container button:disabled {
+      .chat-input-container button:disabled,
+      .message-actions button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
         transform: none;
@@ -889,8 +1155,8 @@
       .demo-input-group input,
       .demo-input-group textarea {
         width: 100%;
-        padding: var(--space-sm) var(--space-sm);
-        background: var(--color-bg-secondary);
+        padding: var(--space-sm) var(--space-md);
+        background: var(--color-bg-primary);
         border: 1px solid var(--color-border-primary);
         border-radius: var(--radius-sm);
         color: var(--color-text-primary);
@@ -1250,16 +1516,45 @@
       }
 
       /* ============================================
-         Responsive Styles (Mobile)
+         Responsive Styles (Tablet/Mobile)
          ============================================ */
+      @media (max-width: 1024px) {
+        .keys-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .algorithm-selector {
+          flex-direction: column;
+        }
+
+        .algo-select-group {
+          min-width: 100%;
+        }
+
+        .message-input-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .message-input-group,
+        .aad-input-group {
+          flex: none;
+          width: 100%;
+        }
+
+        .message-actions {
+          justify-content: flex-end;
+        }
+      }
+
       @media (max-width: 768px) {
         body {
           padding: 0;
         }
 
         /* Hide advanced options and AAD input on mobile */
-        .advanced-options,
-        .chat-input-container #aadInput,
+        .context-options,
+        .aad-input-group,
         .download-vector-btn {
           display: none;
         }
@@ -1567,8 +1862,8 @@
           <span></span>
         </button>
         <div class="filter-links" id="filterLinks">
-          <a href="?native" id="filterNative">Native</a>
-          <a href="?noble" id="filterNoble">Extensibility</a>
+          <a href="?native" id="filterNative">Web Cryptography</a>
+          <a href="?noble" id="filterNoble">Noble Cryptography</a>
           <a href="./" id="filterBoth">Both</a>
         </div>
       </div>
@@ -1577,44 +1872,85 @@
       <div class="demo-section" id="demoSection">
         <div class="section-label">Demo</div>
         <button class="download-vector-btn" id="downloadVectorBtn" title="Download test vector" disabled>Download Vector</button>
-        <div id="suiteDisplay" class="suite-display">
-          Select KEM, KDF, and AEAD to begin
-        </div>
 
-        <div id="ikmInputGroup" class="demo-input-group">
-          <label>Input Keying Material:</label>
-          <div class="ikm-input-wrapper">
-            <input type="text" id="ikmInput" placeholder="IKM in hex format" value="…">
-            <button id="zeroIkmButton" title="Set to zero">0x00…</button>
-            <button id="randomIkmButton" title="Randomize">rand()</button>
+        <!-- Algorithm Selector -->
+        <div class="algorithm-selector" id="algorithmSelector">
+          <div class="algo-select-group">
+            <label for="kemSelect">KEM</label>
+            <div class="algo-select-wrapper">
+              <select id="kemSelect" class="algo-select">
+                <option value="" disabled selected>Select KEM...</option>
+              </select>
+            </div>
+          </div>
+          <div class="algo-select-group">
+            <label for="kdfSelect">KDF</label>
+            <div class="algo-select-wrapper">
+              <select id="kdfSelect" class="algo-select">
+                <option value="" disabled selected>Select KDF...</option>
+              </select>
+            </div>
+          </div>
+          <div class="algo-select-group">
+            <label for="aeadSelect">AEAD</label>
+            <div class="algo-select-wrapper">
+              <select id="aeadSelect" class="algo-select">
+                <option value="" disabled selected>Select AEAD...</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <div id="keypairOutput">
+        <!-- Key Derivation from IKM -->
+        <div class="ikm-section">
           <div class="demo-input-group">
-            <label>Public Key:</label>
-            <div class="demo-output" id="publicKeyOutput">…</div>
+            <label>Input Keying Material (IKM, hex):</label>
+            <div class="ikm-input-wrapper">
+              <input type="text" id="ikmInput" value="…">
+              <button id="zeroIkmButton" title="Set to zero">0x00…</button>
+              <button id="randomIkmButton" title="Randomize">rand()</button>
+            </div>
           </div>
-          <div class="demo-input-group" id="privateKeyOutputGroup">
-            <label>Private Key:</label>
-            <div class="demo-output" id="privateKeyOutput">…</div>
-          </div>
+        </div>
 
-        <div class="advanced-options">
-          <button class="advanced-options-toggle" id="advancedOptionsToggle">
-            Optional
-          </button>
-          <div class="advanced-options-content hidden" id="advancedOptionsContent">
+        <!-- Keys Section -->
+        <div class="keys-section">
+          <div class="section-title">Keys</div>
+          <div class="keys-grid">
+            <div class="key-display">
+              <div class="key-display-label">
+                <span>Public Key</span>
+                <button class="copy-btn" data-copy="publicKeyOutput">Copy</button>
+              </div>
+              <div class="key-display-value placeholder" id="publicKeyOutput">…</div>
+            </div>
+            <div class="key-display" id="privateKeyOutputGroup">
+              <div class="key-display-label">
+                <span>Private Key</span>
+                <button class="copy-btn" data-copy="privateKeyOutput">Copy</button>
+              </div>
+              <div class="key-display-value placeholder" id="privateKeyOutput">…</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Context Section -->
+        <div class="context-section">
+          <div class="section-title">Context</div>
+
+          <!-- Context Options -->
+          <div class="context-options">
+            <!-- Info -->
             <div class="demo-input-group">
-              <label>Info:</label>
+              <label>Info (hex, optional):</label>
               <div class="ikm-input-wrapper">
-                <input type="text" id="infoInput" placeholder="Info in hex format">
+                <input type="text" id="infoInput">
                 <button id="zeroInfoButton" title="Set to 32 zero bytes">0x00…</button>
                 <button id="randomInfoButton" title="Generate random 32 bytes">rand()</button>
               </div>
-              <div class="helper-text">Application-specific context (any size)</div>
             </div>
 
+            <!-- Mode Selector -->
             <div class="mode-selector">
               <label>
                 <input type="radio" name="mode" value="base" id="modeBase" checked>
@@ -1626,79 +1962,65 @@
               </label>
             </div>
 
+            <!-- PSK Fields -->
             <div class="psk-fields hidden" id="pskFields">
               <div class="demo-input-group">
-                <label>Pre-Shared Key (PSK):</label>
+                <label>Pre-Shared Key (PSK, hex, ≥32 bytes):</label>
                 <div class="ikm-input-wrapper">
-                  <input type="text" id="pskInput" placeholder="PSK in hex format (≥32 bytes)">
-                  <button id="zeroPskButton" title="Set to 32 zero bytes">0x00…</button>
+                  <input type="text" id="pskInput">
                   <button id="randomPskButton" title="Generate random 32 bytes">rand()</button>
                 </div>
-                <div class="helper-text">Minimum 32 bytes (64 hex characters)</div>
               </div>
-
               <div class="demo-input-group">
-                <label>PSK ID:</label>
+                <label>PSK ID (hex, >0 bytes):</label>
                 <div class="ikm-input-wrapper">
-                  <input type="text" id="pskIdInput" placeholder="PSK ID in hex format">
+                  <input type="text" id="pskIdInput">
                   <button id="randomPskIdButton" title="Generate random 8 bytes">rand()</button>
                 </div>
-                <div class="helper-text">Minimum 1 byte (2 hex characters)</div>
               </div>
             </div>
           </div>
-        </div>
 
-          <div class="demo-input-group">
-            <label>Encapsulated Key:</label>
-            <div class="demo-output" id="encapsulatedKeyOutput">…</div>
+          <!-- Encapsulated Key -->
+          <div class="key-display">
+            <div class="key-display-label">
+              <span>Encapsulated Key</span>
+              <button class="copy-btn" data-copy="encapsulatedKeyOutput">Copy</button>
+            </div>
+            <div class="key-display-value placeholder" id="encapsulatedKeyOutput">…</div>
           </div>
         </div>
 
-        <div id="chatSection">
-          <h3 id="messagesHeading" class="mt-lg">Messages</h3>
-          <div class="chat-container hidden" id="chatContainer" role="log" aria-live="polite" aria-label="Encrypted messages"></div>
-          <div class="chat-input-container">
-            <input type="text" id="messageInput" placeholder="Type a message to encrypt..." aria-label="Message to encrypt">
-            <input type="text" id="aadInput" placeholder="AAD (optional, hex)" class="aad-input-short" aria-label="Additional authenticated data">
-            <button id="sendButton" aria-label="Encrypt message">encrypt()</button>
-            <button id="refreshContextButton" title="Generate fresh context" disabled aria-label="Reset context">reset()</button>
-            <button id="autoPopulateButton" title="Auto-populate with random text" aria-label="Auto-populate with sample text">rand()</button>
+        <!-- Message Input (Full Width) -->
+        <div class="message-input-section">
+          <div class="message-input-row">
+            <div class="message-input-group">
+              <label for="messageInput">Message</label>
+              <input type="text" id="messageInput" placeholder="Type a message to encrypt..." aria-label="Message to encrypt">
+            </div>
+            <div class="aad-input-group">
+              <label for="aadInput">AAD (hex, optional)</label>
+              <input type="text" id="aadInput" aria-label="Additional authenticated data">
+            </div>
+            <div class="message-actions">
+              <button id="sendButton" aria-label="Encrypt message">encrypt()</button>
+              <button id="autoPopulateButton" title="Auto-populate with random text" aria-label="Auto-populate with sample text">rand()</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="components-section" id="componentsSection">
-        <div class="section-label">Algorithm Selection</div>
-        <div id="algorithmCards"></div>
-        <div class="legend">
-            <div class="legend-item" id="legendNative">
-              <a href="?native">
-                <div class="legend-color native"></div>
-                <span>Native (Web Cryptography)</span>
-              </a>
-            </div>
-            <div class="legend-item" id="legendNoble">
-              <a href="?noble">
-                <div class="legend-color noble"></div>
-                <span>Extensibility (Noble Cryptography)</span>
-              </a>
-            </div>
-            <div class="legend-item" id="legendBoth">
-              <a href="./">
-                <div class="legend-color both"></div>
-                <span>Both implementations</span>
-              </a>
-            </div>
-            <div class="legend-item hidden" id="legendUnsupported">
-              <div class="legend-color unsupported"></div>
-              <span>Unsupported</span>
-            </div>
+        <!-- Messages Display -->
+        <div class="messages-display-section hidden" id="messagesDisplaySection">
+          <div class="messages-header">
+            <div class="messages-title">Encrypted Messages</div>
           </div>
+          <div class="chat-container" id="chatContainer" role="log" aria-live="polite" aria-label="Encrypted messages"></div>
+          <div class="helper-text" id="decryptHint">Click ciphertext messages to decrypt them in sequence</div>
+        </div>
       </div>
 
       <div class="vector-validation" id="vectorValidation">
-        <div class="section-label">Test Vectors</div>
+        <div class="section-label">RFC Test Vectors</div>
         <div class="play-overlay" id="playOverlay">
           <div class="play-button" id="playButton"></div>
         </div>
@@ -1746,17 +2068,9 @@
       const ci = params.has('ci')
       const both = (onlyNative && onlyNoble) || (!onlyNative && !onlyNoble)
 
-      // Highlight active filter
-      const filterMap = {
-        native: ['filterNative', 'legendNoble', 'legendBoth'],
-        noble: ['filterNoble', 'legendNative', 'legendBoth'],
-        both: ['filterBoth']
-      }
-
+      // Highlight active filter in header
       const activeFilter = onlyNative ? 'native' : onlyNoble ? 'noble' : 'both'
-      const [activeLink, ...disabledLegends] = filterMap[activeFilter]
-      document.getElementById(activeLink).classList.add('active')
-      disabledLegends.forEach(id => document.getElementById(id).classList.add('disabled'))
+      document.getElementById('filter' + activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)).classList.add('active')
 
       import * as HPKE from '@panva/hpke'
       import * as Noble from '@panva/hpke-noble'
@@ -1958,6 +2272,45 @@
       // HELPER FUNCTIONS
       // ============================================================================
 
+      // Cache commonly used DOM elements
+      const elements = {
+        ikmInput: document.getElementById('ikmInput'),
+        infoInput: document.getElementById('infoInput'),
+        pskInput: document.getElementById('pskInput'),
+        pskIdInput: document.getElementById('pskIdInput'),
+        aadInput: document.getElementById('aadInput'),
+        messageInput: document.getElementById('messageInput'),
+        pskFields: document.getElementById('pskFields'),
+        chatContainer: document.getElementById('chatContainer'),
+        messagesDisplaySection: document.getElementById('messagesDisplaySection'),
+        publicKeyOutput: document.getElementById('publicKeyOutput'),
+        privateKeyOutput: document.getElementById('privateKeyOutput'),
+        privateKeyOutputGroup: document.getElementById('privateKeyOutputGroup'),
+        encapsulatedKeyOutput: document.getElementById('encapsulatedKeyOutput'),
+        sendButton: document.getElementById('sendButton'),
+        autoPopulateButton: document.getElementById('autoPopulateButton'),
+        downloadVectorBtn: document.getElementById('downloadVectorBtn'),
+        demoSection: document.getElementById('demoSection'),
+      }
+
+      /** Sets an element to placeholder state */
+      const setPlaceholder = (element) => {
+        element.textContent = ''
+        element.classList.add('placeholder')
+      }
+
+      /** Clears messages display */
+      const clearMessages = () => {
+        elements.chatContainer.innerHTML = ''
+        elements.messagesDisplaySection.classList.add('hidden')
+      }
+
+      /** Checks if any input field has validation errors */
+      const hasValidationErrors = () => [
+        elements.aadInput, elements.ikmInput, elements.infoInput,
+        elements.pskInput, elements.pskIdInput
+      ].some(el => el.classList.contains('error'))
+
       /** Selects the preferred algorithm implementation (native over noble if both pass) */
       const selectPreferredAlgorithm = (algorithms, algoName, algoType) => {
         const nativeAlgo = algorithms.find(a => a.name === algoName && !a.isNoble)
@@ -1995,24 +2348,24 @@
       }
 
       /** Generates random bytes and updates input field */
-      const setRandomHex = (inputId, byteCount) => {
+      const setRandomHex = (element, byteCount) => {
         const random = crypto.getRandomValues(new Uint8Array(byteCount))
-        document.getElementById(inputId).value = random.toHex()
+        element.value = random.toHex()
+        element.classList.remove('error')
         return random
       }
 
       /** Sets input to all zeros */
-      const setZeroHex = (inputId, byteCount) => {
+      const setZeroHex = (element, byteCount) => {
         const zero = '00'.repeat(byteCount)
-        document.getElementById(inputId).value = zero
+        element.value = zero
+        element.classList.remove('error')
         return Uint8Array.fromHex(zero)
       }
 
       /** Resets chat and sets up fresh context */
       const resetAndSetupContext = async () => {
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
+        clearMessages()
         await setupSenderContext()
       }
 
@@ -2134,12 +2487,9 @@
       }
 
       /**
-       * Renders the algorithm summary cards at the top of the page Shows the status of each KEM,
-       * KDF, and AEAD algorithm
+       * Renders the algorithm dropdowns and algorithm cards for vector validation
        */
       function renderAlgorithmSummary() {
-        const summaryDiv = document.getElementById('algorithmCards')
-
         // Get unique algorithm names
         const kemNames = [...new Set(ALL_KEMS.map((k) => k.name))].sort()
         const kdfNames = [...new Set(ALL_KDFS.map((k) => k.name))].sort()
@@ -2174,113 +2524,103 @@
             return order.indexOf(a) - order.indexOf(b)
           })
 
-        const sections = [
-          {
-            title: 'Key Encapsulation Mechanisms (KEM) - Traditional (T)',
-            algos: traditionalKEMs,
-            type: 'kem',
-          },
-          {
-            title: 'Key Encapsulation Mechanisms (KEM) - Hybrid (PQ/T)',
-            algos: hybridKEMs,
-            type: 'kem',
-          },
-          {
-            title: 'Key Encapsulation Mechanisms (KEM) - Post-Quantum (PQ)',
-            algos: postQuantumKEMs,
-            type: 'kem',
-          },
-          { title: 'Key Derivation Functions (KDF)', algos: kdfNames, type: 'kdf' },
-          { title: 'Authenticated Encryption (AEAD)', algos: aeadNames, type: 'aead' },
-        ]
+        // Populate KEM dropdown
+        const kemSelect = document.getElementById('kemSelect')
+        kemSelect.innerHTML = '<option value="" disabled>Select KEM...</option>'
 
-        summaryDiv.innerHTML = sections
-          .map(
-            (section) => `
-        <div class="algorithm-section">
-          <h3>${section.title}</h3>
-          <div class="algorithm-grid">
-            ${section.algos
-              .map((algoName) => {
-                const status = getAlgorithmStatus(algoName, section.type)
-                const displayName = ALGORITHM_NAMES[algoName]
-
-                return (
-                  '<div class="algo-card ' +
-                  status +
-                  '" data-algo="' +
-                  algoName +
-                  '" data-type="' +
-                  section.type +
-                  '">' +
-                  '<div class="algo-name">' +
-                  displayName +
-                  '</div>' +
-                  '</div>'
-                )
-              })
-              .join('')}
-          </div>
-        </div>
-      `,
-          )
-          .join('')
-
-        // Add click handlers for algorithm selection
-        document.querySelectorAll('.algo-card').forEach(card => {
-          card.addEventListener('click', () => {
-            const algoName = card.getAttribute('data-algo')
-            const algoType = card.getAttribute('data-type')
-
-            // Don't allow selection of AEAD_EXPORT_ONLY for demo or non-passing algorithms
-            if (algoName === 'AEAD_EXPORT_ONLY') return
-            const status = getAlgorithmStatus(algoName, algoType)
-            if (status !== 'native' && status !== 'noble' && status !== 'both') return
-
-            // Remove selection from other cards of same type
-            document.querySelectorAll(`.algo-card[data-type="${algoType}"]`).forEach(c => {
-              c.classList.remove('selected')
-            })
-            card.classList.add('selected')
-
-            // Select algorithm and update state
-            const algoMap = { kem: ALL_KEMS, kdf: ALL_KDFS, aead: ALL_AEADS }
-            const stateKey = `selected${algoType.toUpperCase()}`
-            demoState[stateKey] = selectPreferredAlgorithm(algoMap[algoType], algoName, algoType)
-            updateDemoSection()
+        const addKemGroup = (label, kems) => {
+          if (kems.length === 0) return
+          const optgroup = document.createElement('optgroup')
+          optgroup.label = label
+          kems.forEach(name => {
+            const status = getAlgorithmStatus(name, 'kem')
+            const opt = document.createElement('option')
+            opt.value = name
+            opt.textContent = ALGORITHM_NAMES[name]
+            opt.dataset.status = status
+            if (status === 'unsupported') opt.disabled = true
+            optgroup.appendChild(opt)
           })
+          kemSelect.appendChild(optgroup)
+        }
+
+        addKemGroup('Traditional', traditionalKEMs)
+        addKemGroup('Hybrid (PQ/T)', hybridKEMs)
+        addKemGroup('Post-Quantum', postQuantumKEMs)
+
+        // Populate KDF dropdown
+        const kdfSelect = document.getElementById('kdfSelect')
+        kdfSelect.innerHTML = '<option value="" disabled>Select KDF...</option>'
+        kdfNames.forEach(name => {
+          const status = getAlgorithmStatus(name, 'kdf')
+          const opt = document.createElement('option')
+          opt.value = name
+          opt.textContent = ALGORITHM_NAMES[name]
+          opt.dataset.status = status
+          if (status === 'unsupported') opt.disabled = true
+          kdfSelect.appendChild(opt)
         })
 
-        // Auto-select first available KEM, KDF, and AEAD after rendering
-        const selectFirstAlgorithm = (type) => {
-          const cards = document.querySelectorAll(`.algo-card[data-type="${type}"]`)
-          for (const card of cards) {
-            const algoName = card.getAttribute('data-algo')
-            if (algoName === 'AEAD_EXPORT_ONLY') continue
+        // Populate AEAD dropdown
+        const aeadSelect = document.getElementById('aeadSelect')
+        aeadSelect.innerHTML = '<option value="" disabled>Select AEAD...</option>'
+        aeadNames.forEach(name => {
+          const status = getAlgorithmStatus(name, 'aead')
+          const opt = document.createElement('option')
+          opt.value = name
+          opt.textContent = ALGORITHM_NAMES[name]
+          opt.dataset.status = status
+          if (status === 'unsupported' || name === 'AEAD_EXPORT_ONLY') opt.disabled = true
+          aeadSelect.appendChild(opt)
+        })
 
-            const status = getAlgorithmStatus(algoName, type)
-            if (status === 'native' || status === 'noble' || status === 'both') {
-              card.classList.add('selected')
-              const algoMap = { kem: ALL_KEMS, kdf: ALL_KDFS, aead: ALL_AEADS }
-              const stateKey = `selected${type.toUpperCase()}`
-              demoState[stateKey] = selectPreferredAlgorithm(algoMap[type], algoName, type)
-              break
-            }
+        // Update select styling based on status
+        const updateSelectStyle = (select) => {
+          const selectedOption = select.options[select.selectedIndex]
+          if (selectedOption && selectedOption.dataset.status) {
+            select.className = 'algo-select ' + selectedOption.dataset.status
+          } else {
+            select.className = 'algo-select'
           }
         }
 
-        selectFirstAlgorithm('kem')
-        selectFirstAlgorithm('kdf')
-        selectFirstAlgorithm('aead')
+        // Add change handlers for dropdowns
+        kemSelect.addEventListener('change', () => {
+          const algoName = kemSelect.value
+          demoState.selectedKEM = selectPreferredAlgorithm(ALL_KEMS, algoName, 'kem')
+          updateSelectStyle(kemSelect)
+          updateDemoSection()
+        })
 
-        // Show unsupported legend only if there are unsupported algorithms
-        const hasUnsupported = document.querySelector('.algo-card.unsupported')
-        const legendUnsupported = document.getElementById('legendUnsupported')
-        if (hasUnsupported) {
-          legendUnsupported.classList.remove('hidden')
-        } else {
-          legendUnsupported.classList.add('hidden')
+        kdfSelect.addEventListener('change', () => {
+          const algoName = kdfSelect.value
+          demoState.selectedKDF = selectPreferredAlgorithm(ALL_KDFS, algoName, 'kdf')
+          updateSelectStyle(kdfSelect)
+          updateDemoSection()
+        })
+
+        aeadSelect.addEventListener('change', () => {
+          const algoName = aeadSelect.value
+          demoState.selectedAEAD = selectPreferredAlgorithm(ALL_AEADS, algoName, 'aead')
+          updateSelectStyle(aeadSelect)
+          updateDemoSection()
+        })
+
+        // Auto-select first available algorithm
+        const autoSelectFirst = (select, algorithms, type) => {
+          for (const opt of select.options) {
+            if (opt.disabled) continue
+            select.value = opt.value
+            const stateKey = `selected${type.toUpperCase()}`
+            demoState[stateKey] = selectPreferredAlgorithm(algorithms, opt.value, type)
+            updateSelectStyle(select)
+            break
+          }
         }
+
+        autoSelectFirst(kemSelect, ALL_KEMS, 'kem')
+        autoSelectFirst(kdfSelect, ALL_KDFS, 'kdf')
+        autoSelectFirst(aeadSelect, ALL_AEADS, 'aead')
 
         // Update demo section once after all three are selected
         updateDemoSection()
@@ -2296,135 +2636,163 @@
         demoState.senderContext = null
         demoState.encapsulatedKey = null
 
-        // Clear inputs and hide chat container
-        document.getElementById('ikmInput').value = ''
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
+        // Clear inputs and messages
+        elements.ikmInput.value = ''
+        clearMessages()
+
+        // Reset key display elements to placeholder state
+        setPlaceholder(elements.publicKeyOutput)
+        setPlaceholder(elements.privateKeyOutput)
+        setPlaceholder(elements.encapsulatedKeyOutput)
       }
 
-      function updateDemoSection() {
-        const demoSection = document.getElementById('demoSection')
-        const suiteDisplay = document.getElementById('suiteDisplay')
+      function resetContextState() {
+        // Reset only context-related state, keep keys
+        demoState.senderContext = null
+        demoState.encapsulatedKey = null
 
+        // Clear messages and reset encapsulated key display
+        clearMessages()
+        setPlaceholder(elements.encapsulatedKeyOutput)
+      }
+
+      async function updateDemoSection() {
         if (demoState.selectedKEM && demoState.selectedKDF && demoState.selectedAEAD) {
-          demoSection.classList.add('active')
-
-          // Update suite display
-          const kemName = ALGORITHM_NAMES[demoState.selectedKEM.name] || demoState.selectedKEM.name
-          const kdfName = ALGORITHM_NAMES[demoState.selectedKDF.name] || demoState.selectedKDF.name
-          const aeadName = ALGORITHM_NAMES[demoState.selectedAEAD.name] || demoState.selectedAEAD.name
-          suiteDisplay.innerHTML = `${kemName} + ${kdfName} + ${aeadName}`
+          elements.demoSection.classList.add('active')
 
           // Set theme class based on filter
-          demoSection.classList.remove('theme-noble', 'theme-both')
+          elements.demoSection.classList.remove('theme-noble', 'theme-both')
           if (onlyNoble) {
-            demoSection.classList.add('theme-noble')
+            elements.demoSection.classList.add('theme-noble')
           } else if (both) {
-            demoSection.classList.add('theme-both')
+            elements.demoSection.classList.add('theme-both')
           }
 
-          // Check if suite has changed by comparing the selected factory references with stored ones
-          const suiteChanged = !demoState.lastSelectedKEM ||
+          // Check if KEM has changed (only KEM affects key derivation)
+          const kemChanged = !demoState.lastSelectedKEM ||
+            demoState.selectedKEM.factory !== demoState.lastSelectedKEM
+
+          // Check if any algorithm changed (affects context)
+          const suiteChanged = kemChanged ||
             !demoState.lastSelectedKDF ||
             !demoState.lastSelectedAEAD ||
-            demoState.selectedKEM.factory !== demoState.lastSelectedKEM ||
             demoState.selectedKDF.factory !== demoState.lastSelectedKDF ||
             demoState.selectedAEAD.factory !== demoState.lastSelectedAEAD
 
-          // Only reset and generate new IKM if suite actually changed
-          if (suiteChanged) {
-            // Store current selections
-            demoState.lastSelectedKEM = demoState.selectedKEM.factory
-            demoState.lastSelectedKDF = demoState.selectedKDF.factory
-            demoState.lastSelectedAEAD = demoState.selectedAEAD.factory
+          // Store current selections
+          demoState.lastSelectedKEM = demoState.selectedKEM.factory
+          demoState.lastSelectedKDF = demoState.selectedKDF.factory
+          demoState.lastSelectedAEAD = demoState.selectedAEAD.factory
 
-            // Create new suite
-            demoState.suite = new HPKE.CipherSuite(
-              demoState.selectedKEM.factory,
-              demoState.selectedKDF.factory,
-              demoState.selectedAEAD.factory
-            )
+          // Create new suite
+          demoState.suite = new HPKE.CipherSuite(
+            demoState.selectedKEM.factory,
+            demoState.selectedKDF.factory,
+            demoState.selectedAEAD.factory
+          )
 
-            // Reset demo state when suite changes
+          // Only randomize IKM when KEM changes (KEM determines key size)
+          if (kemChanged) {
+            // Reset demo state when KEM changes
             resetDemoState()
 
             // Auto-generate random IKM and keypair
             const ikmLength = demoState.suite.KEM.Nsk
             const randomIkm = crypto.getRandomValues(new Uint8Array(ikmLength))
-            document.getElementById('ikmInput').value = randomIkm.toHex()
+            elements.ikmInput.value = randomIkm.toHex()
             deriveFromIkm(randomIkm.toHex())
+          } else if (suiteChanged) {
+            // KDF/AEAD changed but KEM stayed the same - reset context, keep keys
+            resetContextState()
+            // Re-setup context with existing keys and new suite
+            await setupSenderContext()
           }
         } else {
-          demoSection.classList.remove('active')
+          elements.demoSection.classList.remove('active')
         }
       }
 
       // IKM button handlers
       document.getElementById('zeroIkmButton').addEventListener('click', async () => {
         if (!demoState.suite) return
-        await deriveFromIkm(setZeroHex('ikmInput', demoState.suite.KEM.Nsk).toHex())
+        await deriveFromIkm(setZeroHex(elements.ikmInput, demoState.suite.KEM.Nsk).toHex())
       })
 
       document.getElementById('randomIkmButton').addEventListener('click', async () => {
         if (!demoState.suite) return
-        await deriveFromIkm(setRandomHex('ikmInput', demoState.suite.KEM.Nsk).toHex())
+        await deriveFromIkm(setRandomHex(elements.ikmInput, demoState.suite.KEM.Nsk).toHex())
       })
 
       async function deriveFromIkm(ikmHex) {
         if (!demoState.suite) return
 
-        const ikmInput = document.getElementById('ikmInput')
+        if (!ikmHex) {
+          // Empty IKM - reset keys and context
+          elements.ikmInput.classList.remove('error')
+          demoState.recipientKeyPair = null
+          setPlaceholder(elements.publicKeyOutput)
+          setPlaceholder(elements.privateKeyOutput)
+          resetContextState()
+          updateButtonStates()
+          return
+        }
+
         try {
           const ikm = Uint8Array.fromHex(ikmHex)
           demoState.recipientKeyPair = await demoState.suite.DeriveKeyPair(ikm, true)
-          ikmInput.classList.remove('error')
+          elements.ikmInput.classList.remove('error')
+
+          // Show keys
+          const publicKeyBytes = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
+          elements.publicKeyOutput.textContent = publicKeyBytes.toHex()
+          elements.publicKeyOutput.classList.remove('placeholder')
+
+          if (demoState.recipientKeyPair.privateKey) {
+            const privateKeyBytes = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
+            elements.privateKeyOutput.textContent = privateKeyBytes.toHex()
+            elements.privateKeyOutput.classList.remove('placeholder')
+            elements.privateKeyOutputGroup.classList.remove('hidden')
+          } else {
+            elements.privateKeyOutputGroup.classList.add('hidden')
+          }
+
           await setupSenderContext()
         } catch (e) {
-          // Highlight input field on error
-          ikmInput.classList.add('error')
+          // Highlight input field on error and reset keys
+          elements.ikmInput.classList.add('error')
+          demoState.recipientKeyPair = null
+          setPlaceholder(elements.publicKeyOutput)
+          setPlaceholder(elements.privateKeyOutput)
+          resetContextState()
           console.error('Invalid IKM hex:', e.message)
         }
         updateButtonStates()
       }
 
-      document.getElementById('ikmInput').addEventListener('input', async (e) => {
-        const ikmHex = e.target.value.trim()
-        if (ikmHex) {
-          await deriveFromIkm(ikmHex)
-        }
-      })
-
-      // Advanced options toggle
-      document.getElementById('advancedOptionsToggle').addEventListener('click', () => {
-        const toggle = document.getElementById('advancedOptionsToggle')
-        const content = document.getElementById('advancedOptionsContent')
-
-        toggle.classList.toggle('expanded')
-        content.classList.toggle('hidden')
+      elements.ikmInput.addEventListener('input', async (e) => {
+        await deriveFromIkm(e.target.value.trim())
       })
 
       // Mode selector
       document.querySelectorAll('input[name="mode"]').forEach(radio => {
         radio.addEventListener('change', async (e) => {
           demoState.mode = e.target.value
-          const pskFields = document.getElementById('pskFields')
 
           if (e.target.value === 'psk') {
-            pskFields.classList.remove('hidden')
+            elements.pskFields.classList.remove('hidden')
             // Initialize PSK values if not present
-            if (!document.getElementById('pskInput').value) {
-              demoState.psk = setRandomHex('pskInput', 32)
+            if (!elements.pskInput.value) {
+              demoState.psk = setRandomHex(elements.pskInput, 32)
             } else {
-              demoState.psk = validateHexInput(document.getElementById('pskInput'), 32)
+              demoState.psk = validateHexInput(elements.pskInput, 32)
             }
-            if (!document.getElementById('pskIdInput').value) {
-              demoState.pskId = setRandomHex('pskIdInput', 8)
+            if (!elements.pskIdInput.value) {
+              demoState.pskId = setRandomHex(elements.pskIdInput, 8)
             } else {
-              demoState.pskId = validateHexInput(document.getElementById('pskIdInput'), 1)
+              demoState.pskId = validateHexInput(elements.pskIdInput, 1)
             }
           } else {
-            pskFields.classList.add('hidden')
+            elements.pskFields.classList.add('hidden')
             demoState.psk = demoState.pskId = null
           }
 
@@ -2432,174 +2800,111 @@
         })
       })
 
-      // Info input
-      document.getElementById('infoInput').addEventListener('input', async (e) => {
-        demoState.info = validateHexInput(e.target)
-        if (!e.target.classList.contains('error')) {
+      /** Creates input handler for hex fields that require non-empty in certain modes */
+      const createHexInputHandler = (element, stateKey, minBytes = 0, requireNonEmpty = false) => {
+        element.addEventListener('input', async (e) => {
+          const value = e.target.value.trim()
+          if (requireNonEmpty && !value) {
+            e.target.classList.add('error')
+            demoState[stateKey] = null
+          } else {
+            demoState[stateKey] = validateHexInput(e.target, minBytes)
+          }
           await resetAndSetupContext()
-        }
-        updateButtonStates()
-      })
-
-      // Info button handlers
-      document.getElementById('zeroInfoButton').addEventListener('click', async () => {
-        demoState.info = setZeroHex('infoInput', 32)
-        await resetAndSetupContext()
-      })
-
-      document.getElementById('randomInfoButton').addEventListener('click', async () => {
-        demoState.info = setRandomHex('infoInput', 32)
-        await resetAndSetupContext()
-      })
-
-      // PSK input
-      document.getElementById('pskInput').addEventListener('input', async (e) => {
-        demoState.psk = validateHexInput(e.target, 32)
-        if (!e.target.classList.contains('error')) {
-          await resetAndSetupContext()
-        }
-        updateButtonStates()
-      })
-
-      // PSK ID input
-      document.getElementById('pskIdInput').addEventListener('input', async (e) => {
-        demoState.pskId = validateHexInput(e.target, 1)
-        if (!e.target.classList.contains('error')) {
-          await resetAndSetupContext()
-        }
-        updateButtonStates()
-      })
-
-      // PSK button handlers
-      document.getElementById('zeroPskButton').addEventListener('click', async () => {
-        demoState.psk = setZeroHex('pskInput', 32)
-        await resetAndSetupContext()
-      })
-
-      document.getElementById('randomPskButton').addEventListener('click', async () => {
-        demoState.psk = setRandomHex('pskInput', 32)
-        await resetAndSetupContext()
-      })
-
-      document.getElementById('randomPskIdButton').addEventListener('click', async () => {
-        demoState.pskId = setRandomHex('pskIdInput', 8)
-        await resetAndSetupContext()
-      })
-
-      document.getElementById('ikmInput').addEventListener('input', async (e) => {
-        const ikmHex = e.target.value.trim()
-        if (ikmHex) {
-          await deriveFromIkm(ikmHex)
-        }
-      })
-
-      document.getElementById('refreshContextButton').addEventListener('click', async () => {
-        const inputIds = ['aadInput', 'ikmInput', 'infoInput', 'pskInput', 'pskIdInput']
-        const inputs = inputIds.map(id => document.getElementById(id))
-        const hasErrors = inputs.some(input => input.classList.contains('error'))
-
-        if (hasErrors) {
-          // Reset to clean state
-          setRandomHex('ikmInput', demoState.suite.KEM.Nsk)
-          inputs.forEach(input => {
-            input.value = ''
-            input.classList.remove('error')
-          })
-
-          // Reset to base mode
-          document.getElementsByName('mode')[0].checked = true
-          demoState.mode = 'base'
-          demoState.info = demoState.psk = demoState.pskId = null
-          document.getElementById('pskFields').classList.add('hidden')
-          messageInput.value = ''
-
-          const chatContainer = document.getElementById('chatContainer')
-          chatContainer.innerHTML = ''
-          chatContainer.classList.add('hidden')
-
-          await deriveFromIkm(document.getElementById('ikmInput').value)
           updateButtonStates()
-          return
-        }
+        })
+      }
 
-        if (!demoState.suite || !demoState.recipientKeyPair) return
-        if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
-          alert('PSK mode requires both PSK and PSK ID')
-          return
-        }
+      /** Creates button handler that sets random/zero value */
+      const createHexButtonHandler = (buttonId, element, stateKey, byteCount, useZero = false) => {
+        document.getElementById(buttonId).addEventListener('click', async () => {
+          demoState[stateKey] = useZero ? setZeroHex(element, byteCount) : setRandomHex(element, byteCount)
+          await resetAndSetupContext()
+          updateButtonStates()
+        })
+      }
 
-        // Setup fresh contexts with same keys
-        const options = {}
-        if (demoState.info) options.info = demoState.info
-        if (demoState.mode === 'psk') {
-          options.psk = demoState.psk
-          options.pskId = demoState.pskId
-        }
+      // Info handlers
+      createHexInputHandler(elements.infoInput, 'info')
+      createHexButtonHandler('zeroInfoButton', elements.infoInput, 'info', 32, true)
+      createHexButtonHandler('randomInfoButton', elements.infoInput, 'info', 32)
 
-        const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
-        demoState.senderContext = result.ctx
-        demoState.encapsulatedKey = result.encapsulatedKey
-        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+      // PSK handlers (require non-empty when in PSK mode)
+      createHexInputHandler(elements.pskInput, 'psk', 32, true)
+      createHexButtonHandler('randomPskButton', elements.pskInput, 'psk', 32)
 
-        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
-
-        // Clear chat messages and hide container
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
-
-        // Update button states
-        updateButtonStates()
-      })
+      // PSK ID handlers (require non-empty when in PSK mode)
+      createHexInputHandler(elements.pskIdInput, 'pskId', 1, true)
+      createHexButtonHandler('randomPskIdButton', elements.pskIdInput, 'pskId', 8)
 
       async function setupSenderContext() {
-        if (!demoState.suite || !demoState.recipientKeyPair) return
-
-        // Validate PSK mode requirements
-        if (demoState.mode === 'psk' && (!demoState.psk || !demoState.pskId)) {
-          // Don't setup context if PSK mode is selected but PSK/PSK ID not provided
+        if (!demoState.suite || !demoState.recipientKeyPair) {
+          resetContextState()
           return
         }
 
-        // Serialize public key
-        const publicKeyBytes = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
-        document.getElementById('publicKeyOutput').textContent = publicKeyBytes.toHex()
-
-        // Serialize private key if available
-        if (demoState.recipientKeyPair.privateKey) {
-          const privateKeyBytes = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
-          document.getElementById('privateKeyOutput').textContent = privateKeyBytes.toHex()
-          document.getElementById('privateKeyOutputGroup').classList.remove('hidden')
-        } else {
-          document.getElementById('privateKeyOutputGroup').classList.add('hidden')
+        // Check for any validation errors
+        if (elements.infoInput.classList.contains('error')) {
+          resetContextState()
+          return
         }
 
-        // Setup sender context
-        const options = {}
-        if (demoState.info) options.info = demoState.info
+        // PSK mode validation - both PSK and PSK ID are required and must be valid
         if (demoState.mode === 'psk') {
-          options.psk = demoState.psk
-          options.pskId = demoState.pskId
+          const pskValue = elements.pskInput.value.trim()
+          const pskIdValue = elements.pskIdInput.value.trim()
+
+          // PSK is required and must be valid (>= 32 bytes)
+          if (!pskValue) {
+            elements.pskInput.classList.add('error')
+            resetContextState()
+            return
+          }
+          if (!demoState.psk) {
+            resetContextState()
+            return
+          }
+
+          // PSK ID is required and must be valid
+          if (!pskIdValue) {
+            elements.pskIdInput.classList.add('error')
+            resetContextState()
+            return
+          }
+          if (!demoState.pskId) {
+            resetContextState()
+            return
+          }
         }
-        const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
-        demoState.senderContext = result.ctx
-        demoState.encapsulatedKey = result.encapsulatedKey
 
-        // Setup recipient context
-        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+        try {
+          // Setup sender context
+          const options = {}
+          if (demoState.info) options.info = demoState.info
+          if (demoState.mode === 'psk') {
+            options.psk = demoState.psk
+            options.pskId = demoState.pskId
+          }
+          const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
+          demoState.senderContext = result.ctx
+          demoState.encapsulatedKey = result.encapsulatedKey
 
-        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
+          // Setup recipient context
+          demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
 
-        // Clear chat and hide container
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
-        chatContainer.classList.add('hidden')
+          elements.encapsulatedKeyOutput.textContent = result.encapsulatedKey.toHex()
+          elements.encapsulatedKeyOutput.classList.remove('placeholder')
+
+          // Clear messages
+          clearMessages()
+        } catch (e) {
+          console.error('Failed to setup context:', e.message)
+          resetContextState()
+        }
       }
 
       /** Creates and appends an encrypted message to the chat */
       function addEncryptedMessage(seq, plaintext, ciphertext, aad) {
-        const chatContainer = document.getElementById('chatContainer')
-
         const ciphertextDiv = document.createElement('div')
         ciphertextDiv.className = 'chat-message ciphertext'
         ciphertextDiv.dataset.seq = seq
@@ -2657,11 +2962,11 @@
             this.dataset.decrypted = 'true'
 
             // Scroll this plaintext message to top of chat container with margin
-            const offsetTop = this.offsetTop - chatContainer.offsetTop - 15
-            chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+            const offsetTop = this.offsetTop - elements.chatContainer.offsetTop - 15
+            elements.chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
 
             // Update clickability of all remaining ciphertexts
-            chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
+            elements.chatContainer.querySelectorAll('.chat-message.ciphertext').forEach(div => {
               if (div.dataset.decrypted === 'false') {
                 const divSeq = parseInt(div.dataset.seq)
                 const isNextToDecrypt = demoState.recipientContext.seq === divSeq
@@ -2680,8 +2985,8 @@
           }
         })
 
-        chatContainer.appendChild(ciphertextDiv)
-        chatContainer.classList.remove('hidden')
+        elements.chatContainer.appendChild(ciphertextDiv)
+        elements.messagesDisplaySection.classList.remove('hidden')
       }
 
       // Message sending
@@ -2691,8 +2996,7 @@
           return
         }
 
-        const messageInput = document.getElementById('messageInput')
-        const message = messageInput.value.trim()
+        const message = elements.messageInput.value.trim()
         if (!message) return
 
         // Check if AEAD is export-only mode
@@ -2702,18 +3006,9 @@
         }
 
         // Check for any invalid fields
-        const aadInput = document.getElementById('aadInput')
-        const ikmInput = document.getElementById('ikmInput')
-        const infoInput = document.getElementById('infoInput')
-        const pskInput = document.getElementById('pskInput')
-        const pskIdInput = document.getElementById('pskIdInput')
-        if (aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
-            infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
-            pskIdInput.classList.contains('error')) {
+        if (hasValidationErrors()) {
           return
         }
-
-        const chatContainer = document.getElementById('chatContainer')
 
         try {
           // Get sequence number BEFORE sealing
@@ -2721,8 +3016,8 @@
 
           // Get AAD if provided
           let aad = null
-          if (aadInput.value.trim()) {
-            aad = Uint8Array.fromHex(aadInput.value.trim())
+          if (elements.aadInput.value.trim()) {
+            aad = Uint8Array.fromHex(elements.aadInput.value.trim())
           }
 
           // Encrypt message
@@ -2733,8 +3028,8 @@
           addEncryptedMessage(seq, plaintext, ciphertext, aad)
 
           // Clear inputs
-          messageInput.value = ''
-          document.getElementById('aadInput').value = ''
+          elements.messageInput.value = ''
+          elements.aadInput.value = ''
           updateButtonStates()
         } catch (e) {
           console.error('Error sending message:', e)
@@ -2742,43 +3037,37 @@
         }
       }
 
-      const messageInput = document.getElementById('messageInput')
-      const sendButton = document.getElementById('sendButton')
-      const refreshContextButton = document.getElementById('refreshContextButton')
-
       /** Update button states based on input validity and messages */
       const updateButtonStates = () => {
-        const hasErrors = ['aadInput', 'ikmInput', 'infoInput', 'pskInput', 'pskIdInput']
-          .some(id => document.getElementById(id).classList.contains('error'))
+        const hasErrors = hasValidationErrors()
 
-        sendButton.disabled = !messageInput.value.trim() || hasErrors
-        document.getElementById('autoPopulateButton').disabled = hasErrors
+        elements.sendButton.disabled = !elements.messageInput.value.trim() || hasErrors
+        elements.autoPopulateButton.disabled = hasErrors
 
-        const hasMessages = document.getElementById('chatContainer').children.length > 0
-        refreshContextButton.disabled = !hasErrors && !hasMessages
+        const hasMessages = elements.chatContainer.children.length > 0
 
         // Enable download button if we have a valid suite and messages
-        const downloadBtn = document.getElementById('downloadVectorBtn')
-        downloadBtn.disabled = !demoState.suite || !hasMessages || hasErrors
-      }      // Initialize button states
+        elements.downloadVectorBtn.disabled = !demoState.suite || !hasMessages || hasErrors
+      }
+
+      // Initialize button states
       updateButtonStates()
 
       // Update button states on input
-      messageInput.addEventListener('input', updateButtonStates)
+      elements.messageInput.addEventListener('input', updateButtonStates)
 
-      sendButton.addEventListener('click', (e) => {
+      elements.sendButton.addEventListener('click', (e) => {
         e.preventDefault()
         sendMessage()
       })
-      messageInput.addEventListener('keypress', (e) => {
+      elements.messageInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault()
           sendMessage()
         }
       })
 
-      const aadInput = document.getElementById('aadInput')
-      aadInput.addEventListener('keypress', (e) => {
+      elements.aadInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           e.preventDefault()
           sendMessage()
@@ -2786,17 +3075,16 @@
       })
 
       // Validate AAD input on change
-      aadInput.addEventListener('input', () => {
-        validateHexInput(aadInput)
+      elements.aadInput.addEventListener('input', () => {
+        validateHexInput(elements.aadInput)
         updateButtonStates()
       })
 
       // Download vector button handler
-      document.getElementById('downloadVectorBtn').addEventListener('click', async () => {
+      elements.downloadVectorBtn.addEventListener('click', async () => {
         if (!demoState.suite || !demoState.recipientKeyPair) return
 
-        const chatContainer = document.getElementById('chatContainer')
-        const messages = chatContainer.querySelectorAll('.chat-message')
+        const messages = elements.chatContainer.querySelectorAll('.chat-message')
         if (messages.length === 0) return
 
         // Collect encryptions from chat messages
@@ -2860,7 +3148,7 @@
       })
 
       // Auto-populate with random public domain text
-      document.getElementById('autoPopulateButton').addEventListener('click', async (e) => {
+      elements.autoPopulateButton.addEventListener('click', async (e) => {
         e.preventDefault()
 
         if (!demoState.senderContext) {
@@ -2874,14 +3162,7 @@
         }
 
         // Check for any invalid fields
-        const aadInput = document.getElementById('aadInput')
-        const ikmInput = document.getElementById('ikmInput')
-        const infoInput = document.getElementById('infoInput')
-        const pskInput = document.getElementById('pskInput')
-        const pskIdInput = document.getElementById('pskIdInput')
-        if (aadInput.classList.contains('error') || ikmInput.classList.contains('error') ||
-            infoInput.classList.contains('error') || pskInput.classList.contains('error') ||
-            pskIdInput.classList.contains('error')) {
+        if (hasValidationErrors()) {
           return
         }
 
@@ -2892,8 +3173,7 @@
         }
 
         // Clear existing messages and reset contexts with same keys
-        const chatContainer = document.getElementById('chatContainer')
-        chatContainer.innerHTML = ''
+        elements.chatContainer.innerHTML = ''
 
         // Setup fresh sender and recipient contexts
         const options = {}
@@ -2908,7 +3188,7 @@
 
         demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
 
-        document.getElementById('encapsulatedKeyOutput').textContent = result.encapsulatedKey.toHex()
+        elements.encapsulatedKeyOutput.textContent = result.encapsulatedKey.toHex()
 
         const publicDomainTexts = [
           [
@@ -3640,10 +3920,10 @@
         updateButtonStates()
 
         // Scroll to first decryptable message (seq === 0)
-        const firstMessage = chatContainer.querySelector('.chat-message[data-seq="0"]')
+        const firstMessage = elements.chatContainer.querySelector('.chat-message[data-seq="0"]')
         if (firstMessage) {
-          const offsetTop = firstMessage.offsetTop - chatContainer.offsetTop - 15
-          chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
+          const offsetTop = firstMessage.offsetTop - elements.chatContainer.offsetTop - 15
+          elements.chatContainer.scrollTo({ top: offsetTop, behavior: 'smooth' })
         }
       })
 
@@ -3851,11 +4131,6 @@
 
       /** Runs comprehensive vector validation tests */
       async function runVectorValidation() {
-        const vectorSection = document.getElementById('vectorValidation')
-        vectorSection.classList.add('running')
-
-        const progressBar = document.getElementById('vectorProgress')
-        const progressText = document.getElementById('vectorProgressText')
         const progressInfo = document.getElementById('vectorProgressInfo')
 
         let completedOps = 0
@@ -3880,7 +4155,6 @@
         if (totalOps === 0) {
           progressInfo.innerHTML =
             '<span>No functional implementations found for vector validation</span>'
-          vectorSection.classList.remove('running')
           return
         }
 
@@ -4018,19 +4292,6 @@
         // Final update
         clearInterval(progressInterval)
         updateProgress()
-        vectorSection.classList.remove('running')
-        if (failedOps === 0) {
-          if (onlyNative) {
-            vectorSection.classList.add('passed-native')
-          } else if (onlyNoble) {
-            vectorSection.classList.add('passed-noble')
-          } else {
-            vectorSection.classList.add('passed-both')
-          }
-        } else {
-          vectorSection.classList.add('failed')
-        }
-        updateProgress()
 
         // Add vector results to globalThis
         globalThis.hpkeTestResults.vectorValidation = {
@@ -4064,7 +4325,7 @@
           const element = document.getElementById(id)
           element.addEventListener('click', async () => {
             const text = element.textContent
-            if (text) {
+            if (text && !element.classList.contains('placeholder')) {
               try {
                 await navigator.clipboard.writeText(text)
                 // Clear any pending timeout for this element
@@ -4076,6 +4337,28 @@
                   element.classList.remove('copy-flash')
                   delete copyTimeouts[id]
                 }, 200)
+              } catch (err) {
+                console.error('Failed to copy:', err)
+              }
+            }
+          })
+        })
+
+        // Set up copy button handlers
+        document.querySelectorAll('.copy-btn').forEach(btn => {
+          btn.addEventListener('click', async (e) => {
+            e.stopPropagation()
+            const targetId = btn.dataset.copy
+            const targetEl = document.getElementById(targetId)
+            if (targetEl && !targetEl.classList.contains('placeholder')) {
+              try {
+                await navigator.clipboard.writeText(targetEl.textContent)
+                btn.classList.add('copied')
+                btn.textContent = 'Copied!'
+                setTimeout(() => {
+                  btn.classList.remove('copied')
+                  btn.textContent = 'Copy'
+                }, 1500)
               } catch (err) {
                 console.error('Failed to copy:', err)
               }
