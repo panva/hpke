@@ -14,15 +14,14 @@ const suite = new HPKE.CipherSuite(
 const recipientKeyPair = await suite.GenerateKeyPair()
 
 // Sender: Single-shot encryption (seal and send one message)
-const aad = encoder.encode('message-metadata')
 const plaintext = encoder.encode('Single encrypted message')
 
-const { encapsulatedKey, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext, aad)
+const { encapsulatedKey, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext)
 
-// Sender → Recipient: Send enc, aad, and ct
+// Sender → Recipient: Send enc, and ct
 
 // Recipient: Single-shot decryption (open one message)
-const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext, aad)
+const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext)
 
 console.log(decoder.decode(decrypted)) // "Single encrypted message"
 

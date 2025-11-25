@@ -816,17 +816,16 @@ export class CipherSuite {
    * ```ts
    * let suite!: HPKE.CipherSuite
    * let publicKey!: HPKE.Key // recipient's public key
-   * let aad!: Uint8Array | undefined
    *
    * const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
    *
-   * const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext, aad)
+   * const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext)
    * ```
    *
    * @param publicKey - Recipient's public key
    * @param plaintext - Plaintext to encrypt
-   * @param aad - Additional authenticated data passed to the AEAD
    * @param options - Options
+   * @param options.aad - Additional authenticated data passed to the AEAD
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK modes)
    * @param options.pskId - Pre-shared key identifier (for PSK modes)
@@ -838,14 +837,13 @@ export class CipherSuite {
   async Seal(
     publicKey: Key,
     plaintext: Uint8Array,
-    aad?: Uint8Array,
-    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
+    options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedKey: Uint8Array; ciphertext: Uint8Array }> {
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
     }
     const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
-    const ciphertext = await ctx.Seal(plaintext, aad)
+    const ciphertext = await ctx.Seal(plaintext, options?.aad)
     return { encapsulatedKey, ciphertext }
   }
 
@@ -866,24 +864,18 @@ export class CipherSuite {
    * let suite!: HPKE.CipherSuite
    * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * // ... receive encapsulatedKey, ciphertext, and possibly aad from sender
+   * // ... receive encapsulatedKey, ciphertext from sender
    * let encapsulatedKey!: Uint8Array
    * let ciphertext!: Uint8Array
-   * let aad!: Uint8Array | undefined
    *
-   * const plaintext: Uint8Array = await suite.Open(
-   *   privateKey,
-   *   encapsulatedKey,
-   *   ciphertext,
-   *   aad,
-   * )
+   * const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedKey, ciphertext)
    * ```
    *
    * @param privateKey - Recipient's private key or key pair
    * @param encapsulatedKey - Encapsulated key from the sender
    * @param ciphertext - Ciphertext to decrypt
-   * @param aad - Additional authenticated data (must match sender's `aad`)
    * @param options - Options
+   * @param options.aad - Additional authenticated data (must match sender's `aad`)
    * @param options.info - Application-supplied information (must match sender's `info`)
    * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
    * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
@@ -894,15 +886,14 @@ export class CipherSuite {
     privateKey: Key | KeyPair,
     encapsulatedKey: Uint8Array,
     ciphertext: Uint8Array,
-    aad?: Uint8Array,
-    options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
+    options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
     this.#validateEncLength(encapsulatedKey)
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
     }
     const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
-    return await ctx.Open(ciphertext, aad)
+    return await ctx.Open(ciphertext, options?.aad)
   }
 
   /**

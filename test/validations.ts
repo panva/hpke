@@ -162,7 +162,7 @@ test.describe('Validations', () => {
       it(`${suite.KEM.name} rejects invalid encapsulated key length`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const invalidEnc = new Uint8Array(10) // Wrong length
-        await t.assert.rejects(suite.Open(kp.privateKey, invalidEnc, empty, empty), {
+        await t.assert.rejects(suite.Open(kp.privateKey, invalidEnc, empty, { aad: empty }), {
           name: 'DecapError',
         })
       })
@@ -184,13 +184,9 @@ test.describe('Validations', () => {
 
       it(`${AEAD.name} throws OpenError on invalid ciphertext`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const info = empty
-        const aad = empty
         const pt = new Uint8Array(16)
 
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, pt, aad, {
-          info,
-        })
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, pt)
 
         // Corrupt the ciphertext
         const corruptedCt = new Uint8Array(ct)
@@ -198,25 +194,20 @@ test.describe('Validations', () => {
           corruptedCt[0] ^= 0xff
         }
 
-        await t.assert.rejects(suite.Open(kp.privateKey, enc, corruptedCt, aad, { info }), {
-          name: 'OpenError',
-        })
+        await t.assert.rejects(suite.Open(kp.privateKey, enc, corruptedCt), { name: 'OpenError' })
       })
 
       it(`${AEAD.name} throws OpenError on wrong AAD`, async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const info = empty
         const aad = new Uint8Array(16).fill(0xaa)
         const pt = new Uint8Array(16)
 
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, pt, aad, {
-          info,
-        })
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, pt, { aad })
 
         // Use different AAD
         const wrongAad = new Uint8Array(16).fill(0xbb)
 
-        await t.assert.rejects(suite.Open(kp.privateKey, enc, ct, wrongAad, { info }), {
+        await t.assert.rejects(suite.Open(kp.privateKey, enc, ct, { aad: wrongAad }), {
           name: 'OpenError',
         })
       })
@@ -233,7 +224,7 @@ test.describe('Validations', () => {
     it('Single-shot Seal rejects Export-only AEAD', async (t: test.TestContext) => {
       const kp = await getKeyPair(suite)
       const pt = new Uint8Array(16)
-      await t.assert.rejects(suite.Seal(kp.publicKey, pt, empty), {
+      await t.assert.rejects(suite.Seal(kp.publicKey, pt, { aad: empty }), {
         name: 'TypeError',
         message: 'Export-only AEAD cannot be used with Seal',
       })
@@ -243,7 +234,7 @@ test.describe('Validations', () => {
       const kp = await getKeyPair(suite)
       const fakeEnc = new Uint8Array(suite.KEM.Nenc)
       const fakeCt = new Uint8Array(16)
-      await t.assert.rejects(suite.Open(kp.privateKey, fakeEnc, fakeCt, empty), {
+      await t.assert.rejects(suite.Open(kp.privateKey, fakeEnc, fakeCt, { aad: empty }), {
         name: 'TypeError',
         message: 'Export-only AEAD cannot be used with Open',
       })
@@ -536,7 +527,7 @@ test.describe('Validations', () => {
           if (value === null || value === undefined) continue
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, empty, { info: value }),
+            suite.Seal(kp.publicKey, empty, { aad: empty, info: value }),
             { name: 'TypeError', message: '"info" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -549,7 +540,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null extractable is valid (defaults to empty)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, value),
+            suite.Seal(kp.publicKey, empty, { aad: value }),
             { name: 'TypeError', message: '"aad" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -561,7 +552,7 @@ test.describe('Validations', () => {
         for (const { name, value } of notUint8Array) {
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, value, empty),
+            suite.Seal(kp.publicKey, value, { aad: empty }),
             { name: 'TypeError', message: '"plaintext" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -575,7 +566,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, empty, { info: empty, psk: value, pskId }),
+            suite.Seal(kp.publicKey, empty, { aad: empty, info: empty, psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -589,7 +580,7 @@ test.describe('Validations', () => {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Seal(kp.publicKey, empty, empty, { info: empty, psk, pskId: value }),
+            suite.Seal(kp.publicKey, empty, { aad: empty, info: empty, psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -600,14 +591,15 @@ test.describe('Validations', () => {
     test.describe('Single-Shot Open API', () => {
       it('rejects non-Uint8Array info', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, empty, {
+        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, {
+          aad: empty,
           info: empty,
         })
         for (const { name, value } of notUint8Array) {
           if (value === null || value === undefined) continue
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, empty, empty, { info: value }),
+            suite.Open(kp.privateKey, enc, empty, { aad: empty, info: value }),
             { name: 'TypeError', message: '"info" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -616,17 +608,15 @@ test.describe('Validations', () => {
 
       it('rejects non-Uint8Array aad', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(
-          kp.publicKey,
-          empty,
-          empty,
-          { info: empty },
-        )
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
+          aad: empty,
+          info: empty,
+        })
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null extractable is valid (defaults to empty)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, ct, value),
+            suite.Open(kp.privateKey, enc, ct, { aad: value }),
             { name: 'TypeError', message: '"aad" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -635,13 +625,14 @@ test.describe('Validations', () => {
 
       it('rejects non-Uint8Array ct', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
-        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, empty, {
+        const { encapsulatedKey: enc } = await suite.Seal(kp.publicKey, empty, {
+          aad: empty,
           info: empty,
         })
         for (const { name, value } of notUint8Array) {
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, value, empty),
+            suite.Open(kp.privateKey, enc, value, { aad: empty }),
             { name: 'TypeError', message: '"ciphertext" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -651,17 +642,15 @@ test.describe('Validations', () => {
       it('rejects non-Uint8Array psk', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const pskId = new Uint8Array(32)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(
-          kp.publicKey,
-          empty,
-          empty,
-          { info: empty },
-        )
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
+          aad: empty,
+          info: empty,
+        })
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null psk is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, ct, empty, { info: empty, psk: value, pskId }),
+            suite.Open(kp.privateKey, enc, ct, { aad: empty, info: empty, psk: value, pskId }),
             { name: 'TypeError', message: '"psk" must be an Uint8Array' },
             `Failed for ${name}`,
           )
@@ -671,17 +660,15 @@ test.describe('Validations', () => {
       it('rejects non-Uint8Array pskId', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const psk = new Uint8Array(32)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(
-          kp.publicKey,
-          empty,
-          empty,
-          { info: empty },
-        )
+        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(kp.publicKey, empty, {
+          aad: empty,
+          info: empty,
+        })
         for (const { name, value } of notUint8Array) {
           if (value == null) continue // undefined/null pskId is valid (defaults to false)
           await t.assert.rejects(
             // @ts-expect-error
-            suite.Open(kp.privateKey, enc, ct, empty, { info: empty, psk, pskId: value }),
+            suite.Open(kp.privateKey, enc, ct, { aad: empty, info: empty, psk, pskId: value }),
             { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
             `Failed for ${name}`,
           )

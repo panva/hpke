@@ -401,7 +401,7 @@ const serialized: Uint8Array = await suite.SerializePublicKey(publicKey)
 
 ### Open()
 
-> **Open**(`privateKey`, `encapsulatedKey`, `ciphertext`, `aad?`, `options?`): `Promise`<`Uint8Array`>
+> **Open**(`privateKey`, `encapsulatedKey`, `ciphertext`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for decrypting a single message.
 
@@ -419,8 +419,8 @@ Mode selection:
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
 | `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
-| `aad?` | `Uint8Array` | Additional authenticated data (must match sender's `aad`) |
 | `options?` |  | Options |
+| `options.aad?` | `Uint8Array` | Additional authenticated data (must match sender's `aad`) |
 | `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
 | `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
@@ -437,17 +437,11 @@ A Promise that resolves to the decrypted plaintext.
 let suite!: HPKE.CipherSuite
 let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulatedKey, ciphertext, and possibly aad from sender
+// ... receive encapsulatedKey, ciphertext from sender
 let encapsulatedKey!: Uint8Array
 let ciphertext!: Uint8Array
-let aad!: Uint8Array | undefined
 
-const plaintext: Uint8Array = await suite.Open(
-  privateKey,
-  encapsulatedKey,
-  ciphertext,
-  aad,
-)
+const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedKey, ciphertext)
 ```
 
 ***
@@ -502,7 +496,7 @@ const exported: Uint8Array = await suite.ReceiveExport(
 
 ### Seal()
 
-> **Seal**(`publicKey`, `plaintext`, `aad?`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
+> **Seal**(`publicKey`, `plaintext`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
 
 Single-shot API for encrypting a single message. It combines context setup and encryption in
 one call.
@@ -518,8 +512,8 @@ Mode selection:
 | :------ | :------ | :------ |
 | `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
 | `plaintext` | `Uint8Array` | Plaintext to encrypt |
-| `aad?` | `Uint8Array` | Additional authenticated data passed to the AEAD |
 | `options?` |  | Options |
+| `options.aad?` | `Uint8Array` | Additional authenticated data passed to the AEAD |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
 | `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK modes) |
@@ -537,11 +531,10 @@ encapsulated key is [Nenc](#kem) bytes.
 ```ts
 let suite!: HPKE.CipherSuite
 let publicKey!: HPKE.Key // recipient's public key
-let aad!: Uint8Array | undefined
 
 const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
 
-const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext, aad)
+const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext)
 ```
 
 ***

@@ -186,7 +186,7 @@ for (const vector of vectors) {
       const ct = hex(encryptions0.ct)
       const pt = hex(encryptions0.pt)
       const key = keyType === 'privateKey' ? skR : kpR
-      t.assert.deepStrictEqual(await suite.Open(key, enc, ct, aad, { info, psk, pskId }), pt)
+      t.assert.deepStrictEqual(await suite.Open(key, enc, ct, { aad, info, psk, pskId }), pt)
     }
 
     // Helper for testing ReceiveExport operation with different key types

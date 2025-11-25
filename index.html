@@ -3660,11 +3660,10 @@
         const { encapsulatedKey, ciphertext } = await suite.Seal(
           recipientKeyPair.publicKey,
           plaintext,
-          aad,
         )
 
         // Recipient opens using their private key
-        const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext, aad)
+        const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext)
 
         // Verify decrypted matches plaintext
         const decryptedText = new TextDecoder().decode(decrypted)
