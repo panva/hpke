@@ -2802,12 +2802,10 @@
         // Collect encryptions from chat messages
         const encryptions = []
         for (const msg of messages) {
-          if (msg.classList.contains('ciphertext')) {
-            const pt = msg.dataset.plaintext || ''
-            const aad = msg.dataset.aad || ''
-            const ct = msg.dataset.ciphertext
-            encryptions.push({ pt, aad, ct })
-          }
+          const pt = msg.dataset.plaintext || ''
+          const aad = msg.dataset.aad || ''
+          const ct = msg.dataset.ciphertext
+          encryptions.push({ pt, aad, ct })
         }
 
         // Get algorithm IDs
