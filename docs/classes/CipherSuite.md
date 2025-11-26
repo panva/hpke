@@ -133,9 +133,9 @@ Mode selection:
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
 | `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `options?` |  | Options |
-| `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
-| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
+| `options.info?` | `Uint8Array` | Application-supplied information |
+| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode) |
 
 #### Returns
 
@@ -420,10 +420,10 @@ Mode selection:
 | `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
 | `options?` |  | Options |
-| `options.aad?` | `Uint8Array` | Additional authenticated data (must match sender's `aad`) |
-| `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
-| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
+| `options.aad?` | `Uint8Array` | Additional authenticated data |
+| `options.info?` | `Uint8Array` | Application-supplied information |
+| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode) |
 
 #### Returns
 
@@ -460,12 +460,12 @@ It combines context setup and secret export in one call.
 | :------ | :------ | :------ |
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
 | `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
-| `exporterContext` | `Uint8Array` | Context of the export operation (must match sender's `exporterContext`) |
-| `length` | `number` | Desired length of exported secret in bytes (must match sender's `L`) |
+| `exporterContext` | `Uint8Array` | Context of the export operation |
+| `length` | `number` | Desired length of exported secret in bytes |
 | `options?` |  | Options |
-| `options.info?` | `Uint8Array` | Application-supplied information (must match sender's `info`) |
-| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode, must match sender's `psk`) |
-| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode, must match sender's `pskId`) |
+| `options.info?` | `Uint8Array` | Application-supplied information |
+| `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode) |
+| `options.pskId?` | `Uint8Array` | Pre-shared key identifier (for PSK mode) |
 
 #### Returns
 

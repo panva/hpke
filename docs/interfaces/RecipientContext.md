@@ -76,7 +76,7 @@ produced by the sender.
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
-| `aad?` | `Uint8Array` | Additional authenticated data (must match sender's `aad`) |
+| `aad?` | `Uint8Array` | Additional authenticated data |
 
 #### Returns
 

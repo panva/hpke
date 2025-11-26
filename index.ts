@@ -333,7 +333,7 @@ class RecipientContext {
    * ```
    *
    * @param ciphertext - Ciphertext to decrypt
-   * @param aad - Additional authenticated data (must match sender's `aad`)
+   * @param aad - Additional authenticated data
    *
    * @returns A Promise that resolves to the decrypted plaintext.
    */
@@ -875,10 +875,10 @@ export class CipherSuite {
    * @param encapsulatedKey - Encapsulated key from the sender
    * @param ciphertext - Ciphertext to decrypt
    * @param options - Options
-   * @param options.aad - Additional authenticated data (must match sender's `aad`)
-   * @param options.info - Application-supplied information (must match sender's `info`)
-   * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
+   * @param options.aad - Additional authenticated data
+   * @param options.info - Application-supplied information
+   * @param options.psk - Pre-shared key (for PSK mode)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the decrypted plaintext.
    */
@@ -968,13 +968,12 @@ export class CipherSuite {
    *
    * @param privateKey - Recipient's private key or key pair
    * @param encapsulatedKey - Encapsulated key from the sender
-   * @param exporterContext - Context of the export operation (must match sender's
-   *   `exporterContext`)
-   * @param length - Desired length of exported secret in bytes (must match sender's `L`)
+   * @param exporterContext - Context of the export operation
+   * @param length - Desired length of exported secret in bytes
    * @param options - Options
-   * @param options.info - Application-supplied information (must match sender's `info`)
-   * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
+   * @param options.info - Application-supplied information
+   * @param options.psk - Pre-shared key (for PSK mode)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the exported secret.
    */
@@ -1103,9 +1102,9 @@ export class CipherSuite {
    * @param privateKey - Recipient's private key or key pair
    * @param encapsulatedKey - Encapsulated key from the sender
    * @param options - Options
-   * @param options.info - Application-supplied information (must match sender's `info`)
-   * @param options.psk - Pre-shared key (for PSK mode, must match sender's `psk`)
-   * @param options.pskId - Pre-shared key identifier (for PSK mode, must match sender's `pskId`)
+   * @param options.info - Application-supplied information
+   * @param options.psk - Pre-shared key (for PSK mode)
+   * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the recipient context.
    */
