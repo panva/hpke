@@ -319,7 +319,7 @@
 
       .download-vector-btn:hover:not(:disabled) {
         color: var(--color-text-primary);
-        border-color: var(--color-text-tertiary);
+        border-top-color: var(--color-text-tertiary);
         background: var(--color-bg-primary);
       }
 
@@ -668,19 +668,6 @@
         background: var(--color-bg-secondary);
         border: 1px solid var(--color-border-primary);
         border-radius: var(--radius-sm);
-      }
-
-      .messages-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        margin-bottom: var(--space-md);
-      }
-
-      .messages-title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
-        color: var(--color-text-primary);
       }
 
       .helper-text {
@@ -1034,10 +1021,27 @@
       }
 
       .mode-selector input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
         width: 16px;
         height: 16px;
+        border: 1px solid var(--color-info);
+        border-radius: 50%;
         cursor: pointer;
-        accent-color: var(--color-info);
+        position: relative;
+        transition: all var(--transition-fast);
+      }
+
+      .mode-selector input[type="radio"]:checked::before {
+        content: '';
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: var(--color-info);
+        border-radius: 50%;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
       }
 
       .mode-selector label:hover {
@@ -1770,9 +1774,7 @@
 
         <!-- Messages Display -->
         <div class="messages-display-section hidden" id="messagesDisplaySection">
-          <div class="messages-header">
-            <div class="messages-title">Encrypted Messages</div>
-          </div>
+          <div class="section-title">Messages</div>
           <div class="chat-container" id="chatContainer" role="log" aria-live="polite" aria-label="Encrypted messages"></div>
           <div class="helper-text" id="decryptHint">Click ciphertext messages to decrypt them in sequence</div>
         </div>
