@@ -1621,8 +1621,8 @@
           <span></span>
         </button>
         <div class="filter-links" id="filterLinks">
-          <a href="?native" id="filterNative">@panva/hpke</a>
-          <a href="?noble" id="filterNoble">@panva/hpke-noble</a>
+          <a href="?native" id="filterNative">Web Cryptography</a>
+          <a href="?noble" id="filterNoble">Noble Cryptography</a>
           <a href="./" id="filterBoth">both</a>
         </div>
       </div>
@@ -2322,7 +2322,7 @@
         const updateLabel = (labelId, selectedAlgo, defaultText) => {
           const label = document.getElementById(labelId)
           if (selectedAlgo) {
-            const pkg = selectedAlgo.isNoble ? '@panva/hpke-noble' : '@panva/hpke'
+            const pkg = selectedAlgo.isNoble ? 'Noble Cryptography' : 'Web Cryptography'
             label.innerHTML = `${defaultText} <span class="pkg-name">(${pkg})</span>`
           } else {
             label.textContent = defaultText
