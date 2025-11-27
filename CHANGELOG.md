@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.0](https://github.com/panva/hpke/compare/v0.3.0...v0.4.0) (2025-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* encapsulatedKey is now encapsulatedSecret
+
+### Refactor
+
+* encapsulatedKey is now encapsulatedSecret ([3a10dac](https://github.com/panva/hpke/commit/3a10dacd82ee96f9c24d401e911a5bca0979c5ea))
+
 ## [0.3.0](https://github.com/panva/hpke/compare/v0.2.7...v0.3.0) (2025-11-25)
 
 
