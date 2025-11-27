@@ -1,4 +1,6 @@
-# Ignore artifacts:
 build
-dist
 coverage
+dist
+docs
+package-lock.json
+test/vectors*.json
