@@ -231,13 +231,15 @@ for (const vector of vectors) {
         }
       }
 
-    if (vector.aead_id !== 0xffff) {
+    if (vector.encryptions[0]) {
       it('Open', testOpen('privateKey'))
       it('Open (with KeyPair)', testOpen('keyPair'))
     }
 
-    it('ReceiveExport', testReceiveExport('privateKey'))
-    it('ReceiveExport (with KeyPair)', testReceiveExport('keyPair'))
+    if (vector.exports[0]) {
+      it('ReceiveExport', testReceiveExport('privateKey'))
+      it('ReceiveExport (with KeyPair)', testReceiveExport('keyPair'))
+    }
 
     it('SetupR > Open & Export', testSetupRecipient('privateKey'))
     it('SetupR > Open & Export (with KeyPair)', testSetupRecipient('keyPair'))

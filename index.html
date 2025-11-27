@@ -2859,69 +2859,54 @@
 
       // Download vector button handler
       elements.downloadVectorBtn.addEventListener('click', async () => {
-        if (!demoState.suite || !demoState.recipientKeyPair) return
-
-        const messages = elements.chatContainer.querySelectorAll('.chat-message')
-        if (messages.length === 0) return
-
-        // Collect encryptions from chat messages
-        const encryptions = []
-        for (const msg of messages) {
-          const pt = msg.dataset.plaintext || ''
-          const aad = msg.dataset.aad || ''
-          const ct = msg.dataset.ciphertext
-          encryptions.push({ pt, aad, ct })
+        // Gather demo state and messages for export
+        if (!demoState.suite || !demoState.recipientKeyPair) {
+          alert('Demo state is incomplete. Please select algorithms and generate a key pair first.');
+          return;
         }
 
-        // Get algorithm IDs
-        const kemId = ALGORITHM_IDS[demoState.selectedKEM.name]
-        const kdfId = ALGORITHM_IDS[demoState.selectedKDF.name]
-        const aeadId = ALGORITHM_IDS[demoState.selectedAEAD.name]
-
-        // Get mode (0x00 for base, 0x01 for PSK)
-        const mode = demoState.mode === 'psk' ? 0x01 : 0x00
-
-        // Serialize keys
-        const ikmR = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
-        const pkRm = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
-        const skRm = ikmR // Same for derived keys
-
-        // Build vector object
+        // Prepare vector object in vectors-pq.json format
         const vector = {
-          mode,
-          kem_id: kemId,
-          kdf_id: kdfId,
-          aead_id: aeadId,
-          info: demoState.info ? demoState.info.toHex() : '',
-          ikmR: ikmR.toHex(),
-          pkRm: pkRm.toHex(),
-          skRm: skRm.toHex(),
-          enc: demoState.encapsulatedSecret.toHex(),
-          encryptions
+          kem_id: ALGORITHM_IDS[demoState.selectedKEM.name],
+          kdf_id: ALGORITHM_IDS[demoState.selectedKDF.name],
+          aead_id: ALGORITHM_IDS[demoState.selectedAEAD.name],
+          mode: demoState.mode === 'psk' ? 1 : 0,
+          info: elements.infoInput.value.trim(),
+          ikmR: elements.ikmInput.value.trim(),
+          pkRm: elements.publicKeyOutput.textContent.trim(),
+          skRm: elements.privateKeyOutput.textContent.trim(),
+          enc: elements.encapsulatedSecretOutput.textContent.trim(),
+          encryptions: [],
+          exports: [],
+        };
+
+        if (demoState.psk) {
+          vector.psk = demoState.psk.toHex();
+          vector.psk_id = demoState.pskId.toHex();
         }
 
-        // Add PSK fields if in PSK mode
-        if (mode === 0x01) {
-          vector.psk = demoState.psk.toHex()
-          vector.psk_id = demoState.pskId.toHex()
-        }
+        // Collect all encrypted messages
+        elements.chatContainer.querySelectorAll('.chat-message').forEach(div => {
+          const encryption = {
+            pt: div.dataset.plaintext,
+            ct: div.dataset.ciphertext,
+            aad: div.dataset.aad || '',
+          };
+          vector.encryptions.push(encryption);
+        });
 
-        // Create filename
-        const kemName = demoState.selectedKEM.name
-        const kdfName = demoState.selectedKDF.name
-        const aeadName = demoState.selectedAEAD.name
-        const filename = `hpke-vector-${kemName}-${kdfName}-${aeadName}.json`
-
-        // Download file
-        const blob = new Blob([JSON.stringify([vector], null, 2)], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = filename
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+        // Download as top-level JSON array file
+        const blob = new Blob([JSON.stringify([vector], null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'vector-demo.json';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
       })
 
       // Auto-populate with random public domain text
