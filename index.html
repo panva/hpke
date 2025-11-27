@@ -329,6 +329,7 @@
         right: var(--space-md);
         padding: var(--space-xs) var(--space-md);
         font-size: var(--font-size-sm);
+        font-family: var(--font-sans);
         color: var(--color-text-secondary);
         background: var(--color-bg-primary);
         border: 2px solid var(--color-border-primary);
@@ -351,6 +352,33 @@
 
       .download-vector-btn:disabled {
         display: none;
+      }
+
+      .upload-vector-btn {
+        position: absolute;
+        top: -21px;
+        right: var(--space-md);
+        padding: var(--space-xs) var(--space-md);
+        font-size: var(--font-size-sm);
+        font-family: var(--font-sans);
+        color: var(--color-text-secondary);
+        background: var(--color-bg-primary);
+        border: 2px solid var(--color-border-primary);
+        border-bottom: none;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-base);
+        z-index: 1;
+        line-height: 1;
+      }
+
+      .upload-vector-btn:hover {
+        color: var(--color-text-primary);
+        border-top-color: var(--color-text-tertiary);
+        background: var(--color-bg-primary);
       }
 
       /* ============================================
@@ -1351,7 +1379,8 @@
         /* Hide advanced options and AAD input on mobile */
         .context-options,
         .aad-input-group,
-        .download-vector-btn {
+        .download-vector-btn,
+        .upload-vector-btn {
           display: none;
         }
 
@@ -1808,12 +1837,14 @@
 
       <div class="vector-validation" id="vectorValidation">
         <div class="section-label">RFC Test Vectors</div>
+        <input type="file" id="vectorFileInput" accept=".json" style="display: none;">
+        <button id="uploadVectorBtn" class="upload-vector-btn" title="Upload custom test vector JSON file">Upload Vectors</button>
         <div class="play-overlay hidden" id="playOverlay">
           <div class="play-button" id="playButton"></div>
         </div>
         <div class="vector-validation-content blurred" id="vectorValidationContent">
           <p class="subtitle-text">
-            Testing all encryptions and exports from RFC test vectors with functional implementations
+            Testing all mode_base and mode_psk encryptions and exports from test vectors with functional implementations
           </p>
         <div class="progress-bar-container" id="vectorProgressContainer">
           <div class="progress-box"></div>
@@ -1838,7 +1869,6 @@
           <div class="progress-box"></div>
         </div>
         <div class="progress-info" id="vectorProgressInfo">
-          <span>Pending…</span>
         </div>
         </div>
       </div>
@@ -1865,10 +1895,6 @@
 
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
-      const allVectors = [...vectors, ...vectorsPq].filter((v) => {
-        if (v.mode !== 0x00 && v.mode !== 0x01) return false
-        return true
-      })
 
       // ============================================================================
       // ALGORITHM DISCOVERY
@@ -3892,7 +3918,18 @@
       // ============================================================================
 
       /** Runs comprehensive vector validation tests */
-      async function runVectorValidation() {
+      async function runVectorValidation(allVectors = [...vectors, ...vectorsPq]) {
+        const overlay = document.getElementById('playOverlay')
+        const content = document.getElementById('vectorValidationContent')
+
+        // Remove overlay and blur
+        overlay.classList.add('hidden')
+        content.classList.remove('blurred')
+
+        allVectors = allVectors.filter((v) => {
+          if (v.mode !== 0x00 && v.mode !== 0x01) return false
+          return true
+        })
         const progressInfo = document.getElementById('vectorProgressInfo')
 
         let completedOps = 0
@@ -3900,6 +3937,8 @@
         let failedOps = 0
         let totalOps = 0
         let lastFailedBox = -1
+        let lastFilledBox = -1
+        let failedOpsSinceLastBox = 0
 
         // Calculate total operations first
         for (const vector of allVectors) {
@@ -3920,38 +3959,33 @@
           return
         }
 
+        const progressBoxes = document.querySelectorAll('#vectorProgressContainer .progress-box')
+
         const updateProgress = () => {
-          const percent = (completedOps / totalOps) * 100
-          const filledBoxes = Math.floor(percent / 5)
-
-          const boxes = document.querySelectorAll('.progress-box')
-          boxes.forEach((box, index) => {
-            const shouldBeFilled = index < filledBoxes
-            const isFilled = box.classList.contains('filled')
-
-            // Only modify classes if state changed
-            if (shouldBeFilled && !isFilled) {
-              box.classList.add('filled')
-            } else if (!shouldBeFilled && isFilled) {
-              box.classList.remove('filled', 'failed')
-            }
-          })
-
-          // Mark the box corresponding to when the first failure occurred
-          if (failedOps > 0 && lastFailedBox === -1) {
-            lastFailedBox = Math.max(0, filledBoxes - 1)
-          }
-          if (lastFailedBox >= 0 && lastFailedBox < boxes.length) {
-            const failedBox = boxes[lastFailedBox]
-            if (!failedBox.classList.contains('failed')) {
-              failedBox.classList.add('failed')
-            }
-          }
-
           progressInfo.innerHTML = `
             <span>Total: ${totalOps} operations</span>
             <span><span class="passed">✓ ${passedOps}</span> <span class="failed">✗ ${failedOps}</span></span>
           `
+
+          // Update progress boxes (20 boxes = 5% each)
+          const percentComplete = (completedOps / totalOps) * 100
+          const boxesToFill = Math.floor(percentComplete / 5)
+
+          let boxesJustFilled = false
+          progressBoxes.forEach((box, index) => {
+            if (index < boxesToFill && !box.classList.contains('filled')) {
+              box.classList.add('filled')
+              if (failedOpsSinceLastBox > 0) {
+                box.classList.add('failed')
+              }
+              lastFilledBox = index
+              boxesJustFilled = true
+            }
+          })
+
+          if (boxesJustFilled) {
+            failedOpsSinceLastBox = 0
+          }
         }
 
         updateProgress()
@@ -4015,6 +4049,7 @@
                       passedOps++
                     } catch (e) {
                       failedOps++
+                      failedOpsSinceLastBox++
                     } finally {
                       completedOps++
                     }
@@ -4037,6 +4072,7 @@
                       passedOps++
                     } catch (e) {
                       failedOps++
+                      failedOpsSinceLastBox++
                     } finally {
                       completedOps++
                     }
@@ -4053,7 +4089,6 @@
 
         // Final update
         clearInterval(progressInterval)
-        updateProgress()
 
         // Add vector results to globalThis
         globalThis.hpkeTestResults.vectorValidation = {
@@ -4117,13 +4152,6 @@
 
         // Set up play button click handler
         document.getElementById('playOverlay').addEventListener('click', async () => {
-          const overlay = document.getElementById('playOverlay')
-          const content = document.getElementById('vectorValidationContent')
-
-          // Remove overlay and blur
-          overlay.classList.add('hidden')
-          content.classList.remove('blurred')
-
           // Start validation
           await runVectorValidation()
         })
@@ -4132,6 +4160,47 @@
         if (ci) {
           document.getElementById('playOverlay').click()
         }
+
+        // Set up custom vector upload
+        const vectorFileInput = document.getElementById('vectorFileInput')
+        const uploadVectorBtn = document.getElementById('uploadVectorBtn')
+
+        uploadVectorBtn.addEventListener('click', () => {
+          vectorFileInput.click()
+        })
+
+        vectorFileInput.addEventListener('change', async (e) => {
+          const file = e.target.files[0]
+          if (!file) return
+
+          try {
+            const text = await file.text()
+            const customVectors = JSON.parse(text)
+
+            // Validate it's an array
+            if (!Array.isArray(customVectors)) {
+              alert('Invalid vector file: expected JSON array')
+              return
+            }
+
+            // Reset progress display
+            const progressInfo = document.getElementById('vectorProgressInfo')
+            const boxes = document.querySelectorAll('.progress-box')
+            boxes.forEach(box => {
+              box.classList.remove('filled', 'failed')
+            })
+            progressInfo.innerHTML = '<span>Running custom vectors...</span>'
+
+            // Run validation with custom vectors
+            await runVectorValidation(customVectors)
+
+            // Clear file input
+            vectorFileInput.value = ''
+          } catch (error) {
+            alert('Error reading vector file: ' + error.message)
+            console.error('Vector file error:', error)
+          }
+        })
       }
 
       init()
