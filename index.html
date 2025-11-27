@@ -1770,13 +1770,13 @@
             </div>
           </div>
 
-          <!-- Encapsulated Key -->
+          <!-- Encapsulated Secret -->
           <div class="key-display">
             <div class="key-display-label">
-              <span>Encapsulated Key</span>
-              <button class="copy-btn" data-copy="encapsulatedKeyOutput">Copy</button>
+              <span>Encapsulated Secret</span>
+              <button class="copy-btn" data-copy="encapsulatedSecretOutput">Copy</button>
             </div>
-            <div class="key-display-value placeholder" id="encapsulatedKeyOutput">…</div>
+            <div class="key-display-value placeholder" id="encapsulatedSecretOutput">…</div>
           </div>
         </div>
 
@@ -2073,7 +2073,7 @@
         publicKeyOutput: document.getElementById('publicKeyOutput'),
         privateKeyOutput: document.getElementById('privateKeyOutput'),
         privateKeyOutputGroup: document.getElementById('privateKeyOutputGroup'),
-        encapsulatedKeyOutput: document.getElementById('encapsulatedKeyOutput'),
+        encapsulatedSecretOutput: document.getElementById('encapsulatedSecretOutput'),
         sendButton: document.getElementById('sendButton'),
         autoPopulateButton: document.getElementById('autoPopulateButton'),
         downloadVectorBtn: document.getElementById('downloadVectorBtn'),
@@ -2251,7 +2251,7 @@
         recipientKeyPair: null,
         senderContext: null,
         recipientContext: null,
-        encapsulatedKey: null,
+        encapsulatedSecret: null,
         mode: 'base',
         info: null,
         psk: null,
@@ -2411,7 +2411,7 @@
         // Reset all demo state
         demoState.recipientKeyPair = null
         demoState.senderContext = null
-        demoState.encapsulatedKey = null
+        demoState.encapsulatedSecret = null
 
         // Clear inputs and messages
         elements.ikmInput.value = ''
@@ -2420,17 +2420,17 @@
         // Reset key display elements to placeholder state
         setPlaceholder(elements.publicKeyOutput)
         setPlaceholder(elements.privateKeyOutput)
-        setPlaceholder(elements.encapsulatedKeyOutput)
+        setPlaceholder(elements.encapsulatedSecretOutput)
       }
 
       function resetContextState() {
         // Reset only context-related state, keep keys
         demoState.senderContext = null
-        demoState.encapsulatedKey = null
+        demoState.encapsulatedSecret = null
 
-        // Clear messages and reset encapsulated key display
+        // Clear messages and reset encapsulated secret display
         clearMessages()
-        setPlaceholder(elements.encapsulatedKeyOutput)
+        setPlaceholder(elements.encapsulatedSecretOutput)
       }
 
       async function updateDemoSection() {
@@ -2664,13 +2664,13 @@
           }
           const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
           demoState.senderContext = result.ctx
-          demoState.encapsulatedKey = result.encapsulatedKey
+          demoState.encapsulatedSecret = result.encapsulatedSecret
 
           // Setup recipient context
-          demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+          demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedSecret, options)
 
-          elements.encapsulatedKeyOutput.textContent = result.encapsulatedKey.toHex()
-          elements.encapsulatedKeyOutput.classList.remove('placeholder')
+          elements.encapsulatedSecretOutput.textContent = result.encapsulatedSecret.toHex()
+          elements.encapsulatedSecretOutput.classList.remove('placeholder')
 
           // Clear messages
           clearMessages()
@@ -2896,7 +2896,7 @@
           ikmR: ikmR.toHex(),
           pkRm: pkRm.toHex(),
           skRm: skRm.toHex(),
-          enc: demoState.encapsulatedKey.toHex(),
+          enc: demoState.encapsulatedSecret.toHex(),
           encryptions
         }
 
@@ -2961,11 +2961,11 @@
         }
         const result = await demoState.suite.SetupSender(demoState.recipientKeyPair.publicKey, options)
         demoState.senderContext = result.ctx
-        demoState.encapsulatedKey = result.encapsulatedKey
+        demoState.encapsulatedSecret = result.encapsulatedSecret
 
-        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedKey, options)
+        demoState.recipientContext = await demoState.suite.SetupRecipient(demoState.recipientKeyPair, result.encapsulatedSecret, options)
 
-        elements.encapsulatedKeyOutput.textContent = result.encapsulatedKey.toHex()
+        elements.encapsulatedSecretOutput.textContent = result.encapsulatedSecret.toHex()
 
         const publicDomainTexts = [
           [
@@ -3714,13 +3714,13 @@
         const aad = new TextEncoder().encode('additional data')
 
         // Sender seals using recipient's public key
-        const { encapsulatedKey, ciphertext } = await suite.Seal(
+        const { encapsulatedSecret, ciphertext } = await suite.Seal(
           recipientKeyPair.publicKey,
           plaintext,
         )
 
         // Recipient opens using their private key
-        const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext)
+        const decrypted = await suite.Open(recipientKeyPair, encapsulatedSecret, ciphertext)
 
         // Verify decrypted matches plaintext
         const decryptedText = new TextDecoder().decode(decrypted)
@@ -3735,7 +3735,7 @@
         const L = 32
 
         // Sender exports secret using recipient's public key
-        const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+        const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
           recipientKeyPair.publicKey,
           exporterContext,
           L,
@@ -3744,7 +3744,7 @@
         // Recipient receives exported secret using their private key
         const receivedSecret = await suite.ReceiveExport(
           recipientKeyPair,
-          encapsulatedKey,
+          encapsulatedSecret,
           exporterContext,
           L,
         )

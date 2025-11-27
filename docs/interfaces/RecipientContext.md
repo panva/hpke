@@ -19,10 +19,10 @@ Context for decrypting multiple messages and exporting secrets on the recipient 
 let suite!: HPKE.CipherSuite
 let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulatedKey from sender
-let encapsulatedKey!: Uint8Array
+// ... receive encapsulatedSecret from sender
+let encapsulatedSecret!: Uint8Array
 
-const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
+const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedSecret)
 ```
 
 ## Methods

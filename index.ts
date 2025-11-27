@@ -30,10 +30,10 @@
  *
  * // 3. Encrypt a message
  * const plaintext = new TextEncoder().encode('Hello, World!')
- * const { encapsulatedKey, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
+ * const { encapsulatedSecret, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
  *
  * // 4. Decrypt the message
- * const decrypted = await suite.Open(recipient.privateKey, encapsulatedKey, ciphertext)
+ * const decrypted = await suite.Open(recipient.privateKey, encapsulatedSecret, ciphertext)
  * console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
  * ```
  */
@@ -103,7 +103,7 @@ class Mutex {
  * let suite!: HPKE.CipherSuite
  * let publicKey!: HPKE.Key // recipient's public key
  *
- * const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
+ * const { encapsulatedSecret, ctx } = await suite.SetupSender(publicKey)
  * ```
  *
  * @group Core
@@ -246,10 +246,10 @@ export type { SenderContext }
  * let suite!: HPKE.CipherSuite
  * let privateKey!: HPKE.Key | HPKE.KeyPair
  *
- * // ... receive encapsulatedKey from sender
- * let encapsulatedKey!: Uint8Array
+ * // ... receive encapsulatedSecret from sender
+ * let encapsulatedSecret!: Uint8Array
  *
- * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
+ * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedSecret)
  * ```
  *
  * @group Core
@@ -532,7 +532,7 @@ export class CipherSuite {
     name: string
     /** The length in bytes of this suite's KEM produced shared secret */
     Nsecret: number
-    /** The length in bytes of this suite's KEM produced encapsulated key */
+    /** The length in bytes of this suite's KEM produced encapsulated secret */
     Nenc: number
     /** The length in bytes of this suite's KEM public key */
     Npk: number
@@ -797,7 +797,7 @@ export class CipherSuite {
 
   #validateEncLength(enc: Uint8Array) {
     if (enc.byteLength !== this.KEM.Nenc) {
-      throw new DecapError('Invalid encapsulated key length')
+      throw new DecapError('Invalid encapsulated secret length')
     }
   }
 
@@ -819,7 +819,7 @@ export class CipherSuite {
    *
    * const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
    *
-   * const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext)
+   * const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext)
    * ```
    *
    * @param publicKey - Recipient's public key
@@ -830,21 +830,21 @@ export class CipherSuite {
    * @param options.psk - Pre-shared key (for PSK modes)
    * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
-   * @returns A Promise that resolves to an object containing the encapsulated key and ciphertext.
-   *   The ciphertext is {@link CipherSuite.AEAD Nt} bytes longer than the plaintext. The
-   *   encapsulated key is {@link CipherSuite.KEM Nenc} bytes.
+   * @returns A Promise that resolves to an object containing the encapsulated secret and
+   *   ciphertext. The ciphertext is {@link CipherSuite.AEAD Nt} bytes longer than the plaintext. The
+   *   encapsulated secret is {@link CipherSuite.KEM Nenc} bytes.
    */
   async Seal(
     publicKey: Key,
     plaintext: Uint8Array,
     options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
-  ): Promise<{ encapsulatedKey: Uint8Array; ciphertext: Uint8Array }> {
+  ): Promise<{ encapsulatedSecret: Uint8Array; ciphertext: Uint8Array }> {
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
     }
-    const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
+    const { encapsulatedSecret, ctx } = await this.SetupSender(publicKey, options)
     const ciphertext = await ctx.Seal(plaintext, options?.aad)
-    return { encapsulatedKey, ciphertext }
+    return { encapsulatedSecret, ciphertext }
   }
 
   /**
@@ -864,15 +864,15 @@ export class CipherSuite {
    * let suite!: HPKE.CipherSuite
    * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * // ... receive encapsulatedKey, ciphertext from sender
-   * let encapsulatedKey!: Uint8Array
+   * // ... receive encapsulatedSecret, ciphertext from sender
+   * let encapsulatedSecret!: Uint8Array
    * let ciphertext!: Uint8Array
    *
-   * const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedKey, ciphertext)
+   * const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, ciphertext)
    * ```
    *
    * @param privateKey - Recipient's private key or key pair
-   * @param encapsulatedKey - Encapsulated key from the sender
+   * @param encapsulatedSecret - Encapsulated secret from the sender
    * @param ciphertext - Ciphertext to decrypt
    * @param options - Options
    * @param options.aad - Additional authenticated data
@@ -884,15 +884,15 @@ export class CipherSuite {
    */
   async Open(
     privateKey: Key | KeyPair,
-    encapsulatedKey: Uint8Array,
+    encapsulatedSecret: Uint8Array,
     ciphertext: Uint8Array,
     options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulatedKey)
+    this.#validateEncLength(encapsulatedSecret)
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
     }
-    const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
+    const ctx = await this.SetupRecipient(privateKey, encapsulatedSecret, options)
     return await ctx.Open(ciphertext, options?.aad)
   }
 
@@ -912,7 +912,7 @@ export class CipherSuite {
    *
    * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
    *
-   * const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+   * const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
    *   publicKey,
    *   exporterContext,
    *   32,
@@ -927,18 +927,18 @@ export class CipherSuite {
    * @param options.psk - Pre-shared key (for PSK modes)
    * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
-   * @returns A Promise that resolves to an object containing the encapsulated key and the exported
-   *   secret.
+   * @returns A Promise that resolves to an object containing the encapsulated secret and the
+   *   exported secret.
    */
   async SendExport(
     publicKey: Key,
     exporterContext: Uint8Array,
     length: number,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
-  ): Promise<{ encapsulatedKey: Uint8Array; exportedSecret: Uint8Array }> {
-    const { encapsulatedKey, ctx } = await this.SetupSender(publicKey, options)
+  ): Promise<{ encapsulatedSecret: Uint8Array; exportedSecret: Uint8Array }> {
+    const { encapsulatedSecret, ctx } = await this.SetupSender(publicKey, options)
     const exportedSecret = await ctx.Export(exporterContext, length)
-    return { encapsulatedKey, exportedSecret }
+    return { encapsulatedSecret, exportedSecret }
   }
 
   /**
@@ -955,19 +955,19 @@ export class CipherSuite {
    *
    * const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
    *
-   * // ... receive encapsulatedKey from sender
-   * let encapsulatedKey!: Uint8Array
+   * // ... receive encapsulatedSecret from sender
+   * let encapsulatedSecret!: Uint8Array
    *
    * const exported: Uint8Array = await suite.ReceiveExport(
    *   privateKey,
-   *   encapsulatedKey,
+   *   encapsulatedSecret,
    *   exporterContext,
    *   32,
    * )
    * ```
    *
    * @param privateKey - Recipient's private key or key pair
-   * @param encapsulatedKey - Encapsulated key from the sender
+   * @param encapsulatedSecret - Encapsulated secret from the sender
    * @param exporterContext - Context of the export operation
    * @param length - Desired length of exported secret in bytes
    * @param options - Options
@@ -979,13 +979,13 @@ export class CipherSuite {
    */
   async ReceiveExport(
     privateKey: Key | KeyPair,
-    encapsulatedKey: Uint8Array,
+    encapsulatedSecret: Uint8Array,
     exporterContext: Uint8Array,
     length: number,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulatedKey)
-    const ctx = await this.SetupRecipient(privateKey, encapsulatedKey, options)
+    this.#validateEncLength(encapsulatedSecret)
+    const ctx = await this.SetupRecipient(privateKey, encapsulatedSecret, options)
     return await ctx.Export(exporterContext, length)
   }
 
@@ -1010,7 +1010,7 @@ export class CipherSuite {
    * let suite!: HPKE.CipherSuite
    * let publicKey!: HPKE.Key // recipient's public key
    *
-   * const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
+   * const { encapsulatedSecret, ctx } = await suite.SetupSender(publicKey)
    *
    * // Encrypt multiple messages with the same context
    * const aad1: Uint8Array = new TextEncoder().encode('message 1 aad')
@@ -1028,13 +1028,13 @@ export class CipherSuite {
    * @param options.psk - Pre-shared key (for PSK modes)
    * @param options.pskId - Pre-shared key identifier (for PSK modes)
    *
-   * @returns A Promise that resolves to an object containing the encapsulated key and the sender
-   *   context (`ctx`). The encapsulated key is {@link CipherSuite.KEM Nenc} bytes.
+   * @returns A Promise that resolves to an object containing the encapsulated secret and the sender
+   *   context (`ctx`). The encapsulated secret is {@link CipherSuite.KEM Nenc} bytes.
    */
   async SetupSender(
     publicKey: Key,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
-  ): Promise<{ encapsulatedKey: Uint8Array; ctx: SenderContext }> {
+  ): Promise<{ encapsulatedSecret: Uint8Array; ctx: SenderContext }> {
     isKey(publicKey, 'public')
 
     let shared_secret: Uint8Array
@@ -1061,7 +1061,7 @@ export class CipherSuite {
     )
 
     const ctx = new SenderContext(this.#suite, mode, key, base_nonce, exporter_secret)
-    return { encapsulatedKey: enc, ctx }
+    return { encapsulatedSecret: enc, ctx }
   }
 
   /**
@@ -1081,10 +1081,13 @@ export class CipherSuite {
    * let suite!: HPKE.CipherSuite
    * let privateKey!: HPKE.Key | HPKE.KeyPair
    *
-   * // ... receive encapsulatedKey from sender
-   * let encapsulatedKey!: Uint8Array
+   * // ... receive encapsulatedSecret from sender
+   * let encapsulatedSecret!: Uint8Array
    *
-   * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
+   * const ctx: HPKE.RecipientContext = await suite.SetupRecipient(
+   *   privateKey,
+   *   encapsulatedSecret,
+   * )
    *
    * // ... receive messages from sender
    *
@@ -1100,7 +1103,7 @@ export class CipherSuite {
    * ```
    *
    * @param privateKey - Recipient's private key or key pair
-   * @param encapsulatedKey - Encapsulated key from the sender
+   * @param encapsulatedSecret - Encapsulated secret from the sender
    * @param options - Options
    * @param options.info - Application-supplied information
    * @param options.psk - Pre-shared key (for PSK mode)
@@ -1110,15 +1113,15 @@ export class CipherSuite {
    */
   async SetupRecipient(
     privateKey: Key | KeyPair,
-    encapsulatedKey: Uint8Array,
+    encapsulatedSecret: Uint8Array,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<RecipientContext> {
     const { skR, pkR } = this.#extractRecipientKeys(privateKey)
-    this.#validateEncLength(encapsulatedKey)
+    this.#validateEncLength(encapsulatedSecret)
 
     let shared_secret: Uint8Array
     try {
-      shared_secret = await this.#suite.KEM.Decap(encapsulatedKey, skR, pkR)
+      shared_secret = await this.#suite.KEM.Decap(encapsulatedSecret, skR, pkR)
     } catch (cause) {
       if (cause instanceof ValidationError || cause instanceof NotSupportedError) {
         throw cause
@@ -2005,12 +2008,12 @@ export interface KEM {
    * Encapsulates a shared secret to a recipient's public key.
    *
    * This is the sender-side operation that generates an ephemeral key pair, performs the KEM
-   * operation, and returns both the shared secret and the encapsulated key to send to the
+   * operation, and returns both the shared secret and the encapsulated secret to send to the
    * recipient.
    *
    * @param pkR - The recipient's public key
    *
-   * @returns A promise resolving to an object containing the shared secret and encapsulated key
+   * @returns A promise resolving to an object containing the shared secret and encapsulated secret
    */
   Encap(pkR: Key): Promise<{ shared_secret: Uint8Array; enc: Uint8Array }>
 
@@ -2018,9 +2021,9 @@ export interface KEM {
    * Decapsulates a shared secret using a recipient's private key.
    *
    * This is the recipient-side operation that uses the private key to extract the shared secret
-   * from the encapsulated key.
+   * from the encapsulated secret.
    *
-   * @param enc - The encapsulated key of {@link Nenc} length
+   * @param enc - The encapsulated secret of {@link Nenc} length
    * @param skR - The recipient's private key
    * @param pkR - The recipient's public key (when user input to {@link CipherSuite.SetupRecipient}
    *   is a {@link KeyPair})

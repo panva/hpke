@@ -16,12 +16,12 @@ const recipientKeyPair = await suite.GenerateKeyPair()
 // Sender: Single-shot encryption (seal and send one message)
 const plaintext = encoder.encode('Single encrypted message')
 
-const { encapsulatedKey, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext)
+const { encapsulatedSecret, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext)
 
 // Sender → Recipient: Send enc, and ct
 
 // Recipient: Single-shot decryption (open one message)
-const decrypted = await suite.Open(recipientKeyPair, encapsulatedKey, ciphertext)
+const decrypted = await suite.Open(recipientKeyPair, encapsulatedSecret, ciphertext)
 
 console.log(decoder.decode(decrypted)) // "Single encrypted message"
 

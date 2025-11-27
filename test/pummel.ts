@@ -68,7 +68,7 @@ test.describe('pummel', () => {
         const pkR = kp.publicKey
         const skR = kp.privateKey
         const pt = new Uint8Array(12)
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(pkR, pt)
+        const { encapsulatedSecret: enc, ciphertext: ct } = await suite.Seal(pkR, pt)
         await suite.Open(skR, enc, ct)
       },
       (err: Error) => {
@@ -304,13 +304,13 @@ test.describe('pummel', () => {
               const L = suite.AEAD.Nk || suite.KDF.Nh
               const exporterContext = empty
 
-              const { encapsulatedKey: enc, exportedSecret: exported } = await suite.SendExport(
+              const { encapsulatedSecret: enc, exportedSecret: exported } = await suite.SendExport(
                 pkR,
                 exporterContext,
                 L,
                 { psk, pskId },
               )
-              assertExactBuffer(t, enc, 'SendExport.encapsulatedKey')
+              assertExactBuffer(t, enc, 'SendExport.encapsulatedSecret')
               assertExactBuffer(t, exported, 'SendExport.exportedSecret')
               const received = await suite.ReceiveExport(skR, enc, exporterContext, L, {
                 psk,
@@ -328,11 +328,11 @@ test.describe('pummel', () => {
               const pkR = kp.publicKey
               const skR = kp.privateKey
               const pt = new Uint8Array(12)
-              const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(pkR, pt, {
+              const { encapsulatedSecret: enc, ciphertext: ct } = await suite.Seal(pkR, pt, {
                 psk,
                 pskId,
               })
-              assertExactBuffer(t, enc, 'Seal.encapsulatedKey')
+              assertExactBuffer(t, enc, 'Seal.encapsulatedSecret')
               assertExactBuffer(t, ct, 'Seal.ciphertext')
 
               const opened = await suite.Open(skR, enc, ct, { psk, pskId })
@@ -345,11 +345,11 @@ test.describe('pummel', () => {
               const pkR = kp.publicKey
               const skR = kp.privateKey
 
-              const { encapsulatedKey: enc, ctx: contextS } = await suite.SetupSender(pkR, {
+              const { encapsulatedSecret: enc, ctx: contextS } = await suite.SetupSender(pkR, {
                 psk,
                 pskId,
               })
-              assertExactBuffer(t, enc, 'SetupSender.encapsulatedKey')
+              assertExactBuffer(t, enc, 'SetupSender.encapsulatedSecret')
               t.assert.equal(contextS.Nt, suite.AEAD.Nt)
               const contextR = await suite.SetupRecipient(skR, enc, { psk, pskId })
 
@@ -461,13 +461,13 @@ test.describe('pummel', () => {
         const pskId = new Uint8Array(32).fill(66)
         const pskIdCopy = pskId.slice()
 
-        const { encapsulatedKey: enc, ciphertext: ct } = await suite.Seal(pkR, pt, {
+        const { encapsulatedSecret: enc, ciphertext: ct } = await suite.Seal(pkR, pt, {
           aad,
           info,
           psk,
           pskId,
         })
-        assertExactBuffer(t, enc, 'mutation test - Seal.encapsulatedKey')
+        assertExactBuffer(t, enc, 'mutation test - Seal.encapsulatedSecret')
         assertExactBuffer(t, ct, 'mutation test - Seal.ciphertext')
         assertNotMutated(t, info, infoCopy, 'info in Seal')
         assertNotMutated(t, aad, aadCopy, 'aad in Seal')
@@ -500,13 +500,13 @@ test.describe('pummel', () => {
         const psk3Copy = psk.slice()
         const pskId3Copy = pskId.slice()
 
-        const { encapsulatedKey: enc2, exportedSecret: _exported } = await suite.SendExport(
+        const { encapsulatedSecret: enc2, exportedSecret: _exported } = await suite.SendExport(
           pkR,
           exporterContext,
           32,
           { info: exportInfo, psk, pskId },
         )
-        assertExactBuffer(t, enc2, 'mutation test - SendExport.encapsulatedKey')
+        assertExactBuffer(t, enc2, 'mutation test - SendExport.encapsulatedSecret')
         assertExactBuffer(t, _exported, 'mutation test - SendExport.exportedSecret')
         assertNotMutated(t, exportInfo, exportInfoCopy, 'info in SendExport')
         assertNotMutated(t, exporterContext, exporterContextCopy, 'exporterContext in SendExport')
@@ -543,12 +543,12 @@ test.describe('pummel', () => {
         const psk5Copy = psk.slice()
         const pskId5Copy = pskId.slice()
 
-        const { encapsulatedKey: enc3, ctx: senderCtx } = await suite.SetupSender(pkR, {
+        const { encapsulatedSecret: enc3, ctx: senderCtx } = await suite.SetupSender(pkR, {
           info: setupInfo,
           psk,
           pskId,
         })
-        assertExactBuffer(t, enc3, 'mutation test - SetupSender.encapsulatedKey')
+        assertExactBuffer(t, enc3, 'mutation test - SetupSender.encapsulatedSecret')
         assertNotMutated(t, setupInfo, setupInfoCopy, 'info in SetupSender')
         assertNotMutated(t, psk, psk5Copy, 'psk in SetupSender')
         assertNotMutated(t, pskId, pskId5Copy, 'pskId in SetupSender')

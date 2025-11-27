@@ -13,10 +13,10 @@ const suite = new HPKE.CipherSuite(
 const recipientKeyPair = await suite.GenerateKeyPair()
 
 // Sender: Setup sender context
-const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientKeyPair.publicKey)
+const { encapsulatedSecret, ctx: senderCtx } = await suite.SetupSender(recipientKeyPair.publicKey)
 
 // Recipient: Setup recipient context
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey)
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedSecret)
 
 // Both parties can export secrets using the same exporter context
 const exporterContext1 = encoder.encode('encryption-key')

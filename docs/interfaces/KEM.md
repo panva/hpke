@@ -123,13 +123,13 @@ const customSuite = new HPKE.CipherSuite(
 Decapsulates a shared secret using a recipient's private key.
 
 This is the recipient-side operation that uses the private key to extract the shared secret
-from the encapsulated key.
+from the encapsulated secret.
 
 #### Parameters
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `enc` | `Uint8Array` | The encapsulated key of [Nenc](#nenc) length |
+| `enc` | `Uint8Array` | The encapsulated secret of [Nenc](#nenc) length |
 | `skR` | [`Key`](Key.md) | The recipient's private key |
 | `pkR` | [`Key`](Key.md) ∣ `undefined` | The recipient's public key (when user input to [CipherSuite.SetupRecipient](../classes/CipherSuite.md#setuprecipient) is a [KeyPair](KeyPair.md)) |
 
@@ -210,7 +210,7 @@ A promise resolving to a [!Key](Key.md) or a Key interface-conforming object
 Encapsulates a shared secret to a recipient's public key.
 
 This is the sender-side operation that generates an ephemeral key pair, performs the KEM
-operation, and returns both the shared secret and the encapsulated key to send to the
+operation, and returns both the shared secret and the encapsulated secret to send to the
 recipient.
 
 #### Parameters
@@ -223,7 +223,7 @@ recipient.
 
 `Promise`<{ `enc`: `Uint8Array`; `shared_secret`: `Uint8Array`; }>
 
-A promise resolving to an object containing the shared secret and encapsulated key
+A promise resolving to an object containing the shared secret and encapsulated secret
 
 ***
 

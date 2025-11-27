@@ -30,10 +30,10 @@ console.log(
 ) // true
 
 // Sender: Setup sender context
-const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientKeyPair.publicKey)
+const { encapsulatedSecret, ctx: senderCtx } = await suite.SetupSender(recipientKeyPair.publicKey)
 
 // Recipient: Setup recipient context
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey)
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedSecret)
 
 // Sender: Encrypt message
 const aad = encoder.encode('metadata')

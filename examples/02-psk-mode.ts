@@ -26,15 +26,18 @@ const recipientPublicKeySerialized = await suite.SerializePublicKey(recipientKey
 const recipientPublicKey = await suite.DeserializePublicKey(recipientPublicKeySerialized)
 
 // Sender: Setup sender context with PSK mode
-const { encapsulatedKey, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey, {
+const { encapsulatedSecret, ctx: senderCtx } = await suite.SetupSender(recipientPublicKey, {
   psk,
   pskId,
 })
 
-// Sender → Recipient: Send encapsulated key (enc)
+// Sender → Recipient: Send encapsulated secret (enc)
 
 // Recipient: Setup recipient context with PSK mode
-const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedKey, { psk, pskId })
+const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedSecret, {
+  psk,
+  pskId,
+})
 
 // Sender: Encrypt message with AAD
 const aad = encoder.encode('authenticated-data')

@@ -115,7 +115,7 @@ const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
 
 ### SetupRecipient()
 
-> **SetupRecipient**(`privateKey`, `encapsulatedKey`, `options?`): `Promise`<[`RecipientContext`](../interfaces/RecipientContext.md)>
+> **SetupRecipient**(`privateKey`, `encapsulatedSecret`, `options?`): `Promise`<[`RecipientContext`](../interfaces/RecipientContext.md)>
 
 Establishes a recipient decryption context.
 
@@ -131,7 +131,7 @@ Mode selection:
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
+| `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK mode) |
@@ -149,10 +149,13 @@ A Promise that resolves to the recipient context.
 let suite!: HPKE.CipherSuite
 let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulatedKey from sender
-let encapsulatedKey!: Uint8Array
+// ... receive encapsulatedSecret from sender
+let encapsulatedSecret!: Uint8Array
 
-const ctx: HPKE.RecipientContext = await suite.SetupRecipient(privateKey, encapsulatedKey)
+const ctx: HPKE.RecipientContext = await suite.SetupRecipient(
+  privateKey,
+  encapsulatedSecret,
+)
 
 // ... receive messages from sender
 
@@ -171,7 +174,7 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 ### SetupSender()
 
-> **SetupSender**(`publicKey`, `options?`): `Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedKey`: `Uint8Array`; }>
+> **SetupSender**(`publicKey`, `options?`): `Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedSecret`: `Uint8Array`; }>
 
 Establishes a sender encryption context.
 
@@ -198,10 +201,10 @@ nonce uniqueness.
 
 #### Returns
 
-`Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedKey`: `Uint8Array`; }>
+`Promise`<{ `ctx`: [`SenderContext`](../interfaces/SenderContext.md); `encapsulatedSecret`: `Uint8Array`; }>
 
-A Promise that resolves to an object containing the encapsulated key and the sender
-context (`ctx`). The encapsulated key is [Nenc](#kem) bytes.
+A Promise that resolves to an object containing the encapsulated secret and the sender
+context (`ctx`). The encapsulated secret is [Nenc](#kem) bytes.
 
 #### Example
 
@@ -209,7 +212,7 @@ context (`ctx`). The encapsulated key is [Nenc](#kem) bytes.
 let suite!: HPKE.CipherSuite
 let publicKey!: HPKE.Key // recipient's public key
 
-const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
+const { encapsulatedSecret, ctx } = await suite.SetupSender(publicKey)
 
 // Encrypt multiple messages with the same context
 const aad1: Uint8Array = new TextEncoder().encode('message 1 aad')
@@ -401,7 +404,7 @@ const serialized: Uint8Array = await suite.SerializePublicKey(publicKey)
 
 ### Open()
 
-> **Open**(`privateKey`, `encapsulatedKey`, `ciphertext`, `options?`): `Promise`<`Uint8Array`>
+> **Open**(`privateKey`, `encapsulatedSecret`, `ciphertext`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for decrypting a single message.
 
@@ -417,7 +420,7 @@ Mode selection:
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
+| `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
 | `options?` |  | Options |
 | `options.aad?` | `Uint8Array` | Additional authenticated data |
@@ -437,18 +440,18 @@ A Promise that resolves to the decrypted plaintext.
 let suite!: HPKE.CipherSuite
 let privateKey!: HPKE.Key | HPKE.KeyPair
 
-// ... receive encapsulatedKey, ciphertext from sender
-let encapsulatedKey!: Uint8Array
+// ... receive encapsulatedSecret, ciphertext from sender
+let encapsulatedSecret!: Uint8Array
 let ciphertext!: Uint8Array
 
-const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedKey, ciphertext)
+const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, ciphertext)
 ```
 
 ***
 
 ### ReceiveExport()
 
-> **ReceiveExport**(`privateKey`, `encapsulatedKey`, `exporterContext`, `length`, `options?`): `Promise`<`Uint8Array`>
+> **ReceiveExport**(`privateKey`, `encapsulatedSecret`, `exporterContext`, `length`, `options?`): `Promise`<`Uint8Array`>
 
 Single-shot API for receiving an exported secret.
 
@@ -459,7 +462,7 @@ It combines context setup and secret export in one call.
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
-| `encapsulatedKey` | `Uint8Array` | Encapsulated key from the sender |
+| `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `exporterContext` | `Uint8Array` | Context of the export operation |
 | `length` | `number` | Desired length of exported secret in bytes |
 | `options?` |  | Options |
@@ -481,12 +484,12 @@ let privateKey!: HPKE.Key | HPKE.KeyPair
 
 const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
 
-// ... receive encapsulatedKey from sender
-let encapsulatedKey!: Uint8Array
+// ... receive encapsulatedSecret from sender
+let encapsulatedSecret!: Uint8Array
 
 const exported: Uint8Array = await suite.ReceiveExport(
   privateKey,
-  encapsulatedKey,
+  encapsulatedSecret,
   exporterContext,
   32,
 )
@@ -496,7 +499,7 @@ const exported: Uint8Array = await suite.ReceiveExport(
 
 ### Seal()
 
-> **Seal**(`publicKey`, `plaintext`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
+> **Seal**(`publicKey`, `plaintext`, `options?`): `Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedSecret`: `Uint8Array`; }>
 
 Single-shot API for encrypting a single message. It combines context setup and encryption in
 one call.
@@ -520,11 +523,11 @@ Mode selection:
 
 #### Returns
 
-`Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedKey`: `Uint8Array`; }>
+`Promise`<{ `ciphertext`: `Uint8Array`; `encapsulatedSecret`: `Uint8Array`; }>
 
-A Promise that resolves to an object containing the encapsulated key and ciphertext.
-The ciphertext is [Nt](#aead) bytes longer than the plaintext. The
-encapsulated key is [Nenc](#kem) bytes.
+A Promise that resolves to an object containing the encapsulated secret and
+ciphertext. The ciphertext is [Nt](#aead) bytes longer than the plaintext. The
+encapsulated secret is [Nenc](#kem) bytes.
 
 #### Example
 
@@ -534,14 +537,14 @@ let publicKey!: HPKE.Key // recipient's public key
 
 const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
 
-const { encapsulatedKey, ciphertext } = await suite.Seal(publicKey, plaintext)
+const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext)
 ```
 
 ***
 
 ### SendExport()
 
-> **SendExport**(`publicKey`, `exporterContext`, `length`, `options?`): `Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
+> **SendExport**(`publicKey`, `exporterContext`, `length`, `options?`): `Promise`<{ `encapsulatedSecret`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
 
 Single-shot API for deriving a secret known only to sender and recipient.
 
@@ -563,10 +566,10 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 
 #### Returns
 
-`Promise`<{ `encapsulatedKey`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
+`Promise`<{ `encapsulatedSecret`: `Uint8Array`; `exportedSecret`: `Uint8Array`; }>
 
-A Promise that resolves to an object containing the encapsulated key and the exported
-secret.
+A Promise that resolves to an object containing the encapsulated secret and the
+exported secret.
 
 #### Example
 
@@ -576,7 +579,7 @@ let publicKey!: HPKE.Key // recipient's public key
 
 const exporterContext: Uint8Array = new TextEncoder().encode('exporter context')
 
-const { encapsulatedKey, exportedSecret } = await suite.SendExport(
+const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
   publicKey,
   exporterContext,
   32,
@@ -700,7 +703,7 @@ The name of this suite's KEM
 
 > **Nenc**: `number`
 
-The length in bytes of this suite's KEM produced encapsulated key
+The length in bytes of this suite's KEM produced encapsulated secret
 
 ###### Npk
 

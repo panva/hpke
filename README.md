@@ -37,10 +37,10 @@ const recipient = await suite.GenerateKeyPair()
 
 // 3. Encrypt a message
 const plaintext = new TextEncoder().encode('Hello, World!')
-const { encapsulatedKey, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
+const { encapsulatedSecret, ciphertext } = await suite.Seal(recipient.publicKey, plaintext)
 
 // 4. Decrypt the message
-const decrypted = await suite.Open(recipient.privateKey, encapsulatedKey, ciphertext)
+const decrypted = await suite.Open(recipient.privateKey, encapsulatedSecret, ciphertext)
 console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 ```
 

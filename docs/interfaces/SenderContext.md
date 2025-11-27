@@ -23,7 +23,7 @@ operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
 let suite!: HPKE.CipherSuite
 let publicKey!: HPKE.Key // recipient's public key
 
-const { encapsulatedKey, ctx } = await suite.SetupSender(publicKey)
+const { encapsulatedSecret, ctx } = await suite.SetupSender(publicKey)
 ```
 
 ## Methods
