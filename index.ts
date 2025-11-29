@@ -3720,6 +3720,23 @@ class HybridKey implements Key {
 
   #publicKey?: HybridKey | undefined
 
+  static #isValid(key: HybridKey): boolean {
+    return key.#algorithm !== undefined
+  }
+
+  static validate(key: unknown, extractable?: boolean): asserts key is HybridKey {
+    try {
+      if (!HybridKey.#isValid(key as HybridKey)) {
+        throw new TypeError('unexpected key constructor')
+      }
+    } catch {
+      throw new TypeError('unexpected key constructor')
+    }
+    if (extractable && !(key as HybridKey).extractable) {
+      throw new TypeError('key must be extractable')
+    }
+  }
+
   constructor(
     _: typeof priv,
     algorithm: KeyAlgorithm,
@@ -3880,15 +3897,6 @@ async function prepareEncapsG(
   return [ss_PQ, ss_T, ct_PQ, ct_T]
 }
 
-function assertHybridKey(key: Key, extractable?: boolean): asserts key is HybridKey {
-  if (!(key instanceof HybridKey) || Object.getPrototypeOf(key) !== HybridKey.prototype) {
-    throw new TypeError('unexpected key constructor')
-  }
-  if (extractable && !key.extractable) {
-    throw new TypeError('key must be extractable')
-  }
-}
-
 async function prepareDecapsG(
   PQTKEM: HybridKEM,
   dk_PQ: CryptoKey,
@@ -3989,7 +3997,7 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async SerializePublicKey(this: HybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      assertHybridKey(key, true)
+      HybridKey.validate(key, true)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       const ek_PQ = new Uint8Array(
@@ -4020,7 +4028,7 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async SerializePrivateKey(this: HybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      assertHybridKey(key, true)
+      HybridKey.validate(key, true)
 
       return key.getSeed(priv)
     },
@@ -4042,7 +4050,7 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async Encap(this: HybridKEM, pkR) {
       assertKeyAlgorithm(pkR, this.algorithm)
-      assertHybridKey(pkR)
+      HybridKey.validate(pkR)
 
       const ek_PQ = pkR.getPq(priv)
       const ek_T = pkR.getT(priv)
@@ -4054,11 +4062,11 @@ function PQTKEM_SHARED(): KEM_BASE {
     },
     async Decap(this: HybridKEM, enc, skR, pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
-      assertHybridKey(skR)
+      HybridKey.validate(skR)
 
       if (pkR) {
         assertKeyAlgorithm(pkR, this.algorithm)
-        assertHybridKey(pkR)
+        HybridKey.validate(pkR)
       }
 
       const [ct_PQ, ct_T] = split(this.pq.Nct, this.t.Nct, enc)
