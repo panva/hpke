@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.1](https://github.com/panva/hpke/compare/v0.4.0...v0.4.1) (2025-11-29)
+
+
+### Refactor
+
+* more custom key non-extractable checks ([3d02b02](https://github.com/panva/hpke/commit/3d02b02b96ba767de3f042c10cdd36019b43b690))
+
 ## [0.4.0](https://github.com/panva/hpke/compare/v0.3.0...v0.4.0) (2025-11-27)
 
 
