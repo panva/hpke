@@ -1433,6 +1433,10 @@ export function concat(...buffers: Uint8Array[]): Uint8Array {
   return buf
 }
 
+function slice(buffer: Uint8Array, start?: number, end?: number) {
+  return Uint8Array.prototype.slice.call(buffer, start, end)
+}
+
 /**
  * Encodes an ASCII string into a Uint8Array.
  *
@@ -1560,9 +1564,9 @@ async function CombineSecretsOneStage(
     suite.AEAD.Nk + suite.AEAD.Nn + suite.KDF.Nh,
   )
 
-  const key = secret.slice(0, suite.AEAD.Nk)
-  const base_nonce = secret.slice(suite.AEAD.Nk, suite.AEAD.Nk + suite.AEAD.Nn)
-  const exporter_secret = secret.slice(suite.AEAD.Nk + suite.AEAD.Nn)
+  const key = slice(secret, 0, suite.AEAD.Nk)
+  const base_nonce = slice(secret, suite.AEAD.Nk, suite.AEAD.Nk + suite.AEAD.Nn)
+  const exporter_secret = slice(secret, suite.AEAD.Nk + suite.AEAD.Nn)
 
   return { key, base_nonce, exporter_secret }
 }
@@ -2383,7 +2387,7 @@ function HKDF_SHARED(): KDF_BASE {
         T_prev = T_i
       }
 
-      return T.slice(0, L)
+      return slice(T, 0, L)
     },
   }
 }
@@ -2855,7 +2859,7 @@ async function CurveKeyFromD(
   key: Uint8Array,
   extractable: boolean,
 ) {
-  const tmpl = template.slice()
+  const tmpl = slice(template)
   const pkcs8 = new Uint8Array(Nsk + tmpl.byteLength)
   pkcs8.set(tmpl)
   pkcs8.set(key, tmpl.byteLength)
@@ -3785,7 +3789,7 @@ class HybridKey implements Key {
 
   getSeed(_: typeof priv) {
     InvalidInvocation(_)
-    return this.#seed!.slice()
+    return slice(this.#seed!)
   }
 
   getT(_: typeof priv) {
@@ -3804,8 +3808,8 @@ function split(N1: number, N2: number, x: Uint8Array): [Uint8Array, Uint8Array] 
     throw new Error('x.byteLength !== N1 + N2')
   }
 
-  const x1 = x.slice(0, N1)
-  const x2 = x.slice(-N2)
+  const x1 = slice(x, 0, N1)
+  const x2 = slice(x, -N2)
 
   return [x1, x2]
 }
@@ -3814,7 +3818,7 @@ function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
   let sk_bigint = 0n
   let start = 0
   let end = t.Nscalar!
-  sk_bigint = OS2IP(seed.slice(start, end))
+  sk_bigint = OS2IP(slice(seed, start, end))
 
   while (sk_bigint === 0n || sk_bigint >= t.order!) {
     start = end
@@ -3822,7 +3826,7 @@ function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
     if (end > seed.byteLength) {
       throw new DeriveKeyPairError('Rejection sampling failed')
     }
-    sk_bigint = OS2IP(seed.slice(start, end))
+    sk_bigint = OS2IP(slice(seed, start, end))
   }
   return bigIntToUint8Array(sk_bigint, t.Nscalar!)
 }
@@ -4051,7 +4055,7 @@ function PQTKEM_SHARED(): KEM_BASE {
         extractable,
         dk_PQ,
         dk_T,
-        key.slice(),
+        slice(key),
         publicKey,
       )
 

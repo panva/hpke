@@ -539,7 +539,7 @@ function createPqKem(config: {
       return key.value(priv)
     },
     async DeserializePublicKey(key) {
-      return new NobleKey(priv, 'public', key.slice(), true, algorithm)
+      return new NobleKey(priv, 'public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
       NobleKey.validate(key, algorithm, true)
@@ -547,7 +547,7 @@ function createPqKem(config: {
     },
     async DeserializePrivateKey(key, extractable) {
       const { secretKey } = nobleKem.keygen(key)
-      return new NobleKey(priv, 'private', secretKey, extractable, algorithm, key.slice())
+      return new NobleKey(priv, 'private', secretKey, extractable, algorithm, slice(key))
     },
     async Encap(pkR) {
       NobleKey.validate(pkR, algorithm)
@@ -656,14 +656,14 @@ function createDhKemNist(config: {
     },
     async DeserializePublicKey(key) {
       curve.Point.fromBytes(key).assertValidity()
-      return new NobleKey(priv, 'public', key.slice(), true, algorithm)
+      return new NobleKey(priv, 'public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
       NobleKey.validate(key, algorithm, true)
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
-      return new NobleKey(priv, 'private', key.slice(), extractable, algorithm)
+      return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
     },
     async Encap(pkR) {
       NobleKey.validate(pkR, algorithm)
@@ -675,7 +675,7 @@ function createDhKemNist(config: {
       const skE = (ekp.privateKey as NobleKey).value(priv)
       const enc = (ekp.publicKey as NobleKey).value(priv)
 
-      const dh = curve.getSharedSecret(skE, pkRValue).slice(1)
+      const dh = slice(curve.getSharedSecret(skE, pkRValue), 1)
       checkNotAllZeros(dh)
 
       return {
@@ -692,7 +692,7 @@ function createDhKemNist(config: {
 
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
       const pkEValue = pkE.value(priv)
-      const dh = curve.getSharedSecret(skRValue, pkEValue).slice(1)
+      const dh = slice(curve.getSharedSecret(skRValue, pkEValue), 1)
       checkNotAllZeros(dh)
 
       return await deriveSharedSecret(
@@ -750,14 +750,14 @@ function createDhKemX(config: {
       return key.value(priv)
     },
     async DeserializePublicKey(key) {
-      return new NobleKey(priv, 'public', key.slice(), true, algorithm)
+      return new NobleKey(priv, 'public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
       NobleKey.validate(key, algorithm, true)
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
-      return new NobleKey(priv, 'private', key.slice(), extractable, algorithm)
+      return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
     },
     async Encap(pkR) {
       NobleKey.validate(pkR, algorithm)
@@ -870,12 +870,12 @@ class NobleKey implements HPKE.Key {
 
   value(_: typeof priv) {
     InvalidInvocation(_)
-    return this.#value.slice()
+    return slice(this.#value)
   }
 
   seed(_: typeof priv) {
     InvalidInvocation(_)
-    return this.#seed!.slice()
+    return slice(this.#seed!)
   }
 }
 
@@ -887,4 +887,8 @@ function checkNotAllZeros(buffer: Uint8Array): void {
   if (allZeros === 1) {
     throw new Error('DH shared secret is an all-zero value')
   }
+}
+
+function slice(buffer: Uint8Array, start?: number, end?: number) {
+  return Uint8Array.prototype.slice.call(buffer, start, end)
 }
