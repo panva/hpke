@@ -502,6 +502,68 @@ test.describe('Validations', () => {
         t.assert.ok(ctx)
       })
     }
+
+    // Test that empty PSK results in MODE_BASE (mode === 0x00), not MODE_PSK
+    // This tests the fix for mode determination using psk?.byteLength instead of psk
+    it('SetupSender with empty psk and pskId uses MODE_BASE', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+      const { ctx } = await suite.SetupSender(kp.publicKey, { psk: empty, pskId: empty })
+      t.assert.strictEqual(ctx.mode, HPKE.MODE_BASE)
+    })
+
+    it('SetupRecipient with empty psk and pskId uses MODE_BASE', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+      const { encapsulatedSecret: enc } = await suite.SetupSender(kp.publicKey)
+      const ctx = await suite.SetupRecipient(kp.privateKey, enc, { psk: empty, pskId: empty })
+      t.assert.strictEqual(ctx.mode, HPKE.MODE_BASE)
+    })
+
+    it('SetupSender with valid psk and pskId uses MODE_PSK', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+      const { ctx } = await suite.SetupSender(kp.publicKey, {
+        psk: new Uint8Array(32),
+        pskId: new Uint8Array(16),
+      })
+      t.assert.strictEqual(ctx.mode, HPKE.MODE_PSK)
+    })
+
+    it('SetupRecipient with valid psk and pskId uses MODE_PSK', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+      const psk = new Uint8Array(32)
+      const pskId = new Uint8Array(16)
+      const { encapsulatedSecret: enc } = await suite.SetupSender(kp.publicKey, { psk, pskId })
+      const ctx = await suite.SetupRecipient(kp.privateKey, enc, { psk, pskId })
+      t.assert.strictEqual(ctx.mode, HPKE.MODE_PSK)
+    })
+
+    // Test that mode is consistent between sender and recipient when using empty PSK
+    it('sender and recipient agree on MODE_BASE with empty psk/pskId', async (t: test.TestContext) => {
+      const aeadSuite = new HPKE.CipherSuite(
+        HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+        HPKE.KDF_HKDF_SHA256,
+        HPKE.AEAD_AES_128_GCM,
+      )
+      const kp = await getKeyPair(aeadSuite)
+      const plaintext = new Uint8Array([1, 2, 3, 4])
+
+      // Encrypt with empty psk/pskId
+      const { encapsulatedSecret: enc, ciphertext } = await aeadSuite.Seal(
+        kp.publicKey,
+        plaintext,
+        { psk: empty, pskId: empty },
+      )
+
+      // Decrypt with empty psk/pskId - should succeed
+      const decrypted = await aeadSuite.Open(kp.privateKey, enc, ciphertext, {
+        psk: empty,
+        pskId: empty,
+      })
+      t.assert.deepStrictEqual(decrypted, plaintext)
+
+      // Decrypt without psk/pskId - should also succeed (same MODE_BASE)
+      const decrypted2 = await aeadSuite.Open(kp.privateKey, enc, ciphertext)
+      t.assert.deepStrictEqual(decrypted2, plaintext)
+    })
   })
 
   test.describe('Uint8Array parameter validation', () => {

@@ -1050,7 +1050,7 @@ export class CipherSuite {
       throw new EncapError('Encapsulation failed', { cause })
     }
 
-    const mode = options?.psk ? MODE_PSK : MODE_BASE
+    const mode = options?.psk?.byteLength ? MODE_PSK : MODE_BASE
     const { key, base_nonce, exporter_secret } = await KeySchedule(
       this.#suite,
       mode,
@@ -1129,7 +1129,7 @@ export class CipherSuite {
       throw new DecapError('Decapsulation failed', { cause })
     }
 
-    const mode = options?.psk ? MODE_PSK : MODE_BASE
+    const mode = options?.psk?.byteLength ? MODE_PSK : MODE_BASE
     const { key, base_nonce, exporter_secret } = await KeySchedule(
       this.#suite,
       mode,
