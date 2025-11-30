@@ -119,11 +119,11 @@ The mode (0x00 = Base, 0x01 = PSK) for this context.
 
 #### Get Signature
 
-> **get** **seq**(): `number`
+> **get** **seq**(): `bigint`
 
 ##### Returns
 
-`number`
+`bigint`
 
 The sequence number for this context's next [Open](#open), initially zero, increments
 automatically with each successful [Open](#open). The sequence number provides AEAD nonce

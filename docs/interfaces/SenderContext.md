@@ -134,11 +134,11 @@ context.
 
 #### Get Signature
 
-> **get** **seq**(): `number`
+> **get** **seq**(): `bigint`
 
 ##### Returns
 
-`number`
+`bigint`
 
 The sequence number for this context's next [Seal](#seal), initially zero, increments
 automatically with each successful [Seal](#seal). The sequence number provides AEAD nonce

@@ -42,16 +42,23 @@
 // HPKE Context Classes - Sender and Recipient Contexts
 // ============================================================================
 
-function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
-  const seq_bytes = I2OSP(seq, Nn)
+function BigI2OSP(n: bigint, w: number): Uint8Array {
+  const ret = new Uint8Array(w)
+  let num = n
+  for (let i = 0; i < w && num; i++) {
+    ret[w - (i + 1)] = Number(num % 256n)
+    num = num / 256n
+  }
+  return ret
+}
+
+function ComputeNonce(base_nonce: Uint8Array, seq: bigint, Nn: number): Uint8Array {
+  const seq_bytes = BigI2OSP(seq, Nn)
   return xor(base_nonce, seq_bytes)
 }
 
-function IncrementSeq(seq: number): number {
-  // seq is guaranteed to be a safe integer due to:
-  // 1. Initial value is 0
-  // 2. This function throws at MAX_SAFE_INTEGER
-  if (seq >= Number.MAX_SAFE_INTEGER) {
+function IncrementSeq(seq: bigint, limit: bigint): bigint {
+  if (seq >= limit) {
     throw new MessageLimitReachedError('Sequence number overflow')
   }
   return ++seq
@@ -112,7 +119,8 @@ class SenderContext {
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
   #mode: number
-  #seq: number = 0
+  #seq: bigint = 0n
+  #seqLimit: bigint
   #mutex?: Mutex
 
   constructor(
@@ -127,6 +135,7 @@ class SenderContext {
     this.#key = key
     this.#base_nonce = base_nonce
     this.#exporter_secret = exporter_secret
+    this.#seqLimit = (1n << (8n * BigInt(suite.AEAD.Nn))) - 1n
   }
 
   /** @returns The mode (0x00 = Base, 0x01 = PSK) for this context. */
@@ -139,7 +148,7 @@ class SenderContext {
    *   automatically with each successful {@link Seal}. The sequence number provides AEAD nonce
    *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
    */
-  get seq(): number {
+  get seq(): bigint {
     return this.#seq
   }
 
@@ -186,7 +195,7 @@ class SenderContext {
         aad,
         plaintext,
       )
-      this.#seq = IncrementSeq(this.#seq)
+      this.#seq = IncrementSeq(this.#seq, this.#seqLimit)
       return ct
     } finally {
       release()
@@ -254,7 +263,8 @@ class RecipientContext {
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
   #mode: number
-  #seq: number = 0
+  #seq: bigint = 0n
+  #seqLimit: bigint
   #mutex?: Mutex
 
   constructor(
@@ -269,6 +279,7 @@ class RecipientContext {
     this.#key = key
     this.#base_nonce = base_nonce
     this.#exporter_secret = exporter_secret
+    this.#seqLimit = (1n << (8n * BigInt(suite.AEAD.Nn))) - 1n
   }
 
   /** @returns The mode (0x00 = Base, 0x01 = PSK) for this context. */
@@ -281,7 +292,7 @@ class RecipientContext {
    *   automatically with each successful {@link Open}. The sequence number provides AEAD nonce
    *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
    */
-  get seq(): number {
+  get seq(): bigint {
     return this.#seq
   }
 
@@ -338,7 +349,7 @@ class RecipientContext {
 
         throw new OpenError('AEAD decryption failed', { cause })
       }
-      this.#seq = IncrementSeq(this.#seq)
+      this.#seq = IncrementSeq(this.#seq, this.#seqLimit)
       return pt
     } finally {
       release()

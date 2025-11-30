@@ -22,8 +22,8 @@ test.describe('IncrementSeq', () => {
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Check that seq is 0 before first message
-    t.assert.strictEqual(contextS.seq, 0)
-    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.strictEqual(contextS.seq, 0n)
+    t.assert.strictEqual(contextR.seq, 0n)
 
     // Send first message
     const aad = new Uint8Array([1, 2, 3])
@@ -32,8 +32,8 @@ test.describe('IncrementSeq', () => {
     await contextR.Open(ct, aad)
 
     // Check that seq is 1 after first message
-    t.assert.strictEqual(contextS.seq, 1)
-    t.assert.strictEqual(contextR.seq, 1)
+    t.assert.strictEqual(contextS.seq, 1n)
+    t.assert.strictEqual(contextR.seq, 1n)
   })
 
   it('Concurrent Seal() calls must not reuse sequence numbers (race condition test)', async (t: test.TestContext) => {
@@ -63,7 +63,7 @@ test.describe('IncrementSeq', () => {
     const ciphertexts = await Promise.all(sealPromises)
 
     // Verify the final sequence number is correct
-    t.assert.strictEqual(contextS.seq, numConcurrentCalls)
+    t.assert.strictEqual(contextS.seq, BigInt(numConcurrentCalls))
 
     // All ciphertexts should be different (if same nonce was used, identical plaintexts
     // would produce identical ciphertexts, though this isn't guaranteed)
@@ -96,7 +96,7 @@ test.describe('IncrementSeq', () => {
     const ct = await contextS.Seal(pt, aad)
 
     // Verify seq is 0
-    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.strictEqual(contextR.seq, 0n)
 
     // Tamper with the ciphertext
     const badCt = new Uint8Array(ct)
@@ -106,14 +106,14 @@ test.describe('IncrementSeq', () => {
     await t.assert.rejects(contextR.Open(badCt, aad), HPKE.OpenError)
 
     // Sequence number should still be 0
-    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.strictEqual(contextR.seq, 0n)
 
     // Now open with the correct ciphertext - should succeed
     const decrypted = await contextR.Open(ct, aad)
     t.assert.deepStrictEqual(decrypted, pt)
 
     // Now sequence should be 1
-    t.assert.strictEqual(contextR.seq, 1)
+    t.assert.strictEqual(contextR.seq, 1n)
   })
 
   it('Export() does not increment sequence number', async (t: test.TestContext) => {
@@ -129,8 +129,8 @@ test.describe('IncrementSeq', () => {
     const contextR = await suite.SetupRecipient(skR, enc)
 
     // Verify initial sequence is 0
-    t.assert.strictEqual(contextS.seq, 0)
-    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.strictEqual(contextS.seq, 0n)
+    t.assert.strictEqual(contextR.seq, 0n)
 
     // Export from sender context
     const exporterContext = new Uint8Array([7, 8, 9])
@@ -138,13 +138,13 @@ test.describe('IncrementSeq', () => {
     t.assert.strictEqual(exportedS1.byteLength, 32)
 
     // Sequence should still be 0
-    t.assert.strictEqual(contextS.seq, 0)
+    t.assert.strictEqual(contextS.seq, 0n)
 
     // Export from recipient context
     const exportedR1 = await contextR.Export(exporterContext, 32)
     t.assert.strictEqual(exportedR1.byteLength, 32)
 
     // Sequence should still be 0
-    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.strictEqual(contextR.seq, 0n)
   })
 })
