@@ -127,4 +127,4 @@ The mode (0x00 = Base, 0x01 = PSK) for this context.
 
 The sequence number for this context's next [Open](#open), initially zero, increments
 automatically with each successful [Open](#open). The sequence number provides AEAD nonce
-uniqueness.
+uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.

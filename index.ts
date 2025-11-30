@@ -139,7 +139,7 @@ class SenderContext {
   /**
    * @returns The sequence number for this context's next {@link Seal}, initially zero, increments
    *   automatically with each successful {@link Seal}. The sequence number provides AEAD nonce
-   *   uniqueness.
+   *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
    */
   get seq(): number {
     return this.#seq
@@ -285,7 +285,7 @@ class RecipientContext {
   /**
    * @returns The sequence number for this context's next {@link Open}, initially zero, increments
    *   automatically with each successful {@link Open}. The sequence number provides AEAD nonce
-   *   uniqueness.
+   *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
    */
   get seq(): number {
     return this.#seq
