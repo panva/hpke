@@ -15,7 +15,7 @@ import * as HPKE from '../index.ts'
 import { supported } from './support.ts'
 
 test.describe('Buffer.prototype.slice() compatibility', () => {
-  const run = supported.KEM_MLKEM768_X25519() ? it : it.skip
+  const run = supported.KEM_MLKEM768_X25519!() ? it : it.skip
   test.describe('Hybrid KEM DeserializePrivateKey', () => {
     run(
       'should not be affected by modifications to the original Buffer after deserialization',
