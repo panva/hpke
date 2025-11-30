@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.3](https://github.com/panva/hpke/compare/v0.4.2...v0.4.3) (2025-11-30)
+
+
+### Fixes
+
+* don't fall for Node's Buffer.prototype.slice ([fa4c166](https://github.com/panva/hpke/commit/fa4c166fa32ba713832b553d985aef9889721d6c))
+
 ## [0.4.2](https://github.com/panva/hpke/compare/v0.4.1...v0.4.2) (2025-11-30)
 
 
