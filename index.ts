@@ -2188,8 +2188,11 @@ export interface AEAD {
  * @group Utilities
  */
 export function I2OSP(n: number, w: number): Uint8Array {
-  if (w <= 0) {
-    throw new Error('w(length) <= 0')
+  if (!Number.isSafeInteger(w) || w <= 0) {
+    throw new Error('w must be a positive integer')
+  }
+  if (!Number.isSafeInteger(n) || n < 0) {
+    throw new Error('n must be a nonnegative integer')
   }
   const max = Math.pow(256, w)
   if (n >= max) {
@@ -2199,7 +2202,7 @@ export function I2OSP(n: number, w: number): Uint8Array {
   let num = n
   for (let i = 0; i < w && num; i++) {
     ret[w - (i + 1)] = num % 256
-    num = num >> 8
+    num = Math.floor(num / 256)
   }
   return ret
 }

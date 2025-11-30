@@ -117,4 +117,123 @@ test.describe('Utilities', () => {
       assert.equal(result, mockReturn)
     })
   })
+
+  test.describe('I2OSP', () => {
+    // Realistic scenarios - values actually used in HPKE
+    test.describe('realistic HPKE usage', () => {
+      it('converts algorithm identifiers (2 bytes)', () => {
+        // KEM IDs: 0x0010-0x0021, 0x0040-0x0042, 0x0050-0x0051
+        assert.deepEqual(HPKE.I2OSP(0x0010, 2), Uint8Array.of(0x00, 0x10))
+        assert.deepEqual(HPKE.I2OSP(0x0021, 2), Uint8Array.of(0x00, 0x21))
+        // KDF IDs: 0x0001-0x0003, 0x0010-0x0011
+        assert.deepEqual(HPKE.I2OSP(0x0001, 2), Uint8Array.of(0x00, 0x01))
+        // AEAD IDs: 0x0001-0x0003, 0xFFFF
+        assert.deepEqual(HPKE.I2OSP(0xffff, 2), Uint8Array.of(0xff, 0xff))
+      })
+
+      it('converts mode identifiers (1 byte)', () => {
+        assert.deepEqual(HPKE.I2OSP(0x00, 1), Uint8Array.of(0x00)) // MODE_BASE
+        assert.deepEqual(HPKE.I2OSP(0x01, 1), Uint8Array.of(0x01)) // MODE_PSK
+      })
+
+      it('converts length prefixes (2 bytes)', () => {
+        assert.deepEqual(HPKE.I2OSP(0, 2), Uint8Array.of(0x00, 0x00))
+        assert.deepEqual(HPKE.I2OSP(32, 2), Uint8Array.of(0x00, 0x20))
+        assert.deepEqual(HPKE.I2OSP(65535, 2), Uint8Array.of(0xff, 0xff))
+      })
+
+      it('converts typical sequence numbers for nonce computation (12 bytes)', () => {
+        // Early messages
+        assert.deepEqual(HPKE.I2OSP(0, 12), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+        assert.deepEqual(HPKE.I2OSP(1, 12), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1))
+        assert.deepEqual(HPKE.I2OSP(255, 12), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255))
+        assert.deepEqual(HPKE.I2OSP(256, 12), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0))
+      })
+    })
+
+    // Boundary conditions
+    test.describe('boundary conditions', () => {
+      it('handles byte boundaries', () => {
+        // 1-byte max
+        assert.deepEqual(HPKE.I2OSP(255, 1), Uint8Array.of(255))
+        // 2-byte boundary
+        assert.deepEqual(HPKE.I2OSP(255, 2), Uint8Array.of(0, 255))
+        assert.deepEqual(HPKE.I2OSP(256, 2), Uint8Array.of(1, 0))
+        // 4-byte max
+        assert.deepEqual(HPKE.I2OSP(0xffffffff, 4), Uint8Array.of(255, 255, 255, 255))
+      })
+
+      it('handles 32-bit boundary (critical for bit shift operations)', () => {
+        // Max 32-bit unsigned - last value safe for >>> operator
+        assert.deepEqual(
+          HPKE.I2OSP(0xffffffff, 12),
+          Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255, 255),
+        )
+        // First value beyond 32-bit - would fail with >> or >>> operators
+        assert.deepEqual(
+          HPKE.I2OSP(0x100000000, 12),
+          Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0),
+        )
+        // Just above 32-bit boundary
+        assert.deepEqual(
+          HPKE.I2OSP(0x100000001, 12),
+          Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1),
+        )
+        assert.deepEqual(
+          HPKE.I2OSP(0x1ffffffff, 12),
+          Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 1, 255, 255, 255, 255),
+        )
+      })
+
+      it('handles MAX_SAFE_INTEGER (JavaScript precision limit)', () => {
+        // MAX_SAFE_INTEGER = 2^53 - 1 = 9007199254740991 = 0x1FFFFFFFFFFFFF
+        assert.deepEqual(
+          HPKE.I2OSP(Number.MAX_SAFE_INTEGER, 12),
+          Uint8Array.of(0, 0, 0, 0, 0, 31, 255, 255, 255, 255, 255, 255),
+        )
+      })
+
+      it('pads with leading zeros when w exceeds required bytes', () => {
+        assert.deepEqual(HPKE.I2OSP(1, 4), Uint8Array.of(0, 0, 0, 1))
+        assert.deepEqual(HPKE.I2OSP(256, 4), Uint8Array.of(0, 0, 1, 0))
+      })
+    })
+
+    // Edge cases and error conditions
+    test.describe('edge cases', () => {
+      it('handles zero', () => {
+        assert.deepEqual(HPKE.I2OSP(0, 1), Uint8Array.of(0))
+        assert.deepEqual(HPKE.I2OSP(0, 4), Uint8Array.of(0, 0, 0, 0))
+        assert.deepEqual(HPKE.I2OSP(0, 12), Uint8Array.of(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+      })
+
+      it('throws for w <= 0', () => {
+        assert.throws(() => HPKE.I2OSP(0, 0), /w must be a positive integer/)
+        assert.throws(() => HPKE.I2OSP(0, -1), /w must be a positive integer/)
+      })
+
+      it('throws for non-integer w', () => {
+        assert.throws(() => HPKE.I2OSP(0, 1.5), /w must be a positive integer/)
+        assert.throws(() => HPKE.I2OSP(0, NaN), /w must be a positive integer/)
+        assert.throws(() => HPKE.I2OSP(0, Infinity), /w must be a positive integer/)
+      })
+
+      it('throws for negative n', () => {
+        assert.throws(() => HPKE.I2OSP(-1, 4), /n must be a nonnegative integer/)
+        assert.throws(() => HPKE.I2OSP(-256, 4), /n must be a nonnegative integer/)
+      })
+
+      it('throws for non-integer n', () => {
+        assert.throws(() => HPKE.I2OSP(1.5, 4), /n must be a nonnegative integer/)
+        assert.throws(() => HPKE.I2OSP(NaN, 4), /n must be a nonnegative integer/)
+        assert.throws(() => HPKE.I2OSP(Infinity, 4), /n must be a nonnegative integer/)
+      })
+
+      it('throws when n exceeds capacity of w bytes', () => {
+        assert.throws(() => HPKE.I2OSP(256, 1), /n too large/)
+        assert.throws(() => HPKE.I2OSP(65536, 2), /n too large/)
+        assert.throws(() => HPKE.I2OSP(0x100000000, 4), /n too large/)
+      })
+    })
+  })
 })
