@@ -1176,3 +1176,106 @@ test.describe('Non-extractable key protection (built-in and noble KEMs)', () => 
     }
   }
 })
+
+test.describe('Uint8Array view with non-zero offset handling', () => {
+  // These tests verify that Uint8Array views with non-zero byteOffset are handled correctly.
+  // The internal ab() function properly slices the buffer when byteLength !== buffer.byteLength.
+
+  const suite = new HPKE.CipherSuite(
+    HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+    HPKE.KDF_HKDF_SHA256,
+    HPKE.AEAD_AES_128_GCM,
+  )
+
+  it('correctly handles Uint8Array views with non-zero offset in Seal/Open', async (t: test.TestContext) => {
+    const kp = await suite.GenerateKeyPair()
+
+    // Create a larger buffer and use views into it
+    const largeBuffer = new ArrayBuffer(128)
+    const fullView = new Uint8Array(largeBuffer)
+
+    // Fill with test pattern
+    for (let i = 0; i < 128; i++) {
+      fullView[i] = i
+    }
+
+    // Create plaintext as a view with non-zero offset
+    const plaintextOffset = 32
+    const plaintextLength = 16
+    const plaintext = new Uint8Array(largeBuffer, plaintextOffset, plaintextLength)
+
+    // Create AAD as a view with non-zero offset
+    const aadOffset = 64
+    const aadLength = 8
+    const aad = new Uint8Array(largeBuffer, aadOffset, aadLength)
+
+    // Encrypt using views
+    const { encapsulatedSecret, ciphertext } = await suite.Seal(kp.publicKey, plaintext, { aad })
+
+    // Decrypt and verify
+    const decrypted = await suite.Open(kp, encapsulatedSecret, ciphertext, { aad })
+
+    // Verify the decrypted content matches the original plaintext view
+    t.assert.deepStrictEqual(decrypted, plaintext)
+
+    // Also verify content is correct (bytes 32-47 from the pattern)
+    const expected = new Uint8Array(plaintextLength)
+    for (let i = 0; i < plaintextLength; i++) {
+      expected[i] = plaintextOffset + i
+    }
+    t.assert.deepStrictEqual(decrypted, expected)
+  })
+
+  it('correctly handles Uint8Array views with non-zero offset in Export', async (t: test.TestContext) => {
+    const kp = await suite.GenerateKeyPair()
+
+    // Create exporter context as a view with non-zero offset
+    const largeBuffer = new ArrayBuffer(64)
+    const fullView = new Uint8Array(largeBuffer)
+    for (let i = 0; i < 64; i++) {
+      fullView[i] = i * 2
+    }
+
+    const contextOffset = 16
+    const contextLength = 12
+    const exporterContext = new Uint8Array(largeBuffer, contextOffset, contextLength)
+
+    // Export using view
+    const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
+      kp.publicKey,
+      exporterContext,
+      32,
+    )
+
+    // Receive export using the same context view
+    const receivedSecret = await suite.ReceiveExport(kp, encapsulatedSecret, exporterContext, 32)
+
+    // Both sides should derive the same secret
+    t.assert.deepStrictEqual(exportedSecret, receivedSecret)
+  })
+
+  it('correctly handles info parameter as Uint8Array view with non-zero offset', async (t: test.TestContext) => {
+    const kp = await suite.GenerateKeyPair()
+
+    // Create info as a view with non-zero offset
+    const largeBuffer = new ArrayBuffer(48)
+    const fullView = new Uint8Array(largeBuffer)
+    for (let i = 0; i < 48; i++) {
+      fullView[i] = 255 - i
+    }
+
+    const infoOffset = 8
+    const infoLength = 16
+    const info = new Uint8Array(largeBuffer, infoOffset, infoLength)
+
+    const plaintext = new Uint8Array([1, 2, 3, 4])
+
+    // Encrypt with info view
+    const { encapsulatedSecret, ciphertext } = await suite.Seal(kp.publicKey, plaintext, { info })
+
+    // Decrypt with same info view
+    const decrypted = await suite.Open(kp, encapsulatedSecret, ciphertext, { info })
+
+    t.assert.deepStrictEqual(decrypted, plaintext)
+  })
+})
