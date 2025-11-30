@@ -2918,9 +2918,15 @@ function pointAdd(p: ECPoint, q: ECPoint, prime: bigint, a: bigint): ECPoint {
   const { x: x1, y: y1 } = p
   const { x: x2, y: y2 } = q
 
+  // Check for P + (-P) = point at infinity case
+  // This should not occur in normal ECDH operations, but guards against invalid inputs
+  if (p.x === q.x) {
+    throw new Error('Point addition resulted in point at infinity')
+  }
+
   // Slope: s = (y₂ - y₁) / (x₂ - x₁) mod prime
-  const numerator = (y2 - y1 + prime) % prime
-  const denominator = (x2 - x1 + prime) % prime
+  const numerator = (((y2 - y1) % prime) + prime) % prime
+  const denominator = (((x2 - x1) % prime) + prime) % prime
   const s = (numerator * modInverse(denominator, prime)) % prime
 
   // x₃ = s² - x₁ - x₂ mod prime
