@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.2](https://github.com/panva/hpke/compare/v0.4.1...v0.4.2) (2025-11-30)
+
+
+### Fixes
+
+* correct I2OSP for numbers larger than 32 bits ([5b632c6](https://github.com/panva/hpke/commit/5b632c6f34955e41fdcb7477be22ff7c88dd03b5))
+* use psk byteLength for mode determination ([ad34537](https://github.com/panva/hpke/commit/ad34537930e385979fa06ab26889d1f921c3ef2e))
+
+
+### Refactor
+
+* handle edge cases in pointAdd ([1a63302](https://github.com/panva/hpke/commit/1a63302fbbdc1e35097725f194d6c86cb0b4a96b))
+
 ## [0.4.1](https://github.com/panva/hpke/compare/v0.4.0...v0.4.1) (2025-11-29)
 
 
