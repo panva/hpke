@@ -662,7 +662,7 @@ export class CipherSuite {
     if (typeof extractable !== 'boolean') {
       throw new TypeError('"extractable" must be a boolean')
     }
-    if (ikm.byteLength < this.KEM.Nsk) {
+    if (ikm.byteLength < this.#suite.KEM.Nsk) {
       throw new DeriveKeyPairError('Insufficient "ikm" length')
     }
     try {
@@ -748,7 +748,7 @@ export class CipherSuite {
     }
 
     try {
-      if (privateKey.byteLength !== this.KEM.Nsk) {
+      if (privateKey.byteLength !== this.#suite.KEM.Nsk) {
         throw new Error('Invalid "privateKey" length')
       }
       return await this.#suite.KEM.DeserializePrivateKey(privateKey, extractable)
@@ -783,7 +783,7 @@ export class CipherSuite {
     }
 
     try {
-      if (publicKey.byteLength !== this.KEM.Npk) {
+      if (publicKey.byteLength !== this.#suite.KEM.Npk) {
         throw new Error('Invalid "publicKey" length')
       }
       return await this.#suite.KEM.DeserializePublicKey(publicKey)
