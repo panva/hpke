@@ -795,12 +795,6 @@ export class CipherSuite {
     }
   }
 
-  #validateEncLength(enc: Uint8Array) {
-    if (enc.byteLength !== this.KEM.Nenc) {
-      throw new DecapError('Invalid encapsulated secret length')
-    }
-  }
-
   /**
    * Single-shot API for encrypting a single message. It combines context setup and encryption in
    * one call.
@@ -888,7 +882,6 @@ export class CipherSuite {
     ciphertext: Uint8Array,
     options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulatedSecret)
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
     }
@@ -984,7 +977,6 @@ export class CipherSuite {
     length: number,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<Uint8Array> {
-    this.#validateEncLength(encapsulatedSecret)
     const ctx = await this.SetupRecipient(privateKey, encapsulatedSecret, options)
     return await ctx.Export(exporterContext, length)
   }
@@ -1117,7 +1109,12 @@ export class CipherSuite {
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<RecipientContext> {
     const { skR, pkR } = this.#extractRecipientKeys(privateKey)
-    this.#validateEncLength(encapsulatedSecret)
+    if (!(encapsulatedSecret instanceof Uint8Array)) {
+      throw new TypeError('"encapsulatedSecret" must be an Uint8Array')
+    }
+    if (encapsulatedSecret.byteLength !== this.#suite.KEM.Nenc) {
+      throw new DecapError('Invalid encapsulated secret length')
+    }
 
     let shared_secret: Uint8Array
     try {

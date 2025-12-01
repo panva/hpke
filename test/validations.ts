@@ -642,6 +642,18 @@ test.describe('Validations', () => {
     })
 
     test.describe('Single-Shot Open API', () => {
+      it('rejects non-Uint8Array encapsulatedSecret', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        for (const { name, value } of notUint8Array) {
+          await t.assert.rejects(
+            // @ts-expect-error
+            suite.Open(kp.privateKey, value, empty),
+            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            `Failed for ${name}`,
+          )
+        }
+      })
+
       it('rejects non-Uint8Array info', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const { encapsulatedSecret: enc } = await suite.Seal(kp.publicKey, empty)
@@ -818,6 +830,18 @@ test.describe('Validations', () => {
     })
 
     test.describe('SetupRecipient API', () => {
+      it('rejects non-Uint8Array encapsulatedSecret', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        for (const { name, value } of notUint8Array) {
+          await t.assert.rejects(
+            // @ts-expect-error
+            suite.SetupRecipient(kp.privateKey, value),
+            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            `Failed for ${name}`,
+          )
+        }
+      })
+
       it('rejects non-Uint8Array info', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const { encapsulatedSecret: enc } = await suite.SetupSender(kp.publicKey)
@@ -975,6 +999,18 @@ test.describe('Validations', () => {
     })
 
     test.describe('Single-Shot ReceiveExport API', () => {
+      it('rejects non-Uint8Array encapsulatedSecret', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        for (const { name, value } of notUint8Array) {
+          await t.assert.rejects(
+            // @ts-expect-error
+            suite.ReceiveExport(kp.privateKey, value, empty, 32),
+            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            `Failed for ${name}`,
+          )
+        }
+      })
+
       it('rejects non-Uint8Array exporterContext', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
         const { encapsulatedSecret: enc } = await suite.SendExport(kp.publicKey, empty, 32)
