@@ -285,26 +285,6 @@ class RecipientContext {
     return this.#seq
   }
 
-  // /**
-  //  * Sets the sequence number for this context's next {@link Open}. The sequence number provides AEAD
-  //  * nonce uniqueness.
-  //  *
-  //  * This API is intended for protocols that may experience packet loss and need to decrypt arriving
-  //  * packets out of order. The sequence number determines the nonce that will be used next.
-  //  *
-  //  * Control over the sequence number is only given to the recipient since reuse of the same nonce
-  //  * by a sender could lead to loss of confidentiality and integrity.
-  //  *
-  //  * @param seq - The sequence number to use for the next {@link Open}.
-  //  */
-  // set seq(seq: number) {
-  //   if (!Number.isSafeInteger(seq) || seq < 0) {
-  //     throw new TypeError('seq must be a non-negative safe integer')
-  //   }
-
-  //   this.#seq = seq
-  // }
-
   /**
    * Decrypts ciphertext with additional authenticated data.
    *
@@ -3669,17 +3649,11 @@ const InvalidInvocation = (_: typeof priv) => {
 const priv = Symbol()
 class HybridKey implements Key {
   #algorithm: KeyAlgorithm
-
   #type: 'public' | 'private'
-
   #extractable: boolean
-
   #t: CryptoKey
-
   #pq: CryptoKey
-
   #seed?: Uint8Array | undefined
-
   #publicKey?: HybridKey | undefined
 
   static #isValid(key: HybridKey): boolean {
