@@ -63,10 +63,8 @@ async function ContextExport(
   exporterContext: Uint8Array,
   L: number,
 ) {
+  checkUint8Array(exporterContext, 'exporterContext')
   const stages = KDFStages(suite.KDF)
-  if (!(exporterContext instanceof Uint8Array)) {
-    throw new TypeError('"exporterContext" must be a Uint8Array')
-  }
   if (!Number.isInteger(L) || L <= 0 || L > 0xffff) {
     throw new TypeError('"L" must be a positive integer not exceeding 65535')
   }
@@ -171,13 +169,9 @@ class SenderContext {
    *   than the plaintext.
    */
   async Seal(plaintext: Uint8Array, aad?: Uint8Array): Promise<Uint8Array> {
-    if (!(plaintext instanceof Uint8Array)) {
-      throw new TypeError('"plaintext" must be an Uint8Array')
-    }
+    checkUint8Array(plaintext, 'plaintext')
     aad ??= new Uint8Array()
-    if (!(aad instanceof Uint8Array)) {
-      throw new TypeError('"aad" must be an Uint8Array')
-    }
+    checkUint8Array(aad, 'aad')
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
     }
@@ -338,14 +332,9 @@ class RecipientContext {
    * @returns A Promise that resolves to the decrypted plaintext.
    */
   async Open(ciphertext: Uint8Array, aad?: Uint8Array): Promise<Uint8Array> {
-    if (!(ciphertext instanceof Uint8Array)) {
-      throw new TypeError('"ciphertext" must be an Uint8Array')
-    }
-
+    checkUint8Array(ciphertext, 'ciphertext')
     aad ??= new Uint8Array()
-    if (!(aad instanceof Uint8Array)) {
-      throw new TypeError('"aad" must be an Uint8Array')
-    }
+    checkUint8Array(aad, 'aad')
 
     if (this.#suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
@@ -626,9 +615,7 @@ export class CipherSuite {
    */
   async GenerateKeyPair(extractable?: boolean): Promise<KeyPair> {
     extractable ??= false
-    if (typeof extractable !== 'boolean') {
-      throw new TypeError('"extractable" must be a boolean')
-    }
+    checkExtractable(extractable)
     return await this.#suite.KEM.GenerateKeyPair(extractable)
   }
 
@@ -656,12 +643,8 @@ export class CipherSuite {
    */
   async DeriveKeyPair(ikm: Uint8Array, extractable?: boolean): Promise<KeyPair> {
     extractable ??= false
-    if (!(ikm instanceof Uint8Array)) {
-      throw new TypeError('"ikm" must be an Uint8Array')
-    }
-    if (typeof extractable !== 'boolean') {
-      throw new TypeError('"extractable" must be a boolean')
-    }
+    checkExtractable(extractable)
+    checkUint8Array(ikm, 'ikm')
     if (ikm.byteLength < this.#suite.KEM.Nsk) {
       throw new DeriveKeyPairError('Insufficient "ikm" length')
     }
@@ -740,12 +723,8 @@ export class CipherSuite {
    */
   async DeserializePrivateKey(privateKey: Uint8Array, extractable?: boolean): Promise<Key> {
     extractable ??= false
-    if (!(privateKey instanceof Uint8Array)) {
-      throw new TypeError('"privateKey" must be an Uint8Array')
-    }
-    if (typeof extractable !== 'boolean') {
-      throw new TypeError('"extractable" must be a boolean')
-    }
+    checkExtractable(extractable)
+    checkUint8Array(privateKey, 'privateKey')
 
     try {
       if (privateKey.byteLength !== this.#suite.KEM.Nsk) {
@@ -778,9 +757,7 @@ export class CipherSuite {
    * @returns A Promise that resolves to the deserialized public key.
    */
   async DeserializePublicKey(publicKey: Uint8Array): Promise<Key> {
-    if (!(publicKey instanceof Uint8Array)) {
-      throw new TypeError('"publicKey" must be an Uint8Array')
-    }
+    checkUint8Array(publicKey, 'publicKey')
 
     try {
       if (publicKey.byteLength !== this.#suite.KEM.Npk) {
@@ -1109,9 +1086,7 @@ export class CipherSuite {
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<RecipientContext> {
     const { skR, pkR } = this.#extractRecipientKeys(privateKey)
-    if (!(encapsulatedSecret instanceof Uint8Array)) {
-      throw new TypeError('"encapsulatedSecret" must be an Uint8Array')
-    }
+    checkUint8Array(encapsulatedSecret, 'encapsulatedSecret')
     if (encapsulatedSecret.byteLength !== this.#suite.KEM.Nenc) {
       throw new DecapError('Invalid encapsulated secret length')
     }
@@ -1517,11 +1492,7 @@ async function ExportOneStage(
   exporter_context: Uint8Array,
   L: number,
 ) {
-  if (exporter_context.byteLength > MAX_LENGTH_ONE_STAGE) {
-    throw new TypeError(
-      `Exporter context length must not exceed ${MAX_LENGTH_ONE_STAGE} bytes for one-stage KDF`,
-    )
-  }
+  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_ONE_STAGE)
   return await LabeledDerive(KDF, suite_id, exporter_secret, encode('sec'), exporter_context, L)
 }
 
@@ -1533,21 +1504,9 @@ async function CombineSecretsOneStage(
   psk: Uint8Array,
   psk_id: Uint8Array,
 ) {
-  if (psk.byteLength > MAX_LENGTH_ONE_STAGE) {
-    throw new TypeError(
-      `PSK length must not exceed ${MAX_LENGTH_ONE_STAGE} bytes for one-stage KDF`,
-    )
-  }
-  if (psk_id.byteLength > MAX_LENGTH_ONE_STAGE) {
-    throw new TypeError(
-      `PSK ID length must not exceed ${MAX_LENGTH_ONE_STAGE} bytes for one-stage KDF`,
-    )
-  }
-  if (info.byteLength > MAX_LENGTH_ONE_STAGE) {
-    throw new TypeError(
-      `Info length must not exceed ${MAX_LENGTH_ONE_STAGE} bytes for one-stage KDF`,
-    )
-  }
+  checkLength(psk, 'PSK', MAX_LENGTH_ONE_STAGE)
+  checkLength(psk_id, 'PSK ID', MAX_LENGTH_ONE_STAGE)
+  checkLength(info, 'Info', MAX_LENGTH_ONE_STAGE)
 
   const secrets = concat(lengthPrefixed(psk), lengthPrefixed(shared_secret))
   const context = concat(I2OSP(mode, 1), lengthPrefixed(psk_id), lengthPrefixed(info))
@@ -1574,6 +1533,22 @@ const MAX_LENGTH_TWO_STAGE = 0xffff
 // that is also applied to Two-Stage KDF for consistency
 const MAX_LENGTH_ONE_STAGE = 0xffff
 
+function checkLength(data: Uint8Array, name: string, maxLength: number) {
+  if (data.byteLength > maxLength) {
+    throw new TypeError(`${name} length must not exceed ${maxLength} bytes`)
+  }
+}
+function checkUint8Array(input: unknown, name: string): asserts input is Uint8Array {
+  if (!(input instanceof Uint8Array)) {
+    throw new TypeError(`"${name}" must be Uint8Array`)
+  }
+}
+function checkExtractable(extractable: unknown): asserts extractable is boolean {
+  if (typeof extractable !== 'boolean') {
+    throw new TypeError('"extractable" must be boolean')
+  }
+}
+
 async function CombineSecretsTwoStage(
   suite: Triple,
   mode: number,
@@ -1582,21 +1557,9 @@ async function CombineSecretsTwoStage(
   psk: Uint8Array,
   psk_id: Uint8Array,
 ) {
-  if (psk.byteLength > MAX_LENGTH_TWO_STAGE) {
-    throw new TypeError(
-      `PSK length must not exceed ${MAX_LENGTH_TWO_STAGE} bytes for two-stage KDF`,
-    )
-  }
-  if (psk_id.byteLength > MAX_LENGTH_TWO_STAGE) {
-    throw new TypeError(
-      `PSK ID length must not exceed ${MAX_LENGTH_TWO_STAGE} bytes for two-stage KDF`,
-    )
-  }
-  if (info.byteLength > MAX_LENGTH_TWO_STAGE) {
-    throw new TypeError(
-      `Info length must not exceed ${MAX_LENGTH_TWO_STAGE} bytes for two-stage KDF`,
-    )
-  }
+  checkLength(psk, 'PSK', MAX_LENGTH_TWO_STAGE)
+  checkLength(psk_id, 'PSK ID', MAX_LENGTH_TWO_STAGE)
+  checkLength(info, 'Info', MAX_LENGTH_TWO_STAGE)
 
   const [psk_id_hash, info_hash] = await Promise.all([
     LabeledExtract(suite.KDF, suite.id, new Uint8Array(), encode('psk_id_hash'), psk_id),
@@ -1642,11 +1605,7 @@ async function ExportTwoStage(
   exporter_context: Uint8Array,
   L: number,
 ) {
-  if (exporter_context.byteLength > MAX_LENGTH_TWO_STAGE) {
-    throw new TypeError(
-      `Exporter context length must not exceed ${MAX_LENGTH_TWO_STAGE} bytes for two-stage KDF`,
-    )
-  }
+  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_TWO_STAGE)
   return await LabeledExpand(KDF, suite_id, exporter_secret, encode('sec'), exporter_context, L)
 }
 
@@ -2224,35 +2183,28 @@ async function KeySchedule(
   psk?: Uint8Array,
   pskId?: Uint8Array,
 ) {
-  if (info != null && !(info instanceof Uint8Array)) {
-    throw new TypeError('"info" must be an Uint8Array')
-  }
-  if (psk != null && !(psk instanceof Uint8Array)) {
-    throw new TypeError('"psk" must be an Uint8Array')
-  }
-  if (pskId != null && !(pskId instanceof Uint8Array)) {
-    throw new TypeError('"pskId" must be an Uint8Array')
-  }
-  VerifyPSKInputs(psk, pskId)
-
   info ??= new Uint8Array()
+  checkUint8Array(info, 'info')
   psk ??= new Uint8Array()
+  checkUint8Array(psk, 'psk')
   pskId ??= new Uint8Array()
+  checkUint8Array(pskId, 'pskId')
 
   const stages = KDFStages(suite.KDF)
   const CombineSecrets = stages === 1 ? CombineSecretsOneStage : CombineSecretsTwoStage
 
+  VerifyPSKInputs(psk, pskId)
   return await CombineSecrets(suite, mode, shared_secret, info, psk, pskId)
 }
 
-function VerifyPSKInputs(psk?: Uint8Array, psk_id?: Uint8Array) {
-  if (psk?.byteLength && psk_id?.byteLength) {
+function VerifyPSKInputs(psk: Uint8Array, psk_id: Uint8Array) {
+  if (psk.byteLength && psk_id.byteLength) {
     if (psk.byteLength < 32) {
       throw new TypeError('Insufficient PSK length')
     }
     return
   }
-  if (!psk?.byteLength && !psk_id?.byteLength) {
+  if (!psk.byteLength && !psk_id.byteLength) {
     return
   }
   throw new TypeError('Inconsistent PSK inputs')

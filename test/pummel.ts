@@ -613,4 +613,104 @@ test.describe('pummel', () => {
       })
     }
   })
+
+  test.describe('KDF input length limits', () => {
+    for (const KDF of KDFS.values()) {
+      if (!KDF.supported) continue
+
+      const suite = new HPKE.CipherSuite(
+        HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+        KDF.factory,
+        HPKE.AEAD_AES_128_GCM,
+      )
+      const MAX_LENGTH = KDF.factory().stages === 1 ? 0xffff : 0xffff
+
+      test.describe(`${KDF.name}`, () => {
+        it('accepts info at limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const info = new Uint8Array(MAX_LENGTH)
+          await t.assert.doesNotReject(async () => {
+            await suite.Seal(kp.publicKey, empty, { info })
+          })
+        })
+
+        it('rejects info over limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const info = new Uint8Array(MAX_LENGTH + 1)
+          await t.assert.rejects(
+            async () => {
+              await suite.Seal(kp.publicKey, empty, { info })
+            },
+            { name: 'TypeError', message: `Info length must not exceed ${MAX_LENGTH} bytes` },
+          )
+        })
+
+        it('accepts psk at limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const psk = new Uint8Array(MAX_LENGTH)
+          const pskId = new Uint8Array(32)
+          await t.assert.doesNotReject(async () => {
+            await suite.Seal(kp.publicKey, empty, { psk, pskId })
+          })
+        })
+
+        it('rejects psk over limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const psk = new Uint8Array(MAX_LENGTH + 1)
+          const pskId = new Uint8Array(32)
+          await t.assert.rejects(
+            async () => {
+              await suite.Seal(kp.publicKey, empty, { psk, pskId })
+            },
+            { name: 'TypeError', message: `PSK length must not exceed ${MAX_LENGTH} bytes` },
+          )
+        })
+
+        it('accepts psk_id at limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const psk = new Uint8Array(32)
+          const pskId = new Uint8Array(MAX_LENGTH)
+          await t.assert.doesNotReject(async () => {
+            await suite.Seal(kp.publicKey, empty, { psk, pskId })
+          })
+        })
+
+        it('rejects psk_id over limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const psk = new Uint8Array(32)
+          const pskId = new Uint8Array(MAX_LENGTH + 1)
+          await t.assert.rejects(
+            async () => {
+              await suite.Seal(kp.publicKey, empty, { psk, pskId })
+            },
+            { name: 'TypeError', message: `PSK ID length must not exceed ${MAX_LENGTH} bytes` },
+          )
+        })
+
+        it('accepts exporter_context at limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const { ctx } = await suite.SetupSender(kp.publicKey)
+          const exporterContext = new Uint8Array(MAX_LENGTH)
+          await t.assert.doesNotReject(async () => {
+            await ctx.Export(exporterContext, 32)
+          })
+        })
+
+        it('rejects exporter_context over limit', async (t: test.TestContext) => {
+          const kp = await getKeyPair(suite)
+          const { ctx } = await suite.SetupSender(kp.publicKey)
+          const exporterContext = new Uint8Array(MAX_LENGTH + 1)
+          await t.assert.rejects(
+            async () => {
+              await ctx.Export(exporterContext, 32)
+            },
+            {
+              name: 'TypeError',
+              message: `Exporter context length must not exceed ${MAX_LENGTH} bytes`,
+            },
+          )
+        })
+      })
+    }
+  })
 })

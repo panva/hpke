@@ -8,7 +8,7 @@ const empty = new Uint8Array()
 const notUint8Array = [
   { name: 'null', value: null },
   { name: 'undefined', value: undefined },
-  { name: 'string', value: 'not a Uint8Array' },
+  { name: 'string', value: 'not Uint8Array' },
   { name: 'number', value: 42 },
   { name: 'plain array', value: [1, 2, 3] },
   { name: 'ArrayBuffer', value: new ArrayBuffer(16) },
@@ -581,7 +581,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Seal(kp.publicKey, empty, { info: value }),
-            { name: 'TypeError', message: '"info" must be an Uint8Array' },
+            { name: 'TypeError', message: '"info" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -594,7 +594,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Seal(kp.publicKey, empty, { aad: value }),
-            { name: 'TypeError', message: '"aad" must be an Uint8Array' },
+            { name: 'TypeError', message: '"aad" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -606,7 +606,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Seal(kp.publicKey, value),
-            { name: 'TypeError', message: '"plaintext" must be an Uint8Array' },
+            { name: 'TypeError', message: '"plaintext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -620,7 +620,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Seal(kp.publicKey, empty, { psk: value, pskId }),
-            { name: 'TypeError', message: '"psk" must be an Uint8Array' },
+            { name: 'TypeError', message: '"psk" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -634,7 +634,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Seal(kp.publicKey, empty, { psk, pskId: value }),
-            { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
+            { name: 'TypeError', message: '"pskId" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -648,7 +648,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, value, empty),
-            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            { name: 'TypeError', message: '"encapsulatedSecret" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -662,7 +662,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, enc, empty, { info: value }),
-            { name: 'TypeError', message: '"info" must be an Uint8Array' },
+            { name: 'TypeError', message: '"info" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -676,7 +676,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, enc, ct, { aad: value }),
-            { name: 'TypeError', message: '"aad" must be an Uint8Array' },
+            { name: 'TypeError', message: '"aad" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -689,7 +689,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, enc, value),
-            { name: 'TypeError', message: '"ciphertext" must be an Uint8Array' },
+            { name: 'TypeError', message: '"ciphertext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -704,7 +704,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, enc, ct, { psk: value, pskId }),
-            { name: 'TypeError', message: '"psk" must be an Uint8Array' },
+            { name: 'TypeError', message: '"psk" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -719,7 +719,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.Open(kp.privateKey, enc, ct, { psk, pskId: value }),
-            { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
+            { name: 'TypeError', message: '"pskId" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -735,7 +735,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             ctx.Seal(empty, value),
-            { name: 'TypeError', message: '"aad" must be an Uint8Array' },
+            { name: 'TypeError', message: '"aad" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -748,7 +748,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             ctx.Seal(value, empty),
-            { name: 'TypeError', message: '"plaintext" must be an Uint8Array' },
+            { name: 'TypeError', message: '"plaintext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -765,7 +765,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             ctx.Open(empty, value),
-            { name: 'TypeError', message: '"aad" must be an Uint8Array' },
+            { name: 'TypeError', message: '"aad" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -779,7 +779,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             ctx.Open(value, empty),
-            { name: 'TypeError', message: '"ciphertext" must be an Uint8Array' },
+            { name: 'TypeError', message: '"ciphertext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -794,7 +794,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupSender(kp.publicKey, { info: value }),
-            { name: 'TypeError', message: '"info" must be an Uint8Array' },
+            { name: 'TypeError', message: '"info" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -808,7 +808,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupSender(kp.publicKey, { psk: value, pskId }),
-            { name: 'TypeError', message: '"psk" must be an Uint8Array' },
+            { name: 'TypeError', message: '"psk" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -822,7 +822,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupSender(kp.publicKey, { psk, pskId: value }),
-            { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
+            { name: 'TypeError', message: '"pskId" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -836,7 +836,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupRecipient(kp.privateKey, value),
-            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            { name: 'TypeError', message: '"encapsulatedSecret" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -850,7 +850,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupRecipient(kp.privateKey, enc, { info: value }),
-            { name: 'TypeError', message: '"info" must be an Uint8Array' },
+            { name: 'TypeError', message: '"info" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -865,7 +865,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupRecipient(kp.privateKey, enc, { psk: value, pskId }),
-            { name: 'TypeError', message: '"psk" must be an Uint8Array' },
+            { name: 'TypeError', message: '"psk" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -880,7 +880,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SetupRecipient(kp.privateKey, enc, { psk, pskId: value }),
-            { name: 'TypeError', message: '"pskId" must be an Uint8Array' },
+            { name: 'TypeError', message: '"pskId" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -895,7 +895,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             ctx.Export(value, 32),
-            { name: 'TypeError', message: '"exporterContext" must be a Uint8Array' },
+            { name: 'TypeError', message: '"exporterContext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -951,7 +951,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.SendExport(kp.publicKey, value, 32),
-            { name: 'TypeError', message: '"exporterContext" must be a Uint8Array' },
+            { name: 'TypeError', message: '"exporterContext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -1005,7 +1005,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.ReceiveExport(kp.privateKey, value, empty, 32),
-            { name: 'TypeError', message: '"encapsulatedSecret" must be an Uint8Array' },
+            { name: 'TypeError', message: '"encapsulatedSecret" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -1018,7 +1018,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.ReceiveExport(kp.privateKey, enc, value, 32),
-            { name: 'TypeError', message: '"exporterContext" must be a Uint8Array' },
+            { name: 'TypeError', message: '"exporterContext" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -1084,7 +1084,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.GenerateKeyPair(value),
-            { name: 'TypeError', message: '"extractable" must be a boolean' },
+            { name: 'TypeError', message: '"extractable" must be boolean' },
             `Failed for ${name}`,
           )
         }
@@ -1097,7 +1097,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.DeriveKeyPair(value),
-            { name: 'TypeError', message: '"ikm" must be an Uint8Array' },
+            { name: 'TypeError', message: '"ikm" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -1110,7 +1110,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.DeriveKeyPair(ikm, value),
-            { name: 'TypeError', message: '"extractable" must be a boolean' },
+            { name: 'TypeError', message: '"extractable" must be boolean' },
             `Failed for ${name}`,
           )
         }
@@ -1123,7 +1123,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.DeserializePrivateKey(value),
-            { name: 'TypeError', message: '"privateKey" must be an Uint8Array' },
+            { name: 'TypeError', message: '"privateKey" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
@@ -1138,7 +1138,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.DeserializePrivateKey(serialized, value),
-            { name: 'TypeError', message: '"extractable" must be a boolean' },
+            { name: 'TypeError', message: '"extractable" must be boolean' },
             `Failed for ${name}`,
           )
         }
@@ -1151,7 +1151,7 @@ test.describe('Validations', () => {
           await t.assert.rejects(
             // @ts-expect-error
             suite.DeserializePublicKey(value),
-            { name: 'TypeError', message: '"publicKey" must be an Uint8Array' },
+            { name: 'TypeError', message: '"publicKey" must be Uint8Array' },
             `Failed for ${name}`,
           )
         }
