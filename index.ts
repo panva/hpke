@@ -2193,14 +2193,14 @@ export interface AEAD {
  */
 export function I2OSP(n: number, w: number): Uint8Array {
   if (!Number.isSafeInteger(w) || w <= 0) {
-    throw new Error('w must be a positive integer')
+    throw new Error('w must be a positive safe integer')
   }
   if (!Number.isSafeInteger(n) || n < 0) {
-    throw new Error('n must be a nonnegative integer')
+    throw new Error('n must be a non-negative safe integer')
   }
   const max = Math.pow(256, w)
   if (n >= max) {
-    throw new Error('n too large')
+    throw new Error('n too large to fit in w-length byte string')
   }
   const ret = new Uint8Array(w)
   let num = n

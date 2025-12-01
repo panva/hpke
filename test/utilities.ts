@@ -208,31 +208,34 @@ test.describe('Utilities', () => {
       })
 
       it('throws for w <= 0', () => {
-        assert.throws(() => HPKE.I2OSP(0, 0), /w must be a positive integer/)
-        assert.throws(() => HPKE.I2OSP(0, -1), /w must be a positive integer/)
+        assert.throws(() => HPKE.I2OSP(0, 0), /w must be a positive safe integer/)
+        assert.throws(() => HPKE.I2OSP(0, -1), /w must be a positive safe integer/)
       })
 
       it('throws for non-integer w', () => {
-        assert.throws(() => HPKE.I2OSP(0, 1.5), /w must be a positive integer/)
-        assert.throws(() => HPKE.I2OSP(0, NaN), /w must be a positive integer/)
-        assert.throws(() => HPKE.I2OSP(0, Infinity), /w must be a positive integer/)
+        assert.throws(() => HPKE.I2OSP(0, 1.5), /w must be a positive safe integer/)
+        assert.throws(() => HPKE.I2OSP(0, NaN), /w must be a positive safe integer/)
+        assert.throws(() => HPKE.I2OSP(0, Infinity), /w must be a positive safe integer/)
       })
 
       it('throws for negative n', () => {
-        assert.throws(() => HPKE.I2OSP(-1, 4), /n must be a nonnegative integer/)
-        assert.throws(() => HPKE.I2OSP(-256, 4), /n must be a nonnegative integer/)
+        assert.throws(() => HPKE.I2OSP(-1, 4), /n must be a non-negative safe integer/)
+        assert.throws(() => HPKE.I2OSP(-256, 4), /n must be a non-negative safe integer/)
       })
 
       it('throws for non-integer n', () => {
-        assert.throws(() => HPKE.I2OSP(1.5, 4), /n must be a nonnegative integer/)
-        assert.throws(() => HPKE.I2OSP(NaN, 4), /n must be a nonnegative integer/)
-        assert.throws(() => HPKE.I2OSP(Infinity, 4), /n must be a nonnegative integer/)
+        assert.throws(() => HPKE.I2OSP(1.5, 4), /n must be a non-negative safe integer/)
+        assert.throws(() => HPKE.I2OSP(NaN, 4), /n must be a non-negative safe integer/)
+        assert.throws(() => HPKE.I2OSP(Infinity, 4), /n must be a non-negative safe integer/)
       })
 
       it('throws when n exceeds capacity of w bytes', () => {
-        assert.throws(() => HPKE.I2OSP(256, 1), /n too large/)
-        assert.throws(() => HPKE.I2OSP(65536, 2), /n too large/)
-        assert.throws(() => HPKE.I2OSP(0x100000000, 4), /n too large/)
+        assert.throws(() => HPKE.I2OSP(256, 1), /n too large to fit in w-length byte string/)
+        assert.throws(() => HPKE.I2OSP(65536, 2), /n too large to fit in w-length byte string/)
+        assert.throws(
+          () => HPKE.I2OSP(0x100000000, 4),
+          /n too large to fit in w-length byte string/,
+        )
       })
     })
   })
