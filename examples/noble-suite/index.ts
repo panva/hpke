@@ -1,4 +1,12 @@
-import { LabeledDerive, LabeledExtract, LabeledExpand, concat, encode, I2OSP } from '../../index.ts'
+import {
+  LabeledDerive,
+  LabeledExtract,
+  LabeledExpand,
+  concat,
+  encode,
+  I2OSP,
+  ValidationError,
+} from '../../index.ts'
 import type * as HPKE from '../../index.ts'
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js'
@@ -887,12 +895,12 @@ class NobleKey implements HPKE.Key {
 }
 
 function checkNotAllZeros(buffer: Uint8Array): void {
-  let allZeros = 1
+  let or = 0
   for (let i = 0; i < buffer.length; i++) {
-    allZeros &= buffer[i]! === 0 ? 1 : 0
+    or |= buffer[i]!
   }
-  if (allZeros === 1) {
-    throw new Error('DH shared secret is an all-zero value')
+  if (or === 0) {
+    throw new ValidationError('DH shared secret is an all-zero value')
   }
 }
 

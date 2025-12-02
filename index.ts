@@ -2518,11 +2518,11 @@ async function getPublicKey(name: string, key: CryptoKey, usages: KeyUsage[]): P
 
 /** This is a last resort check, Web Cryptography implementers should already be checking it */
 function checkNotAllZeros(buffer: Uint8Array): void {
-  let allZeros = 1
+  let or = 0
   for (let i = 0; i < buffer.length; i++) {
-    allZeros &= buffer[i]! === 0 ? 1 : 0
+    or |= buffer[i]!
   }
-  if (allZeros === 1) {
+  if (or === 0) {
     throw new ValidationError('DH shared secret is an all-zero value')
   }
 }
