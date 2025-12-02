@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/panva/hpke/compare/v0.4.4...v1.0.0) (2025-12-02)
+
+
+### Refactor
+
+* rename package, it is now just "hpke" ([2996ad8](https://github.com/panva/hpke/commit/2996ad846dba0d18da3c1c26966218da73667038))
+
 ## [0.4.4](https://github.com/panva/hpke/compare/v0.4.3...v0.4.4) (2025-12-02)
 
 
