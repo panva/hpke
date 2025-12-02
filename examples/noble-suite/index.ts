@@ -431,6 +431,7 @@ function nistCurveKem(curve: ECDSA, scalarLen: number, elemLen: number, nseed: n
 
     const secretKey = Fn.toBytes(Fn.create(sk))
     const publicKey = curve.getPublicKey(secretKey, false)
+    curve.Point.fromBytes(publicKey).assertValidity()
     return { secretKey, publicKey }
   }
 
@@ -447,18 +448,22 @@ function nistCurveKem(curve: ECDSA, scalarLen: number, elemLen: number, nseed: n
       return rejectionSampling(seed)
     },
     getPublicKey(secretKey: Uint8Array) {
-      return curve.getPublicKey(secretKey, false)
+      const publicKey = curve.getPublicKey(secretKey, false)
+      curve.Point.fromBytes(publicKey).assertValidity()
+      return publicKey
     },
     encapsulate(publicKey: Uint8Array, rand: Uint8Array = randomBytes(nseed)) {
       abytes(rand, nseed, 'rand')
       const { secretKey: ek } = rejectionSampling(rand)
       const sharedSecret = this.decapsulate(publicKey, ek)
       const cipherText = curve.getPublicKey(ek, false)
+      curve.Point.fromBytes(cipherText).assertValidity()
       cleanBytes(ek)
       return { sharedSecret, cipherText }
     },
     decapsulate(cipherText: Uint8Array, secretKey: Uint8Array) {
       const fullSecret = curve.getSharedSecret(secretKey, cipherText)
+      curve.Point.fromBytes(fullSecret).assertValidity()
       return fullSecret.subarray(1)
     },
   }
@@ -768,6 +773,7 @@ function createDhKemX(config: {
         (ekp.privateKey as NobleKey).value(priv),
         (pkR as NobleKey).value(priv),
       )
+      checkNotAllZeros(dh)
 
       return {
         shared_secret: await deriveSharedSecret(
@@ -790,6 +796,7 @@ function createDhKemX(config: {
 
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
       const dh = curve.getSharedSecret(skRValue, pkE.value(priv))
+      checkNotAllZeros(dh)
 
       return await deriveSharedSecret(
         kdf,
