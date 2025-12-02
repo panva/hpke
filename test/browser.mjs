@@ -2,7 +2,11 @@ import { chromium, firefox, webkit } from 'playwright'
 import { spawn } from 'node:child_process'
 
 const PORT = 3000
-const goTo = new URL(`http://localhost:${PORT}?ci`)
+const testUrls = [
+  new URL(`http://localhost:${PORT}/?ci&native`),
+  new URL(`http://localhost:${PORT}/?ci&noble`),
+  new URL(`http://localhost:${PORT}/?ci`),
+]
 
 // Start the server
 function startServer() {
@@ -41,7 +45,7 @@ function startServer() {
 
 // Wait for tests to complete on a page
 async function waitForTestsToComplete(page, browserName, timeout = 180000) {
-  console.log(`  Waiting for tests to complete in ${browserName}...`)
+  console.log(`    Waiting for tests to complete in ${browserName}...`)
 
   try {
     // Wait for main algorithm tests
@@ -79,85 +83,96 @@ async function runBrowserTests(browserType, browserName, channel = null) {
 
   const launchOptions = channel ? { channel } : {}
   const browser = await browserType.launch(launchOptions)
-  const context = await browser.newContext()
-  const page = await context.newPage()
+  const results = []
 
-  // Set default timeout for all page operations
-  page.setDefaultTimeout(180000)
+  for (const testUrl of testUrls) {
+    const urlLabel = testUrl.search
+    console.log(`\n  Testing ${urlLabel}`)
 
-  // Listen for console messages
-  page.on('console', (msg) => {
-    const type = msg.type()
-    if (type === 'error') {
-      console.log(`  [${browserName} console.error]:`, msg.text())
+    const context = await browser.newContext()
+    const page = await context.newPage()
+
+    // Set default timeout for all page operations
+    page.setDefaultTimeout(180000)
+
+    // Listen for console messages
+    page.on('console', (msg) => {
+      const type = msg.type()
+      if (type === 'error') {
+        console.log(`  [${browserName} console.error]:`, msg.text())
+      }
+    })
+
+    // Listen for page errors
+    page.on('pageerror', (error) => {
+      console.error(`  [${browserName} page error]:`, error.message)
+    })
+
+    try {
+      await page.goto(testUrl.href, { waitUntil: 'networkidle' })
+
+      const userAgent = await page.evaluate(() => navigator.userAgent)
+      console.log(`  User Agent: ${userAgent}`)
+
+      const testResults = await waitForTestsToComplete(page, browserName)
+
+      console.log(`    Total tests: ${testResults.total}`)
+      console.log(`    Passed: ${testResults.passed}`)
+      console.log(`    Failed: ${testResults.failed}`)
+      console.log(`    Expected failures: ${testResults.expectedFailures}`)
+      console.log(`    Unexpected failures: ${testResults.unexpectedFailures}`)
+      console.log(`    Unexpected passes: ${testResults.unexpectedPasses}`)
+
+      if (testResults.vectorValidation) {
+        console.log(
+          `    Vector validation: ${testResults.vectorValidation.passed}/${testResults.vectorValidation.total} passed`,
+        )
+      }
+
+      // Check for unexpected results
+      if (testResults.unexpectedFailures > 0) {
+        console.error(
+          `\n    ✗ ${browserName} (${urlLabel}): ${testResults.unexpectedFailures} unexpected failure(s)!`,
+        )
+        console.error('\n    Failed tests:')
+        testResults.tests
+          .filter((t) => t.status === 'failed' && !t.expectedToFail)
+          .forEach((t) => {
+            console.error(`      - ${t.name}`)
+            console.error(`        ${t.error}`)
+          })
+        results.push({ browserName, urlLabel, success: false, results: testResults })
+      } else if (testResults.vectorValidation && testResults.vectorValidation.failed > 0) {
+        console.error(
+          `\n    ✗ ${browserName} (${urlLabel}): ${testResults.vectorValidation.failed} vector validation failure(s)!`,
+        )
+        results.push({ browserName, urlLabel, success: false, results: testResults })
+      } else if (testResults.unexpectedPasses > 0) {
+        console.error(
+          `\n    ✗ ${browserName} (${urlLabel}): ${testResults.unexpectedPasses} unexpected pass(es)!`,
+        )
+        console.error(
+          '\n    These tests were expected to fail but passed (browser support may have improved):',
+        )
+        testResults.tests
+          .filter((t) => t.status === 'passed' && t.expectedToFail)
+          .forEach((t) => {
+            console.error(`      - ${t.name}`)
+          })
+        results.push({ browserName, urlLabel, success: false, results: testResults })
+      } else {
+        results.push({ browserName, urlLabel, success: true, results: testResults })
+      }
+    } catch (error) {
+      console.error(`\n    ✗ ${browserName} (${urlLabel}): Error running tests:`, error.message)
+      results.push({ browserName, urlLabel, success: false, error: error.message })
+    } finally {
+      await context.close()
     }
-  })
-
-  // Listen for page errors
-  page.on('pageerror', (error) => {
-    console.error(`  [${browserName} page error]:`, error.message)
-  })
-
-  try {
-    await page.goto(goTo.href, { waitUntil: 'networkidle' })
-
-    const userAgent = await page.evaluate(() => navigator.userAgent)
-    console.log(`  User Agent: ${userAgent}`)
-
-    const results = await waitForTestsToComplete(page, browserName)
-
-    console.log(`  Total tests: ${results.total}`)
-    console.log(`  Passed: ${results.passed}`)
-    console.log(`  Failed: ${results.failed}`)
-    console.log(`  Expected failures: ${results.expectedFailures}`)
-    console.log(`  Unexpected failures: ${results.unexpectedFailures}`)
-    console.log(`  Unexpected passes: ${results.unexpectedPasses}`)
-
-    if (results.vectorValidation) {
-      console.log(
-        `  Vector validation: ${results.vectorValidation.passed}/${results.vectorValidation.total} passed`,
-      )
-    }
-
-    // Check for unexpected results
-    if (results.unexpectedFailures > 0) {
-      console.error(`\n  ✗ ${browserName}: ${results.unexpectedFailures} unexpected failure(s)!`)
-      console.error('\n  Failed tests:')
-      results.tests
-        .filter((t) => t.status === 'failed' && !t.expectedToFail)
-        .forEach((t) => {
-          console.error(`    - ${t.name}`)
-          console.error(`      ${t.error}`)
-        })
-      return { browserName, success: false, results }
-    }
-
-    if (results.vectorValidation && results.vectorValidation.failed > 0) {
-      console.error(
-        `\n  ✗ ${browserName}: ${results.vectorValidation.failed} vector validation failure(s)!`,
-      )
-      return { browserName, success: false, results }
-    }
-
-    if (results.unexpectedPasses > 0) {
-      console.error(`\n  ✗ ${browserName}: ${results.unexpectedPasses} unexpected pass(es)!`)
-      console.error(
-        '\n  These tests were expected to fail but passed (browser support may have improved):',
-      )
-      results.tests
-        .filter((t) => t.status === 'passed' && t.expectedToFail)
-        .forEach((t) => {
-          console.error(`    - ${t.name}`)
-        })
-      return { browserName, success: false, results }
-    }
-    return { browserName, success: true, results }
-  } catch (error) {
-    console.error(`\n  ✗ ${browserName}: Error running tests:`, error.message)
-    return { browserName, success: false, error: error.message }
-  } finally {
-    await browser.close()
   }
+
+  await browser.close()
+  return results
 }
 
 // Main execution
@@ -189,11 +204,13 @@ async function main() {
     const skipped = []
     for (const browser of browsers) {
       try {
-        const result = await runBrowserTests(browser.type, browser.name, browser.channel)
-        results.push(result)
+        const browserResults = await runBrowserTests(browser.type, browser.name, browser.channel)
+        results.push(...browserResults)
       } catch (error) {
         console.log(`\n  ⚠ Skipping ${browser.name}: ${error.message}`)
-        skipped.push({ browserName: browser.name, error: error.message })
+        for (const testUrl of testUrls) {
+          skipped.push({ browserName: browser.name, urlLabel: testUrl.href, error: error.message })
+        }
       }
     }
 
@@ -205,25 +222,38 @@ async function main() {
     const failed = results.filter((r) => !r.success)
     const passed = results.filter((r) => r.success)
 
-    passed.forEach((r) => {
-      console.log(`✓ ${r.browserName}: PASSED`)
-    })
+    // Group results by browser
+    const browserNames = [...new Set(results.map((r) => r.browserName))]
+    for (const browserName of browserNames) {
+      const browserResults = results.filter((r) => r.browserName === browserName)
+      const browserSkipped = skipped.filter((r) => r.browserName === browserName)
+      console.log(`\n${browserName}:`)
+      browserResults.forEach((r) => {
+        const status = r.success ? '✓' : '✗'
+        console.log(`  ${status} ${r.urlLabel}`)
+      })
+      browserSkipped.forEach((r) => {
+        console.log(`  ⚠ ${r.urlLabel}: SKIPPED`)
+      })
+    }
 
-    failed.forEach((r) => {
-      console.log(`✗ ${r.browserName}: FAILED`)
-    })
-
-    skipped.forEach((r) => {
-      console.log(`⚠ ${r.browserName}: SKIPPED`)
-    })
+    // Also show any browsers that were entirely skipped
+    const skippedBrowsers = [...new Set(skipped.map((r) => r.browserName))].filter(
+      (name) => !browserNames.includes(name),
+    )
+    for (const browserName of skippedBrowsers) {
+      const browserSkipped = skipped.filter((r) => r.browserName === browserName)
+      console.log(`\n${browserName}:`)
+      browserSkipped.forEach((r) => {
+        console.log(`  ⚠ ${r.urlLabel}: SKIPPED`)
+      })
+    }
 
     if (failed.length > 0 || skipped.length > 0) {
-      console.log(
-        `\n${failed.length} browser(s) failed, ${skipped.length} skipped, ${passed.length} passed`,
-      )
+      console.log(`\n${failed.length} failed, ${skipped.length} skipped, ${passed.length} passed`)
       exitCode = 1
     } else {
-      console.log(`\nAll ${passed.length} browser(s) passed!`)
+      console.log(`\nAll ${browserNames.length} browsers passed!`)
     }
   } catch (error) {
     console.error('\nFatal error:', error)
