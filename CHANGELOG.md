@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.4.4](https://github.com/panva/hpke/compare/v0.4.3...v0.4.4) (2025-12-02)
+
+
+### Refactor
+
+* add additional assertValidity checks to the noble implementations ([e46795a](https://github.com/panva/hpke/commit/e46795a241aff80e90f26dcd1abefbfe74ad1f3e))
+* perform the same operation regardless of byte values in checkNotAllZeros ([15f79d5](https://github.com/panva/hpke/commit/15f79d5ea8856183449a6ac2d5c478b4f5fa0d20))
+
 ## [0.4.3](https://github.com/panva/hpke/compare/v0.4.2...v0.4.3) (2025-11-30)
 
 
