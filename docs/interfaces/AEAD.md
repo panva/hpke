@@ -27,7 +27,7 @@ Custom AEAD implementations must conform to this interface to be compatible with
 ## Example
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 // Using a built-in AEAD
 const suite = new HPKE.CipherSuite(

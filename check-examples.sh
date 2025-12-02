@@ -30,7 +30,7 @@ extract_typescript_blocks() {
     codeBlocks.forEach((code, index) => {
       const hasImport = code.includes('import * as HPKE');
       const content = hasImport
-        ? code.replace('@panva/hpke', '${import_path}')
+        ? code.replace('hpke', '${import_path}')
         : \`import * as HPKE from '${import_path}'\n\n\${code}\`;
 
       fs.writeFileSync(\`${base_name}.\${index}.ts\`, content);

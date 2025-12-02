@@ -34,7 +34,7 @@ KDF implementations are either one-stage or two-stage:
 ## Example
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 // Using a built-in KDF
 const suite = new HPKE.CipherSuite(

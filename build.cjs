@@ -72,8 +72,8 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
   const outFile = './examples/noble-suite/index.js'
   let js = amaro.transformSync(fs.readFileSync(inFile), { mode: 'strip-only' }).code
 
-  // Rewrite import paths from '../../index.ts' to '@panva/hpke'
-  js = js.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'@panva/hpke'")
+  // Rewrite import paths from '../../index.ts' to 'hpke'
+  js = js.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'hpke'")
 
   fs.writeFileSync(outFile, js)
   const nobleBefore = getFileSizes(outFile)
@@ -90,8 +90,8 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
   const file = './examples/noble-suite/index.d.ts'
   let dts = fs.readFileSync(file, 'utf8')
 
-  // Rewrite import paths from '../../index.ts' to '@panva/hpke'
-  dts = dts.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'@panva/hpke'")
+  // Rewrite import paths from '../../index.ts' to 'hpke'
+  dts = dts.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'hpke'")
 
   fs.writeFileSync(file, dts)
 }

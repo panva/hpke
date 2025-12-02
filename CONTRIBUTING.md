@@ -1,4 +1,4 @@
-# Contributing to @panva/hpke
+# Contributing to hpke
 
 Please note we have a [code of conduct][coc], please follow it in all your interactions with the
 project.

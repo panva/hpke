@@ -36,7 +36,7 @@
     <script type="importmap">
       {
         "imports": {
-          "@panva/hpke": "./index.js",
+          "hpke": "./index.js",
           "@panva/hpke-noble": "./examples/noble-suite/index.js",
           "@noble/": "./node_modules/@noble/",
           "./index.ts": "./index.js",
@@ -1643,7 +1643,7 @@
     <div class="container">
       <div class="header">
         <div>
-          <h1>@panva/hpke</h1>
+          <h1>HPKE</h1>
           <div class="social-links">
             <a href="https://github.com/panva/hpke" target="_blank">
               <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
@@ -1652,7 +1652,7 @@
                 ></path>
               </svg>
             </a>
-            <a href="https://www.npmjs.com/package/@panva/hpke" target="_blank">
+            <a href="https://www.npmjs.com/package/hpke" target="_blank">
               <svg viewBox="0 0 780 250" fill="currentColor" aria-hidden="true">
                 <path
                   d="M240,250h100v-50h100V0H240V250z M340,50h50v100h-50V50z M480,0v200h100V50h50v150h50V50h50v150h50V0H480z M0,200h100V50h50v150h50V0H0V200z"
@@ -1890,7 +1890,7 @@
       const activeFilter = onlyNative ? 'native' : onlyNoble ? 'noble' : 'both'
       document.getElementById('filter' + activeFilter.charAt(0).toUpperCase() + activeFilter.slice(1)).classList.add('active')
 
-      import * as HPKE from '@panva/hpke'
+      import * as HPKE from 'hpke'
       import * as Noble from '@panva/hpke-noble'
       import Bowser from 'bowser'
 

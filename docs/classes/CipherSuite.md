@@ -72,7 +72,7 @@ platforms and runtimes.
 Traditional algorithms
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
   HPKE.KEM_DHKEM_P256_HKDF_SHA256,
@@ -84,7 +84,7 @@ const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
 Hybrid post-quantum/traditional (PQ/T) KEM
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
   HPKE.KEM_MLKEM768_X25519,
@@ -96,7 +96,7 @@ const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
 Post-quantum (PQ) KEM
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
   HPKE.KEM_ML_KEM_768,

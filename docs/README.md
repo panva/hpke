@@ -1,4 +1,4 @@
-# @panva/hpke
+# hpke
 
 Hybrid Public Key Encryption (HPKE) implementation for JavaScript runtimes.
 
@@ -16,7 +16,7 @@ public key.
 Getting started with [CipherSuite](classes/CipherSuite.md)
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 // 1. Choose a cipher suite
 const suite = new HPKE.CipherSuite(

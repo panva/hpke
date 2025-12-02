@@ -16,7 +16,7 @@
  * Getting started with {@link CipherSuite}
  *
  * ```ts
- * import * as HPKE from '@panva/hpke'
+ * import * as HPKE from 'hpke'
  *
  * // 1. Choose a cipher suite
  * const suite = new HPKE.CipherSuite(
@@ -429,7 +429,7 @@ export class CipherSuite {
    * Traditional algorithms
    *
    * ```ts
-   * import * as HPKE from '@panva/hpke'
+   * import * as HPKE from 'hpke'
    *
    * const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
    *   HPKE.KEM_DHKEM_P256_HKDF_SHA256,
@@ -443,7 +443,7 @@ export class CipherSuite {
    * Hybrid post-quantum/traditional (PQ/T) KEM
    *
    * ```ts
-   * import * as HPKE from '@panva/hpke'
+   * import * as HPKE from 'hpke'
    *
    * const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
    *   HPKE.KEM_MLKEM768_X25519,
@@ -457,7 +457,7 @@ export class CipherSuite {
    * Post-quantum (PQ) KEM
    *
    * ```ts
-   * import * as HPKE from '@panva/hpke'
+   * import * as HPKE from 'hpke'
    *
    * const suite: HPKE.CipherSuite = new HPKE.CipherSuite(
    *   HPKE.KEM_ML_KEM_768,
@@ -1611,7 +1611,7 @@ async function ExportTwoStage(
  * @example
  *
  * ```ts
- * import * as HPKE from '@panva/hpke'
+ * import * as HPKE from 'hpke'
  *
  * // Using a built-in KDF
  * const suite = new HPKE.CipherSuite(
@@ -1788,7 +1788,7 @@ export async function LabeledExpand(
  * @example
  *
  * ```ts
- * import * as HPKE from '@panva/hpke'
+ * import * as HPKE from 'hpke'
  *
  * // Using a built-in KEM
  * const suite = new HPKE.CipherSuite(
@@ -2028,7 +2028,7 @@ function isKey(key: unknown, type: string, extractable?: boolean): asserts key i
  * @example
  *
  * ```ts
- * import * as HPKE from '@panva/hpke'
+ * import * as HPKE from 'hpke'
  *
  * // Using a built-in AEAD
  * const suite = new HPKE.CipherSuite(

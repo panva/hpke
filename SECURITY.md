@@ -6,7 +6,7 @@ The following major versions are currently supported with security updates.
 
 | Version                                         | End-of-life                 |
 | ----------------------------------------------- | --------------------------- |
-| [v0.x](https://github.com/panva/hpke/tree/v0.x) | as soon as v1.x is released |
+| [v1.x](https://github.com/panva/hpke/tree/v1.x) | TBD                         |
 
 End-of-life for the current release will be determined prior to the release of its successor.
 
@@ -16,7 +16,7 @@ You should report vulnerabilities using the [Github UI](https://github.com/panva
 
 ## Threat Model
 
-This section documents the threat model for `@panva/hpke` and `@panva/hpke-noble`. `@panva/hpke` is a JavaScript implementation of [Hybrid Public Key Encryption (draft-ietf-hpke-hpke)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
+This section documents the threat model for `hpke` and `@panva/hpke-noble`. `hpke` is a JavaScript implementation of [Hybrid Public Key Encryption (draft-ietf-hpke-hpke)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
 
 ### Purpose and Intended Users
 
@@ -77,6 +77,6 @@ The following are explicitly **not** considered vulnerabilities in this library:
 - **Side-channel attacks** ([CWE-208](https://cwe.mitre.org/data/definitions/208.html)): Timing attacks, cache attacks, and other side-channel vulnerabilities in the underlying Web Cryptography implementations are not vulnerabilities in this library.
 - **Compromised runtime environment**: Malicious or backdoored JavaScript runtimes, compromised system libraries, or tampered Web Cryptography implementations.
 - **Supply chain attacks on the runtime** ([CWE-1357](https://cwe.mitre.org/data/definitions/1357.html)): Compromised Node.js binaries, malicious browser builds, or similar supply chain attacks on the execution environment.
-- **Supply chain attacks on third-party libraries** ([CWE-1357](https://cwe.mitre.org/data/definitions/1357.html)): `@panva/hpke` has zero dependencies. `@panva/hpke-noble` depends on [@noble](https://paulmillr.com/noble/) cryptographic libraries. Supply chain compromises of third-party dependencies (including `@noble` libraries or any user-provided algorithm implementations) are not considered vulnerabilities in this project.
+- **Supply chain attacks on third-party libraries** ([CWE-1357](https://cwe.mitre.org/data/definitions/1357.html)): `hpke` has zero dependencies. `@panva/hpke-noble` depends on [@noble](https://paulmillr.com/noble/) cryptographic libraries. Supply chain compromises of third-party dependencies (including `@noble` libraries or any user-provided algorithm implementations) are not considered vulnerabilities in this project.
 - **Denial of service via resource exhaustion** ([CWE-400](https://cwe.mitre.org/data/definitions/400.html)): While the library validates inputs, it does not implement resource limits. Applications should implement their own rate limiting and resource management.
 - **Issues in user-provided algorithm implementations**: Security flaws in custom KEM, KDF, or AEAD implementations provided by users are the user's responsibility.

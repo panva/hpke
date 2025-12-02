@@ -1,8 +1,8 @@
-# @panva/hpke
+# hpke
 
-`@panva/hpke` is a JavaScript module for Hybrid Public Key Encryption (HPKE). This module is
-designed to work across various Web-interoperable runtimes including Node.js, browsers, Cloudflare
-Workers, Deno, Bun, and others.
+`hpke` is a JavaScript module for Hybrid Public Key Encryption (HPKE). This module is designed to
+work across various Web-interoperable runtimes including Node.js, browsers, Cloudflare Workers,
+Deno, Bun, and others.
 
 ## [💗 Help the project](https://github.com/sponsors/panva)
 
@@ -12,18 +12,18 @@ this module useful, please consider supporting this project by
 
 ## Dependencies: 0
 
-`@panva/hpke` has no dependencies and it exports tree-shakeable ESM.
+`hpke` has no dependencies and it exports tree-shakeable ESM.
 
 ## [API Reference](docs/README.md)
 
-`@panva/hpke` is distributed via [npmjs.com](https://www.npmjs.com/package/@panva/hpke),
-[jsdelivr.com](https://www.jsdelivr.com/package/npm/@panva/hpke), and
+`hpke` is distributed via [npmjs.com](https://www.npmjs.com/package/hpke),
+[jsdelivr.com](https://www.jsdelivr.com/package/npm/hpke), and
 [github.com](https://github.com/panva/hpke).
 
 ## Quick Start
 
 ```ts
-import * as HPKE from '@panva/hpke'
+import * as HPKE from 'hpke'
 
 // 1. Choose a cipher suite
 const suite = new HPKE.CipherSuite(
@@ -136,7 +136,7 @@ specifications.
 
 | Version                                         | Security Fixes 🔑 | Other Bug Fixes 🐞 | New Features ⭐ |
 | ----------------------------------------------- | ----------------- | ------------------ | --------------- |
-| [v0.x](https://github.com/panva/hpke/tree/v0.x) | [Security Policy] | ✓                  | ✓               |
+| [v1.x](https://github.com/panva/hpke/tree/v1.x) | [Security Policy] | ✓                  | ✓               |
 
 [Web Cryptography]: https://www.w3.org/TR/webcrypto-2/
 [Security Policy]: https://github.com/panva/hpke/security/policy
