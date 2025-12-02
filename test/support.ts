@@ -111,10 +111,20 @@ export const supported: Record<string, () => boolean | undefined> = {
   },
 }
 
-function createAlgorithmMap<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.AEADFactory>(
+type AlgorithmEntry<T> = {
+  supported: boolean
+  factory: T
+  name: string
+  impl: 'webcrypto' | 'noble'
+}
+
+function createAlgorithmMaps<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.AEADFactory>(
   type: string,
 ) {
-  const map = new Map<number, { supported: boolean; factory: T; name: string }>()
+  // Map that prefers WebCrypto, falls back to Noble
+  const preferWebCrypto = new Map<number, AlgorithmEntry<T>>()
+  // Map that only contains Noble implementations
+  const onlyNoble = new Map<number, AlgorithmEntry<T>>()
 
   const hpkeAlgorithms = Object.values(HPKE).filter(
     (value) => typeof value === 'function' && value.name.startsWith(`${type}_`),
@@ -123,34 +133,42 @@ function createAlgorithmMap<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.A
     (value) => typeof value === 'function' && value.name.startsWith(`${type}_`),
   ) as T[]
 
-  // Process HPKE algorithms first
+  // Process HPKE (WebCrypto) algorithms first
   for (const algorithm of hpkeAlgorithms) {
     const id = IDs[algorithm.name]
     if (!id) throw new Error(`missing id for ${algorithm.name}`)
 
     const isSupported = supported[algorithm.name]?.() !== false
 
-    map.set(id, { factory: algorithm, supported: isSupported, name: algorithm.name })
+    preferWebCrypto.set(id, {
+      factory: algorithm,
+      supported: isSupported,
+      name: algorithm.name,
+      impl: 'webcrypto',
+    })
   }
 
-  // Process noble algorithms - these are always supported and only overwrite if existing is not supported
+  // Process noble algorithms
   for (const algorithm of nobleAlgorithms) {
     const id = IDs[algorithm.name]
     if (!id) throw new Error(`missing id for ${algorithm.name}`)
 
-    const existing = map.get(id)
+    // Always add to onlyNoble map
+    onlyNoble.set(id, { factory: algorithm, supported: true, name: algorithm.name, impl: 'noble' })
 
-    // Only overwrite if there's no existing entry, or if the existing one is not supported
+    // For preferWebCrypto: only overwrite if there's no existing entry, or if the existing one is not supported
+    const existing = preferWebCrypto.get(id)
     if (!existing || !existing.supported) {
-      map.set(id, {
+      preferWebCrypto.set(id, {
         factory: algorithm,
-        supported: true, // noble implementations are always supported
+        supported: true,
         name: algorithm.name,
+        impl: 'noble',
       })
     }
   }
 
-  return map
+  return { preferWebCrypto, onlyNoble }
 }
 
 function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.AEADFactory>(
@@ -172,33 +190,26 @@ function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | 
   return unsupported
 }
 
-function getNobleAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | HPKE.AEADFactory>(
-  type: string,
-) {
-  const map = new Map<number, { factory: T; name: string; supported: boolean }>()
+const kemMaps = createAlgorithmMaps<HPKE.KEMFactory>('KEM')
+const kdfMaps = createAlgorithmMaps<HPKE.KDFFactory>('KDF')
+const aeadMaps = createAlgorithmMaps<HPKE.AEADFactory>('AEAD')
 
-  const nobleAlgorithms = Object.values(noble).filter(
-    (value) => typeof value === 'function' && value.name.startsWith(`${type}_`),
-  ) as T[]
+// Add AEAD_EXPORT_ONLY from WebCrypto to Noble AEADs
+aeadMaps.onlyNoble.set(IDs.AEAD_EXPORT_ONLY!, {
+  factory: HPKE.AEAD_EXPORT_ONLY,
+  supported: true,
+  name: 'AEAD_EXPORT_ONLY',
+  impl: 'noble',
+})
 
-  for (const algorithm of nobleAlgorithms) {
-    const id = IDs[algorithm.name]
-    if (!id) throw new Error(`missing id for ${algorithm.name}`)
+export const KEMS = kemMaps.preferWebCrypto
+export const KDFS = kdfMaps.preferWebCrypto
+export const AEADS = aeadMaps.preferWebCrypto
 
-    map.set(id, { factory: algorithm, name: algorithm.name, supported: true })
-  }
-
-  return map
-}
-
-export const KEMS = createAlgorithmMap<HPKE.KEMFactory>('KEM')
-export const KDFS = createAlgorithmMap<HPKE.KDFFactory>('KDF')
-export const AEADS = createAlgorithmMap<HPKE.AEADFactory>('AEAD')
+export const NOBLE_KEMS = kemMaps.onlyNoble
+export const NOBLE_KDFS = kdfMaps.onlyNoble
+export const NOBLE_AEADS = aeadMaps.onlyNoble
 
 export const UNSUPPORTED_KEMS = getUnsupportedAlgorithms<HPKE.KEMFactory>('KEM')
 export const UNSUPPORTED_KDFS = getUnsupportedAlgorithms<HPKE.KDFFactory>('KDF')
 export const UNSUPPORTED_AEADS = getUnsupportedAlgorithms<HPKE.AEADFactory>('AEAD')
-
-export const NOBLE_KEMS = getNobleAlgorithms<HPKE.KEMFactory>('KEM')
-export const NOBLE_KDFS = getNobleAlgorithms<HPKE.KDFFactory>('KDF')
-export const NOBLE_AEADS = getNobleAlgorithms<HPKE.AEADFactory>('AEAD')

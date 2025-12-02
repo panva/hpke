@@ -3,7 +3,18 @@ import * as fs from 'node:fs/promises'
 import * as assert from 'node:assert/strict'
 
 import * as HPKE from '../index.ts'
-import { label, KEMS, KDFS, AEADS, IDs, waitFor, hex } from './support.ts'
+import {
+  label,
+  KEMS,
+  KDFS,
+  AEADS,
+  NOBLE_KEMS,
+  NOBLE_KDFS,
+  NOBLE_AEADS,
+  IDs,
+  waitFor,
+  hex,
+} from './support.ts'
 
 declare global {
   interface Uint8ArrayConstructor {
@@ -71,177 +82,187 @@ const vectors: Vector[] = [
   ...JSON.parse(await fs.readFile('./test/vectors-pq.json', 'ascii')),
 ]
 
-let total = 0
-for (const vector of vectors) {
-  const i = total
-  total++
-  // Skip Auth modes (0x02 and 0x03)
-  if (vector.mode === 0x02 || vector.mode === 0x03) {
-    continue
-  }
-  const KDF = KDFS.get(vector.kdf_id)
-  const KEM = KEMS.get(vector.kem_id)
-  const AEAD = AEADS.get(vector.aead_id)
+// Define implementation sets to test
+const implementations = [
+  { name: 'WebCrypto', KEMS, KDFS, AEADS },
+  { name: 'Noble', KEMS: NOBLE_KEMS, KDFS: NOBLE_KDFS, AEADS: NOBLE_AEADS },
+]
 
-  let skR!: HPKE.Key
-  let pkR!: HPKE.Key
-  let kpR!: HPKE.KeyPair
+for (const impl of implementations) {
+  test.describe(impl.name, () => {
+    let total = 0
+    for (const vector of vectors) {
+      const i = total
+      total++
+      // Skip Auth modes (0x02 and 0x03)
+      if (vector.mode === 0x02 || vector.mode === 0x03) {
+        continue
+      }
+      const KDF = impl.KDFS.get(vector.kdf_id)
+      const KEM = impl.KEMS.get(vector.kem_id)
+      const AEAD = impl.AEADS.get(vector.aead_id)
 
-  const keys = () => {
-    assert.ok(skR)
-    assert.ok(pkR)
-    assert.ok(kpR)
-  }
+      let skR!: HPKE.Key
+      let pkR!: HPKE.Key
+      let kpR!: HPKE.KeyPair
 
-  // Test KEM's key management only
-  if (KEM?.supported === true) {
-    const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
-    test.describe(`[${i}] ${KEM.name}`, () => {
-      it('DeriveKeyPair', async (t: test.TestContext) => {
-        const ikmR = hex(vector.ikmR)
-        // @ts-expect-error
-        const extractable = typeof crypto.subtle.getPublicKey !== 'function'
-        await t.assert.doesNotReject(
-          Promise.all([
-            suite.DeriveKeyPair(ikmR, extractable).then(({ privateKey, publicKey }) => {
-              skR = privateKey
-              pkR = publicKey
-            }),
-            suite.DeriveKeyPair(ikmR).then(({ privateKey, publicKey }) => {
-              kpR = { publicKey, privateKey }
-            }),
-          ]),
-        )
-      })
-
-      it('GenerateKeyPair', async (t: test.TestContext) => {
-        await t.assert.doesNotReject(suite.GenerateKeyPair())
-      })
-
-      it('SerializePublicKey', async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const pkRm = await suite.SerializePublicKey(pkR)
-        t.assert.deepStrictEqual(pkRm, hex(vector.pkRm))
-      })
-
-      it('DeserializePublicKey', async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const pkRm = hex(vector.pkRm)
-        const deserializedKey = await suite.DeserializePublicKey(pkRm)
-        t.assert.deepStrictEqual(deserializedKey.algorithm, pkR.algorithm)
-        t.assert.notEqual(deserializedKey, pkR)
-        t.assert.deepStrictEqual(await suite.SerializePublicKey(deserializedKey), pkRm)
-      })
-
-      it('SerializePrivateKey', async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const skR = await suite.DeserializePrivateKey(hex(vector.skRm), true)
-        const skRm = await suite.SerializePrivateKey(skR)
-        t.assert.deepStrictEqual(skRm, hex(vector.skRm))
-      })
-
-      it('DeserializePrivateKey', async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const skRm = hex(vector.skRm)
-        const deserializedKey = await suite.DeserializePrivateKey(skRm, true)
-        t.assert.notEqual(deserializedKey, skRm)
-        t.assert.deepStrictEqual(deserializedKey.algorithm, skR.algorithm)
-        t.assert.deepStrictEqual(await suite.SerializePrivateKey(deserializedKey), skRm)
-      })
-    })
-  }
-
-  if (!KEM || !KDF || !AEAD) {
-    const suite = {
-      KEM: KEM ?? { id: vector.kem_id, name: getSuiteName('KEM', vector.kem_id) },
-      KDF: KDF ?? { id: vector.kdf_id, name: getSuiteName('KDF', vector.kdf_id) },
-      AEAD: AEAD ?? { id: vector.aead_id, name: getSuiteName('AEAD', vector.aead_id) },
-    }
-    it.skip(`[${i}][not implemented] ${label(suite as HPKE.CipherSuite, vector.mode)}`)
-    continue
-  }
-
-  const suite = new HPKE.CipherSuite(KEM.factory, KDF.factory, AEAD.factory)
-
-  if (!KEM.supported || !KDF.supported || !AEAD.supported) {
-    it.skip(`[${i}][not supported] ${label(suite, vector.mode)}`)
-    continue
-  }
-
-  test.describe(`[${i}] ${label(suite, vector.mode)}`, () => {
-    // Helper to prepare common test data
-    const getTestData = () => ({
-      enc: hex(vector.enc),
-      info: hex(vector.info),
-      psk: vector.psk ? hex(vector.psk) : undefined,
-      pskId: vector.psk_id ? hex(vector.psk_id) : undefined,
-    })
-
-    // Helper for testing Open operation with different key types
-    const testOpen = (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
-      await waitFor(keys, { interval: 0 })
-      const encryptions0 = vector.encryptions[0]!
-      const { enc, info, psk, pskId } = getTestData()
-      const aad = hex(encryptions0.aad)
-      const ct = hex(encryptions0.ct)
-      const pt = hex(encryptions0.pt)
-      const key = keyType === 'privateKey' ? skR : kpR
-      t.assert.deepStrictEqual(await suite.Open(key, enc, ct, { aad, info, psk, pskId }), pt)
-    }
-
-    // Helper for testing ReceiveExport operation with different key types
-    const testReceiveExport =
-      (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const exports0 = vector.exports[0]!
-        const { enc, info, psk, pskId } = getTestData()
-        const exporter_context = hex(exports0.exporter_context)
-        const exported_value = hex(exports0.exported_value)
-        const L = exports0.L
-        const key = keyType === 'privateKey' ? skR : kpR
-        t.assert.deepStrictEqual(
-          await suite.ReceiveExport(key, enc, exporter_context, L, { info, psk, pskId }),
-          exported_value,
-        )
+      const keys = () => {
+        assert.ok(skR)
+        assert.ok(pkR)
+        assert.ok(kpR)
       }
 
-    // Helper for testing SetupRecipient with Open & Export
-    const testSetupRecipient =
-      (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
-        await waitFor(keys, { interval: 0 })
-        const { enc, info, psk, pskId } = getTestData()
-        const key = keyType === 'privateKey' ? skR : kpR
+      // Test KEM's key management only
+      if (KEM?.supported === true) {
+        const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
+        test.describe(`[${i}] ${KEM.name}`, () => {
+          it('DeriveKeyPair', async (t: test.TestContext) => {
+            const ikmR = hex(vector.ikmR)
+            // @ts-expect-error
+            const extractable = typeof crypto.subtle.getPublicKey !== 'function'
+            await t.assert.doesNotReject(
+              Promise.all([
+                suite.DeriveKeyPair(ikmR, extractable).then(({ privateKey, publicKey }) => {
+                  skR = privateKey
+                  pkR = publicKey
+                }),
+                suite.DeriveKeyPair(ikmR).then(({ privateKey, publicKey }) => {
+                  kpR = { publicKey, privateKey }
+                }),
+              ]),
+            )
+          })
 
-        const ctx = await suite.SetupRecipient(key, enc, { info, psk, pskId })
+          it('GenerateKeyPair', async (t: test.TestContext) => {
+            await t.assert.doesNotReject(suite.GenerateKeyPair())
+          })
 
-        // Test all encryptions in sequence
-        for (const encryption of vector.encryptions) {
-          const aad = hex(encryption.aad)
-          const ct = hex(encryption.ct)
-          const pt = hex(encryption.pt)
-          t.assert.deepStrictEqual(await ctx.Open(ct, aad), pt)
-        }
+          it('SerializePublicKey', async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const pkRm = await suite.SerializePublicKey(pkR)
+            t.assert.deepStrictEqual(pkRm, hex(vector.pkRm))
+          })
 
-        // Test all exports
-        for (const exportData of vector.exports) {
-          const exporter_context = hex(exportData.exporter_context)
-          const exported_value = hex(exportData.exported_value)
-          const L = exportData.L
-          t.assert.deepStrictEqual(await ctx.Export(exporter_context, L), exported_value)
-        }
+          it('DeserializePublicKey', async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const pkRm = hex(vector.pkRm)
+            const deserializedKey = await suite.DeserializePublicKey(pkRm)
+            t.assert.deepStrictEqual(deserializedKey.algorithm, pkR.algorithm)
+            t.assert.notEqual(deserializedKey, pkR)
+            t.assert.deepStrictEqual(await suite.SerializePublicKey(deserializedKey), pkRm)
+          })
+
+          it('SerializePrivateKey', async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const skR = await suite.DeserializePrivateKey(hex(vector.skRm), true)
+            const skRm = await suite.SerializePrivateKey(skR)
+            t.assert.deepStrictEqual(skRm, hex(vector.skRm))
+          })
+
+          it('DeserializePrivateKey', async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const skRm = hex(vector.skRm)
+            const deserializedKey = await suite.DeserializePrivateKey(skRm, true)
+            t.assert.notEqual(deserializedKey, skRm)
+            t.assert.deepStrictEqual(deserializedKey.algorithm, skR.algorithm)
+            t.assert.deepStrictEqual(await suite.SerializePrivateKey(deserializedKey), skRm)
+          })
+        })
       }
 
-    if (vector.encryptions[0]) {
-      it('Open', testOpen('privateKey'))
-      it('Open (with KeyPair)', testOpen('keyPair'))
-    }
+      if (!KEM || !KDF || !AEAD) {
+        const suite = {
+          KEM: KEM ?? { id: vector.kem_id, name: getSuiteName('KEM', vector.kem_id) },
+          KDF: KDF ?? { id: vector.kdf_id, name: getSuiteName('KDF', vector.kdf_id) },
+          AEAD: AEAD ?? { id: vector.aead_id, name: getSuiteName('AEAD', vector.aead_id) },
+        }
+        it.skip(`[${i}][not implemented] ${label(suite as HPKE.CipherSuite, vector.mode)}`)
+        continue
+      }
 
-    if (vector.exports[0]) {
-      it('ReceiveExport', testReceiveExport('privateKey'))
-      it('ReceiveExport (with KeyPair)', testReceiveExport('keyPair'))
-    }
+      const suite = new HPKE.CipherSuite(KEM.factory, KDF.factory, AEAD.factory)
 
-    it('SetupR > Open & Export', testSetupRecipient('privateKey'))
-    it('SetupR > Open & Export (with KeyPair)', testSetupRecipient('keyPair'))
+      if (!KEM.supported || !KDF.supported || !AEAD.supported) {
+        it.skip(`[${i}][not supported] ${label(suite, vector.mode)}`)
+        continue
+      }
+
+      test.describe(`[${i}] ${label(suite, vector.mode)}`, () => {
+        // Helper to prepare common test data
+        const getTestData = () => ({
+          enc: hex(vector.enc),
+          info: hex(vector.info),
+          psk: vector.psk ? hex(vector.psk) : undefined,
+          pskId: vector.psk_id ? hex(vector.psk_id) : undefined,
+        })
+
+        // Helper for testing Open operation with different key types
+        const testOpen = (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
+          await waitFor(keys, { interval: 0 })
+          const encryptions0 = vector.encryptions[0]!
+          const { enc, info, psk, pskId } = getTestData()
+          const aad = hex(encryptions0.aad)
+          const ct = hex(encryptions0.ct)
+          const pt = hex(encryptions0.pt)
+          const key = keyType === 'privateKey' ? skR : kpR
+          t.assert.deepStrictEqual(await suite.Open(key, enc, ct, { aad, info, psk, pskId }), pt)
+        }
+
+        // Helper for testing ReceiveExport operation with different key types
+        const testReceiveExport =
+          (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const exports0 = vector.exports[0]!
+            const { enc, info, psk, pskId } = getTestData()
+            const exporter_context = hex(exports0.exporter_context)
+            const exported_value = hex(exports0.exported_value)
+            const L = exports0.L
+            const key = keyType === 'privateKey' ? skR : kpR
+            t.assert.deepStrictEqual(
+              await suite.ReceiveExport(key, enc, exporter_context, L, { info, psk, pskId }),
+              exported_value,
+            )
+          }
+
+        // Helper for testing SetupRecipient with Open & Export
+        const testSetupRecipient =
+          (keyType: 'privateKey' | 'keyPair') => async (t: test.TestContext) => {
+            await waitFor(keys, { interval: 0 })
+            const { enc, info, psk, pskId } = getTestData()
+            const key = keyType === 'privateKey' ? skR : kpR
+
+            const ctx = await suite.SetupRecipient(key, enc, { info, psk, pskId })
+
+            // Test all encryptions in sequence
+            for (const encryption of vector.encryptions) {
+              const aad = hex(encryption.aad)
+              const ct = hex(encryption.ct)
+              const pt = hex(encryption.pt)
+              t.assert.deepStrictEqual(await ctx.Open(ct, aad), pt)
+            }
+
+            // Test all exports
+            for (const exportData of vector.exports) {
+              const exporter_context = hex(exportData.exporter_context)
+              const exported_value = hex(exportData.exported_value)
+              const L = exportData.L
+              t.assert.deepStrictEqual(await ctx.Export(exporter_context, L), exported_value)
+            }
+          }
+
+        if (vector.encryptions[0]) {
+          it('Open', testOpen('privateKey'))
+          it('Open (with KeyPair)', testOpen('keyPair'))
+        }
+
+        if (vector.exports[0]) {
+          it('ReceiveExport', testReceiveExport('privateKey'))
+          it('ReceiveExport (with KeyPair)', testReceiveExport('keyPair'))
+        }
+
+        it('SetupR > Open & Export', testSetupRecipient('privateKey'))
+        it('SetupR > Open & Export (with KeyPair)', testSetupRecipient('keyPair'))
+      })
+    }
   })
 }
