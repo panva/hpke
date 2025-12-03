@@ -70,7 +70,7 @@ Please note that some suites may not be available depending on the runtime used.
 Algorithm implementations exposed by this module are built on top of [Web Cryptography][] (and its
 extensions, e.g. [Secure Curves][], [Modern Algorithms][]). Runtimes implementing Web Cryptography
 are not required to support all of its algorithms and so not all algorithms are available in all
-runtimes, see
+runtimes.
 
 This module is designed to be extensible, you can bring outside-built implementations of any KEM,
 KDF, or AEAD algorithm into any JavaScript runtime by conforming to the respective interfaces
