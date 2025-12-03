@@ -84,12 +84,16 @@ const vectors: Vector[] = [
 
 // Define implementation sets to test
 const implementations = [
-  { name: 'WebCrypto', KEMS, KDFS, AEADS },
-  { name: 'Noble', KEMS: NOBLE_KEMS, KDFS: NOBLE_KDFS, AEADS: NOBLE_AEADS },
+  { name: 'Web Cryptography', KEMS, KDFS, AEADS },
+  { name: 'Noble Cryptography', KEMS: NOBLE_KEMS, KDFS: NOBLE_KDFS, AEADS: NOBLE_AEADS },
 ]
 
 for (const impl of implementations) {
-  test.describe(impl.name, () => {
+  test.describe(`vectors ${impl.name}`, () => {
+    // @ts-ignore
+    if (typeof Deno !== 'object')
+      test.afterEach(() => new Promise((resolve) => setImmediate(resolve)))
+
     let total = 0
     for (const vector of vectors) {
       const i = total

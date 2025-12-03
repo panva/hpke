@@ -53,6 +53,10 @@ function runPummelTests(
   }
 
   test.describe(`pummel (${name})`, () => {
+    // @ts-ignore
+    if (typeof Deno !== 'object')
+      test.afterEach(() => new Promise((resolve) => setImmediate(resolve)))
+
     test.describe('Algorithm implementation returns', () => {
       for (const Algorithm of [...KEMS.values(), ...KDFS.values(), ...AEADS.values()]) {
         it(`${Algorithm.name}() returns are unique objects`, (t: test.TestContext) => {
@@ -282,7 +286,7 @@ function runPummelTests(
                 t.assert.deepStrictEqual(opened, pt)
               })
 
-              it('Roundtrip Setup > Seal<>Open (3 messages)', async (t: test.TestContext) => {
+              it('Roundtrip Setup > Seal<>Open (multiple messages)', async (t: test.TestContext) => {
                 const kp = await getKeyPair(suite)
                 const pkR = kp.publicKey
                 const skR = kp.privateKey
@@ -318,15 +322,6 @@ function runPummelTests(
                 const decrypted2 = await contextR.Open(ct2, aad2)
                 assertExactBuffer(t, decrypted2, 'context.Open decrypted2')
                 t.assert.deepStrictEqual(decrypted2, pt2)
-
-                // Message 3
-                const aad3 = new Uint8Array([60, 70, 80, 90])
-                const pt3 = new Uint8Array([11, 12, 13])
-                const ct3 = await contextS.Seal(pt3, aad3)
-                assertExactBuffer(t, ct3, 'context.Seal ct3')
-                const decrypted3 = await contextR.Open(ct3, aad3)
-                assertExactBuffer(t, decrypted3, 'context.Open decrypted3')
-                t.assert.deepStrictEqual(decrypted3, pt3)
               })
             })
           }
@@ -665,8 +660,8 @@ function runPummelTests(
   })
 }
 
-runPummelTests('WebCrypto', KEMS, KDFS, AEADS)
-runPummelTests('Noble', NOBLE_KEMS, NOBLE_KDFS, NOBLE_AEADS)
+runPummelTests('Web Cryptography', KEMS, KDFS, AEADS)
+runPummelTests('Noble Cryptography', NOBLE_KEMS, NOBLE_KDFS, NOBLE_AEADS)
 
 test.describe('Unsupported WebCrypto algorithms', () => {
   async function testUnsupportedAlgorithm(

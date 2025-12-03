@@ -1160,12 +1160,12 @@ test.describe('Validations', () => {
   })
 })
 
-test.describe('Non-extractable key protection (built-in and noble KEMs)', () => {
+test.describe('Non-extractable key protection', () => {
   const kems: Array<
     [string, Map<number, { factory: HPKE.KEMFactory; name: string; supported: boolean }>]
   > = [
-    ['built-in', KEMS],
-    ['noble', NOBLE_KEMS],
+    ['Web Cryptography', KEMS],
+    ['Noble Cryptography', NOBLE_KEMS],
   ]
 
   for (const [lib, KEMS] of kems) {
