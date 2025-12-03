@@ -2221,12 +2221,12 @@ export const AEAD_EXPORT_ONLY: AEADFactory = function (): AEAD {
 }
 
 // ============================================================================
-// Crypto.subtle wrapper to convert DOMException NotSupportedError
+// Wrapper for crypto.subtle to convert DOMException to NotSupportedError
 // ============================================================================
 
-async function subtle<T>(promise: () => Promise<T>, name: string): Promise<T> {
+async function subtle<T>(promise: (subtle: SubtleCrypto) => Promise<T>, name: string): Promise<T> {
   try {
-    return await promise()
+    return await promise(crypto.subtle)
   } catch (cause) {
     if (
       cause instanceof TypeError ||
@@ -2272,12 +2272,10 @@ function HKDF_SHARED(): KDF_BASE {
       const ikm = ab(_ikm)
       return new Uint8Array(
         await subtle(
-          async () =>
-            crypto.subtle.sign(
+          async (c) =>
+            c.sign(
               'HMAC',
-              await crypto.subtle.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, [
-                'sign',
-              ]),
+              await c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
               ikm,
             ),
           this.name,
@@ -2294,8 +2292,7 @@ function HKDF_SHARED(): KDF_BASE {
       const N = Math.ceil(L / this.Nh)
       const prk = ab(_prk)
       const key = await subtle(
-        () =>
-          crypto.subtle.importKey('raw', prk, { name: 'HMAC', hash: this.hash }, false, ['sign']),
+        (c) => c.importKey('raw', prk, { name: 'HMAC', hash: this.hash }, false, ['sign']),
         this.name,
       )
 
@@ -2308,9 +2305,7 @@ function HKDF_SHARED(): KDF_BASE {
         input.set(info, T_prev.byteLength)
         input[T_prev.byteLength + info.byteLength] = i + 1
 
-        const T_i = new Uint8Array(
-          await subtle(() => crypto.subtle.sign('HMAC', key, input), this.name),
-        )
+        const T_i = new Uint8Array(await subtle((c) => c.sign('HMAC', key, input), this.name))
 
         T.set(T_i, i * this.Nh)
         T_prev = T_i
@@ -2400,20 +2395,8 @@ interface SHAKE extends KDF {
 }
 
 async function ShakeDerive(name: string, variant: string, ikm: ArrayBuffer, L: number) {
-  return new Uint8Array(
-    await subtle(
-      () =>
-        crypto.subtle.digest(
-          {
-            name: variant,
-            // @ts-expect-error
-            length: L << 3,
-          },
-          ikm,
-        ),
-      name,
-    ),
-  )
+  const alg = { name: variant, length: L << 3 }
+  return new Uint8Array(await subtle((c) => c.digest(alg, ikm), name))
 }
 
 function SHAKE_SHARED(): KDF_BASE {
@@ -2496,9 +2479,9 @@ async function getPublicKeyByExport(
     )
   }
 
-  return await subtle(async () => {
-    const jwk = await crypto.subtle.exportKey('jwk', key)
-    return await crypto.subtle.importKey(
+  return await subtle(async (c) => {
+    const jwk = await c.exportKey('jwk', key)
+    return c.importKey(
       'jwk',
       { kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y } as JsonWebKey,
       key.algorithm,
@@ -2511,7 +2494,7 @@ async function getPublicKeyByExport(
 async function getPublicKey(name: string, key: CryptoKey, usages: KeyUsage[]): Promise<CryptoKey> {
   return (
     // @ts-expect-error
-    ((await subtle(() => crypto.subtle.getPublicKey?.(key, usages), name)) as CryptoKey) ||
+    ((await subtle((c) => c.getPublicKey?.(key, usages), name)) as CryptoKey) ||
     (await getPublicKeyByExport(name, key, usages))
   )
 }
@@ -2651,26 +2634,23 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
   return {
     async GenerateKeyPair(this: DHKEM, extractable) {
       return (await subtle(
-        () => crypto.subtle.generateKey(this.algorithm, extractable, ['deriveBits']),
+        (c) => c.generateKey(this.algorithm, extractable, ['deriveBits']),
         this.name,
       )) as CryptoKeyPair
     },
     async SerializePublicKey(this: DHKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       assertCryptoKey(key)
-      return new Uint8Array(await subtle(() => crypto.subtle.exportKey('raw', key), this.name))
+      return new Uint8Array(await subtle((c) => c.exportKey('raw', key), this.name))
     },
     async DeserializePublicKey(this: DHKEM, _key) {
       const key = ab(_key)
-      return await subtle(
-        () => crypto.subtle.importKey('raw', key, this.algorithm, true, []),
-        this.name,
-      )
+      return await subtle((c) => c.importKey('raw', key, this.algorithm, true, []), this.name)
     },
     async SerializePrivateKey(this: DHKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       assertCryptoKey(key)
-      const { d } = await subtle(() => crypto.subtle.exportKey('jwk', key), this.name)
+      const { d } = await subtle((c) => c.exportKey('jwk', key), this.name)
       return b64u(d!)
     },
     async Encap(this: DHKEM, pkR) {
@@ -2685,8 +2665,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       // by WebCrypto's underlying implementations
       const dh = new Uint8Array(
         await subtle(
-          () =>
-            crypto.subtle.deriveBits({ name: skE.algorithm.name, public: pkR }, skE, this.Ndh << 3),
+          (c) => c.deriveBits({ name: skE.algorithm.name, public: pkR }, skE, this.Ndh << 3),
           this.name,
         ),
       )
@@ -2728,8 +2707,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       // by WebCrypto's underlying implementations
       const dh = new Uint8Array(
         await subtle(
-          () =>
-            crypto.subtle.deriveBits({ name: skR.algorithm.name, public: pkE }, skR, this.Ndh << 3),
+          (c) => c.deriveBits({ name: skR.algorithm.name, public: pkE }, skR, this.Ndh << 3),
           this.name,
         ),
       )
@@ -2793,7 +2771,7 @@ async function CurveKeyFromD(
   pkcs8.set(tmpl)
   pkcs8.set(key, tmpl.byteLength)
   return await subtle(
-    () => crypto.subtle.importKey('pkcs8', pkcs8, algorithm, extractable, ['deriveBits']),
+    (c) => c.importKey('pkcs8', pkcs8, algorithm, extractable, ['deriveBits']),
     name,
   )
 }
@@ -2934,7 +2912,7 @@ async function DeserializePrivateKeyNist(
   const jwk = getPrivateJwkNist(this, d)
 
   const privateKey = await subtle(
-    () => crypto.subtle.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
+    (c) => c.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
     this.name,
   )
 
@@ -2971,13 +2949,13 @@ async function GetKeyPairNist(
   const jwk = getPrivateJwkNist(curveConfig, OS2IP(sk))
 
   const privateKey = await subtle(
-    () => crypto.subtle.importKey('jwk', jwk, curveConfig.algorithm, extractable, ['deriveBits']),
+    (c) => c.importKey('jwk', jwk, curveConfig.algorithm, extractable, ['deriveBits']),
     name,
   )
 
   delete jwk.d
   const publicKey = await subtle(
-    () => crypto.subtle.importKey('jwk', jwk, curveConfig.algorithm, true, []),
+    (c) => c.importKey('jwk', jwk, curveConfig.algorithm, true, []),
     name,
   )
 
@@ -3300,7 +3278,7 @@ function MLKEM_SHARED(): KEM_BASE {
       // @ts-expect-error
       const usages: KeyUsage[] = ['encapsulateBits', 'decapsulateBits']
       return (await subtle(
-        () => crypto.subtle.generateKey(this.algorithm, extractable, usages),
+        (c) => c.generateKey(this.algorithm, extractable, usages),
         this.name,
       )) as CryptoKeyPair
     },
@@ -3309,7 +3287,7 @@ function MLKEM_SHARED(): KEM_BASE {
       assertCryptoKey(key)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
-      return new Uint8Array(await subtle(() => crypto.subtle.exportKey(format, key), this.name))
+      return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
     async DeserializePublicKey(this: MLKEM, _key) {
       // @ts-expect-error
@@ -3317,17 +3295,14 @@ function MLKEM_SHARED(): KEM_BASE {
       // @ts-expect-error
       const usages: KeyUsage[] = ['encapsulateBits']
       const key = ab(_key)
-      return await subtle(
-        () => crypto.subtle.importKey(format, key, this.algorithm, true, usages),
-        this.name,
-      )
+      return await subtle((c) => c.importKey(format, key, this.algorithm, true, usages), this.name)
     },
     async SerializePrivateKey(this: MLKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       assertCryptoKey(key)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
-      return new Uint8Array(await subtle(() => crypto.subtle.exportKey(format, key), this.name))
+      return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
     async DeserializePrivateKey(this: MLKEM, _key, extractable) {
       // @ts-expect-error
@@ -3336,7 +3311,7 @@ function MLKEM_SHARED(): KEM_BASE {
       const usages: KeyUsage[] = ['decapsulateBits']
       const key = ab(_key)
       return await subtle(
-        () => crypto.subtle.importKey(format, key, this.algorithm, extractable, usages),
+        (c) => c.importKey(format, key, this.algorithm, extractable, usages),
         this.name,
       )
     },
@@ -3344,9 +3319,8 @@ function MLKEM_SHARED(): KEM_BASE {
       assertKeyAlgorithm(pkR, this.algorithm)
 
       const { sharedKey, ciphertext } = (await subtle(
-        () =>
-          // @ts-expect-error
-          crypto.subtle.encapsulateBits(this.algorithm, pkR),
+        // @ts-expect-error
+        (c) => c.encapsulateBits(this.algorithm, pkR),
         this.name,
       )) as { sharedKey: ArrayBuffer; ciphertext: ArrayBuffer }
 
@@ -3357,9 +3331,8 @@ function MLKEM_SHARED(): KEM_BASE {
       const enc = ab(_enc)
       return new Uint8Array(
         await subtle(
-          () =>
-            // @ts-expect-error
-            crypto.subtle.decapsulateBits(this.algorithm, skR, enc),
+          // @ts-expect-error
+          (c) => c.decapsulateBits(this.algorithm, skR, enc),
           this.name,
         ),
       )
@@ -3504,12 +3477,10 @@ function AEAD_SHARED(): AEAD_BASE {
       const pt = ab(_pt)
       return new Uint8Array(
         await subtle(
-          async () =>
-            crypto.subtle.encrypt(
+          async (c) =>
+            c.encrypt(
               { name: this.algorithm, iv: nonce, additionalData: aad },
-              await crypto.subtle.importKey(this.keyFormat, key, this.algorithm, false, [
-                'encrypt',
-              ]),
+              await c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt']),
               pt,
             ),
           this.name,
@@ -3523,12 +3494,10 @@ function AEAD_SHARED(): AEAD_BASE {
       const ct = ab(_ct)
       return new Uint8Array(
         await subtle(
-          async () =>
-            crypto.subtle.decrypt(
+          async (c) =>
+            c.decrypt(
               { name: this.algorithm, iv: nonce, additionalData: aad },
-              await crypto.subtle.importKey(this.keyFormat, key, this.algorithm, false, [
-                'decrypt',
-              ]),
+              await c.importKey(this.keyFormat, key, this.algorithm, false, ['decrypt']),
               ct,
             ),
           this.name,
@@ -3759,7 +3728,7 @@ async function expandDecapsKeyG(PQTKEM: HybridKEM, _seed: Uint8Array) {
   // @ts-expect-error
   const algorithm: CShakeParams = { name: 'cSHAKE256', length: Nout << 3 }
   const seed = ab(_seed)
-  const seed_full = await subtle(() => crypto.subtle.digest(algorithm, seed), PQTKEM.name)
+  const seed_full = await subtle((c) => c.digest(algorithm, seed), PQTKEM.name)
 
   const [_seed_PQ, seed_T] = split(PQTKEM.pq.Nseed, PQTKEM.t.Nseed, new Uint8Array(seed_full))
   const seed_PQ = ab(_seed_PQ)
@@ -3769,7 +3738,7 @@ async function expandDecapsKeyG(PQTKEM: HybridKEM, _seed: Uint8Array) {
   // @ts-expect-error
   const usages: [KeyUsage, KeyUsage] = ['decapsulateBits', 'encapsulateBits']
   const dk_PQ = await subtle(
-    () => crypto.subtle.importKey(format, seed_PQ, PQTKEM.pq.algorithm, true, [usages[0]]),
+    (c) => c.importKey(format, seed_PQ, PQTKEM.pq.algorithm, true, [usages[0]]),
     PQTKEM.name,
   )
   const ek_PQ = await getPublicKey(PQTKEM.name, dk_PQ, [usages[1]])
@@ -3788,11 +3757,9 @@ async function C2PRICombiner(
   _ek_T: CryptoKey,
   label: Uint8Array,
 ): Promise<Uint8Array> {
-  const ek_T = new Uint8Array(
-    await subtle(() => crypto.subtle.exportKey('raw', _ek_T), PQTKEM.name),
-  )
+  const ek_T = new Uint8Array(await subtle((c) => c.exportKey('raw', _ek_T), PQTKEM.name))
   const data = ab(concat(ss_PQ, ss_T, ct_T, ek_T, label))
-  return new Uint8Array(await subtle(() => crypto.subtle.digest('SHA3-256', data), PQTKEM.name))
+  return new Uint8Array(await subtle((c) => c.digest('SHA3-256', data), PQTKEM.name))
 }
 
 async function prepareEncapsG(
@@ -3801,30 +3768,22 @@ async function prepareEncapsG(
   ek_T: CryptoKey,
 ): Promise<[Uint8Array, Uint8Array, Uint8Array, Uint8Array]> {
   const res = (await subtle(
-    () =>
-      // @ts-expect-error
-      crypto.subtle.encapsulateBits(PQTKEM.pq.algorithm, ek_PQ),
+    // @ts-expect-error
+    (c) => c.encapsulateBits(PQTKEM.pq.algorithm, ek_PQ),
     PQTKEM.name,
   )) as { sharedKey: ArrayBuffer; ciphertext: ArrayBuffer }
   const ss_PQ = new Uint8Array(res.sharedKey)
   const ct_PQ = new Uint8Array(res.ciphertext)
 
   const { privateKey: sk_E, publicKey } = (await subtle(
-    () => crypto.subtle.generateKey(PQTKEM.t.algorithm, true, ['deriveBits']),
+    (c) => c.generateKey(PQTKEM.t.algorithm, true, ['deriveBits']),
     PQTKEM.name,
   )) as CryptoKeyPair
-  const ct_T = new Uint8Array(
-    await subtle(() => crypto.subtle.exportKey('raw', publicKey), PQTKEM.name),
-  )
+  const ct_T = new Uint8Array(await subtle((c) => c.exportKey('raw', publicKey), PQTKEM.name))
 
   const ss_T = new Uint8Array(
     await subtle(
-      () =>
-        crypto.subtle.deriveBits(
-          { name: PQTKEM.t.algorithm.name, public: ek_T },
-          sk_E,
-          PQTKEM.t.Nss << 3,
-        ),
+      (c) => c.deriveBits({ name: PQTKEM.t.algorithm.name, public: ek_T }, sk_E, PQTKEM.t.Nss << 3),
       PQTKEM.name,
     ),
   )
@@ -3842,27 +3801,21 @@ async function prepareDecapsG(
 ): Promise<[Uint8Array, Uint8Array]> {
   const ss_PQ = new Uint8Array(
     await subtle(
-      () =>
-        // @ts-expect-error
-        crypto.subtle.decapsulateBits(PQTKEM.pq.algorithm, dk_PQ, ct_PQ),
+      // @ts-expect-error
+      (c) => c.decapsulateBits(PQTKEM.pq.algorithm, dk_PQ, ct_PQ),
       PQTKEM.name,
     ),
   )
 
   const ct_T = ab(_ct_T)
   const pub = await subtle(
-    () => crypto.subtle.importKey('raw', ct_T, PQTKEM.t.algorithm, true, []),
+    (c) => c.importKey('raw', ct_T, PQTKEM.t.algorithm, true, []),
     PQTKEM.name,
   )
 
   const ss_T = new Uint8Array(
     await subtle(
-      () =>
-        crypto.subtle.deriveBits(
-          { name: PQTKEM.t.algorithm.name, public: pub },
-          dk_T,
-          PQTKEM.t.Nss << 3,
-        ),
+      (c) => c.deriveBits({ name: PQTKEM.t.algorithm.name, public: pub }, dk_T, PQTKEM.t.Nss << 3),
       PQTKEM.name,
     ),
   )
@@ -3937,10 +3890,10 @@ function PQTKEM_SHARED(): KEM_BASE {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       const ek_PQ = new Uint8Array(
-        await subtle(() => crypto.subtle.exportKey(format, key.getPq(priv)), this.name),
+        await subtle((c) => c.exportKey(format, key.getPq(priv)), this.name),
       )
       const ek_T = new Uint8Array(
-        await subtle(() => crypto.subtle.exportKey('raw', key.getT(priv)), this.name),
+        await subtle((c) => c.exportKey('raw', key.getT(priv)), this.name),
       )
 
       return concat(ek_PQ, ek_T)
@@ -3953,11 +3906,8 @@ function PQTKEM_SHARED(): KEM_BASE {
       const pubPq = ab(key.subarray(0, this.pq.Npk))
       const pubT = ab(key.subarray(this.pq.Npk))
       const [ek_PQ, ek_T] = await Promise.all([
-        subtle(
-          () => crypto.subtle.importKey(format, pubPq, this.pq.algorithm, true, usages),
-          this.name,
-        ),
-        subtle(() => crypto.subtle.importKey('raw', pubT, this.t.algorithm, true, []), this.name),
+        subtle((c) => c.importKey(format, pubPq, this.pq.algorithm, true, usages), this.name),
+        subtle((c) => c.importKey('raw', pubT, this.t.algorithm, true, []), this.name),
       ])
 
       return new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
