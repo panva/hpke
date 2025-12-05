@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.1](https://github.com/panva/hpke/compare/v1.0.0...v1.0.1) (2025-12-05)
+
+
+### Documentation
+
+* variety of JSDoc updates ([b2cbf82](https://github.com/panva/hpke/commit/b2cbf8263717c5efeb72d55c333b3190275abe46))
+
 ## [1.0.0](https://github.com/panva/hpke/compare/v0.4.4...v1.0.0) (2025-12-02)
 
 
