@@ -6,6 +6,9 @@ This interface is designed to be compatible with Web Cryptography's CryptoKey ob
 allowing for custom key implementations that may not have all CryptoKey properties. It includes
 only the essential properties needed for HPKE operations and validations.
 
+Keys are created through [CipherSuite.GenerateKeyPair](../classes/CipherSuite.md#generatekeypair), [CipherSuite.DeriveKeyPair](../classes/CipherSuite.md#derivekeypair),
+[CipherSuite.DeserializePrivateKey](../classes/CipherSuite.md#deserializeprivatekey), or [CipherSuite.DeserializePublicKey](../classes/CipherSuite.md#deserializepublickey).
+
 ## Contents
 
 - [Properties](#properties)

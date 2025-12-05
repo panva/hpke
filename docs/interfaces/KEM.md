@@ -172,7 +172,7 @@ Deserializes a private key from bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `key` | `Uint8Array` | The serialized private key already validated to be at least [Nsk](#nsk) bytes |
+| `key` | `Uint8Array` | The serialized private key already validated to be exactly [Nsk](#nsk) bytes |
 | `extractable` | `boolean` | Whether the private key should be extractable |
 
 #### Returns
@@ -193,7 +193,7 @@ Deserializes a public key from bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `key` | `Uint8Array` | The serialized public key already validated to be at least [Npk](#npk) bytes |
+| `key` | `Uint8Array` | The serialized public key already validated to be exactly [Npk](#npk) bytes |
 
 #### Returns
 

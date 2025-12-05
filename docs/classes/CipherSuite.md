@@ -230,11 +230,16 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 > **DeriveKeyPair**(`ikm`, `extractable?`): `Promise`<[`KeyPair`](../interfaces/KeyPair.md)>
 
-Deterministically derives a key pair for this CipherSuite from input keying material. By
+Deterministically derives a key pair for this CipherSuite's KEM from input keying material. By
 default, private keys are derived as non-extractable (their value cannot be exported).
 
-An `ikm` input MUST NOT be reused elsewhere, particularly not with `DeriveKeyPair()` of a
-different KEM.
+> \[!CAUTION]\
+> Input keying material must not be reused elsewhere, particularly not with `DeriveKeyPair()` of
+> a different KEM. Re-use across different KEMs could leak information about the private key.
+
+> \[!CAUTION]\
+> Input keying material should be generated from a cryptographically secure random source or
+> derived from high-entropy secret material.
 
 #### Parameters
 
@@ -270,7 +275,7 @@ non-extractable (their value cannot be exported).
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `privateKey` | `Uint8Array` | Serialized private key |
+| `privateKey` | `Uint8Array` | Serialized private key (must be exactly [Nsk](#kem) bytes) |
 | `extractable?` | `boolean` | Whether the deserialized private key should be extractable (e.g. by [SerializePrivateKey](#serializeprivatekey)) (default: false) |
 
 #### Returns
@@ -300,7 +305,7 @@ value can be exported, e.g. by [SerializePublicKey](#serializepublickey)).
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `publicKey` | `Uint8Array` | Serialized public key |
+| `publicKey` | `Uint8Array` | Serialized public key (must be exactly [Npk](#kem) bytes) |
 
 #### Returns
 

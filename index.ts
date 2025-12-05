@@ -111,13 +111,13 @@ class SenderContext {
   #key: Uint8Array
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
-  #mode: number
+  #mode: typeof MODE_BASE | typeof MODE_PSK
   #seq: number = 0
   #mutex?: Mutex
 
   constructor(
     suite: Triple,
-    mode: number,
+    mode: typeof MODE_BASE | typeof MODE_PSK,
     key: Uint8Array,
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
@@ -129,7 +129,11 @@ class SenderContext {
     this.#exporter_secret = exporter_secret
   }
 
-  /** @returns The mode (0x00 = Base, 0x01 = PSK) for this context. */
+  /**
+   * @returns The mode (0x00 = Base, 0x01 = PSK) for this context.
+   * @see {@link MODE_BASE}
+   * @see {@link MODE_PSK}
+   */
   get mode(): number {
     return this.#mode
   }
@@ -253,13 +257,13 @@ class RecipientContext {
   #key: Uint8Array
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
-  #mode: number
+  #mode: typeof MODE_BASE | typeof MODE_PSK
   #seq: number = 0
   #mutex?: Mutex
 
   constructor(
     suite: Triple,
-    mode: number,
+    mode: typeof MODE_BASE | typeof MODE_PSK,
     key: Uint8Array,
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
@@ -271,7 +275,11 @@ class RecipientContext {
     this.#exporter_secret = exporter_secret
   }
 
-  /** @returns The mode (0x00 = Base, 0x01 = PSK) for this context. */
+  /**
+   * @returns The mode (0x00 = Base, 0x01 = PSK) for this context.
+   * @see {@link MODE_BASE}
+   * @see {@link MODE_PSK}
+   */
   get mode(): number {
     return this.#mode
   }
@@ -600,11 +608,16 @@ export class CipherSuite {
   }
 
   /**
-   * Deterministically derives a key pair for this CipherSuite from input keying material. By
+   * Deterministically derives a key pair for this CipherSuite's KEM from input keying material. By
    * default, private keys are derived as non-extractable (their value cannot be exported).
    *
-   * An `ikm` input MUST NOT be reused elsewhere, particularly not with `DeriveKeyPair()` of a
-   * different KEM.
+   * > [!CAUTION]\
+   * > Input keying material must not be reused elsewhere, particularly not with `DeriveKeyPair()` of
+   * > a different KEM. Re-use across different KEMs could leak information about the private key.
+   *
+   * > [!CAUTION]\
+   * > Input keying material should be generated from a cryptographically secure random source or
+   * > derived from high-entropy secret material.
    *
    * @category Key Management
    * @example
@@ -695,7 +708,7 @@ export class CipherSuite {
    * const privateKey: HPKE.Key = await suite.DeserializePrivateKey(serialized)
    * ```
    *
-   * @param privateKey - Serialized private key
+   * @param privateKey - Serialized private key (must be exactly {@link CipherSuite.KEM Nsk} bytes)
    * @param extractable - Whether the deserialized private key should be extractable (e.g. by
    *   {@link SerializePrivateKey}) (default: false)
    *
@@ -732,7 +745,7 @@ export class CipherSuite {
    * const publicKey: HPKE.Key = await suite.DeserializePublicKey(serialized)
    * ```
    *
-   * @param publicKey - Serialized public key
+   * @param publicKey - Serialized public key (must be exactly {@link CipherSuite.KEM Npk} bytes)
    *
    * @returns A Promise that resolves to the deserialized public key.
    */
@@ -1239,10 +1252,21 @@ interface Triple {
   readonly AEAD: Readonly<AEAD>
 }
 
-/** Mode identifier for Base mode */
+/**
+ * Mode identifier for Base mode (0x00).
+ *
+ * Base mode provides encryption to a public key without sender authentication. The recipient cannot
+ * verify who encrypted the message, only that someone with access to their public key did.
+ */
 export const MODE_BASE = 0x00
 
-/** Mode identifier for PSK mode */
+/**
+ * Mode identifier for PSK mode (0x01).
+ *
+ * PSK (Pre-Shared Key) mode provides encryption with authentication using a pre-shared secret. Both
+ * sender and recipient must possess the same PSK and PSK ID. This provides implicit sender
+ * authentication.
+ */
 export const MODE_PSK = 0x01
 
 /**
@@ -1346,6 +1370,9 @@ export interface KeyPair {
  * This interface is designed to be compatible with Web Cryptography's CryptoKey objects while
  * allowing for custom key implementations that may not have all CryptoKey properties. It includes
  * only the essential properties needed for HPKE operations and validations.
+ *
+ * Keys are created through {@link CipherSuite.GenerateKeyPair}, {@link CipherSuite.DeriveKeyPair},
+ * {@link CipherSuite.DeserializePrivateKey}, or {@link CipherSuite.DeserializePublicKey}.
  */
 export interface Key {
   /** The key algorithm properties */
@@ -1393,7 +1420,7 @@ function slice(buffer: Uint8Array, start?: number, end?: number) {
  * Encodes an ASCII string into a Uint8Array.
  *
  * This utility function converts ASCII strings to byte arrays. It's exported for use in custom KEM,
- * KDF, or AEAD implementations.
+ * KDF, or AEAD implementations to encode identifiers or HPKE suite_id values.
  *
  * @param string - ASCII string to encode
  *
@@ -1404,6 +1431,9 @@ export function encode(string: string): Uint8Array {
   const bytes = new Uint8Array(string.length)
   for (let i = 0; i < string.length; i++) {
     const code = string.charCodeAt(i)
+    if (code > 0x7f) {
+      throw new TypeError('Input string must contain only ASCII characters')
+    }
     bytes[i] = code
   }
   return bytes
@@ -1919,7 +1949,7 @@ export interface KEM {
   /**
    * Deserializes a public key from bytes.
    *
-   * @param key - The serialized public key already validated to be at least {@link Npk} bytes
+   * @param key - The serialized public key already validated to be exactly {@link Npk} bytes
    *
    * @returns A promise resolving to a {@link !Key} or a Key interface-conforming object
    */
@@ -1937,7 +1967,7 @@ export interface KEM {
   /**
    * Deserializes a private key from bytes.
    *
-   * @param key - The serialized private key already validated to be at least {@link Nsk} bytes
+   * @param key - The serialized private key already validated to be exactly {@link Nsk} bytes
    * @param extractable - Whether the private key should be extractable
    *
    * @returns A promise resolving to a {@link !Key} or a Key interface-conforming object
@@ -2121,7 +2151,7 @@ export interface AEAD {
  * into a byte string of specified length. It's exported for use in custom KEM, KDF, or AEAD
  * implementations.
  *
- * @param n - Non-negative integer to convert
+ * @param n - Non-negative safe integer to convert
  * @param w - Desired length of output in bytes
  *
  * @returns A Uint8Array of length w containing the big-endian representation of n

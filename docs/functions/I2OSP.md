@@ -10,7 +10,7 @@ implementations.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `n` | `number` | Non-negative integer to convert |
+| `n` | `number` | Non-negative safe integer to convert |
 | `w` | `number` | Desired length of output in bytes |
 
 ## Returns

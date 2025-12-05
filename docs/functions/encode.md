@@ -5,7 +5,7 @@
 Encodes an ASCII string into a Uint8Array.
 
 This utility function converts ASCII strings to byte arrays. It's exported for use in custom KEM,
-KDF, or AEAD implementations.
+KDF, or AEAD implementations to encode identifiers or HPKE suite\_id values.
 
 ## Parameters
 

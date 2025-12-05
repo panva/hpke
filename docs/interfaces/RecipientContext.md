@@ -107,6 +107,11 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 > **get** **mode**(): `number`
 
+##### See
+
+- [MODE\_BASE](../variables/MODE_BASE.md)
+- [MODE\_PSK](../variables/MODE_PSK.md)
+
 ##### Returns
 
 `number`
