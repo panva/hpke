@@ -60,7 +60,7 @@
     "amaro": "^1.1.5",
     "playwright": "^1.57.0",
     "prettier": "^3.7.4",
-    "prettier-plugin-jsdoc": "^1.7.0",
+    "prettier-plugin-jsdoc": "^1.8.0",
     "remark-behead": "^3.1.0",
     "remark-insert-headings": "^0.0.0",
     "remark-toc": "^9.0.0",
