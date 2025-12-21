@@ -1,6 +1,6 @@
 {
   "name": "@panva/hpke-noble",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "@noble/* based HPKE algorithm implementations for hpke",
   "keywords": [],
   "homepage": "https://github.com/panva/hpke/tree/main/examples/noble-suite",
@@ -22,7 +22,7 @@
     "@noble/ciphers": "^2.0.1",
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
-    "@noble/post-quantum": "^0.5.2"
+    "@noble/post-quantum": "^0.5.3"
   },
   "peerDependencies": {
     "hpke": "^1.0.0"
