@@ -55,7 +55,7 @@
     "@noble/curves": "^2.0.1",
     "@noble/hashes": "^2.0.1",
     "@noble/post-quantum": "^0.5.2",
-    "@types/node": "^24.10.1",
+    "@types/node": "^24.10.4",
     "@types/web": "^0.0.297",
     "amaro": "^1.1.5",
     "playwright": "^1.57.0",
