@@ -19,26 +19,6 @@ export function hex(str: string): Uint8Array {
   )
 }
 
-// Shim for t.waitFor which is not available in Deno and Bun
-export async function waitFor(
-  fn: () => void | Promise<void>,
-  options?: { interval?: number; timeout?: number; signal?: AbortSignal },
-): Promise<void> {
-  const interval = options?.interval ?? 50
-  const signal = options?.signal ?? AbortSignal.timeout(options?.timeout ?? 1000)
-
-  if (signal?.aborted) {
-    throw new Error('waitFor timeout exceeded')
-  }
-
-  try {
-    await fn()
-  } catch {
-    await new Promise((resolve) => setTimeout(resolve, interval))
-    return waitFor(fn, { interval, signal })
-  }
-}
-
 export const IDs: Record<string, number> = {
   KDF_HKDF_SHA256: 0x0001,
   KDF_HKDF_SHA384: 0x0002,
