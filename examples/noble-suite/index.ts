@@ -16,7 +16,7 @@ import { turboshake128, turboshake256 } from '@noble/hashes/sha3-addons.js'
 import { extract, expand } from '@noble/hashes/hkdf.js'
 import { sha256, sha384, sha512 } from '@noble/hashes/sha2.js'
 import { ml_kem512, ml_kem768, ml_kem1024 } from '@noble/post-quantum/ml-kem.js'
-import { MLKEM768P256, MLKEM1024P384, MLKEM768X25519 } from '@noble/post-quantum/hybrid.js'
+import { ml_kem768_p256, ml_kem1024_p384, ml_kem768_x25519 } from '@noble/post-quantum/hybrid.js'
 import { type KEM as NobleKEM } from '@noble/post-quantum/utils.js'
 import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
@@ -371,7 +371,7 @@ export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
     Nenc: 1120,
     Npk: 1216,
     Nsk: 32,
-    kem: MLKEM768X25519,
+    kem: ml_kem768_x25519,
   })
 
 /**
@@ -387,7 +387,7 @@ export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
     Nenc: 1153,
     Npk: 1249,
     Nsk: 32,
-    kem: MLKEM768P256,
+    kem: ml_kem768_p256,
   })
 
 /**
@@ -403,7 +403,7 @@ export const KEM_MLKEM1024_P384: HPKE.KEMFactory = () =>
     Nenc: 1665,
     Npk: 1665,
     Nsk: 32,
-    kem: MLKEM1024P384,
+    kem: ml_kem1024_p384,
   })
 
 function createPqKem(config: {
