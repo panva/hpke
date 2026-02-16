@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.4](https://github.com/panva/hpke/compare/v1.0.3...v1.0.4) (2026-02-16)
+
+
+### Refactor
+
+* account for an upcoming Web Cryptography change ([8503c7d](https://github.com/panva/hpke/commit/8503c7d4dc5ae09c156a09062002f7d78f8f675b))
+
 ## [1.0.3](https://github.com/panva/hpke/compare/v1.0.2...v1.0.3) (2025-12-21)
 
 
