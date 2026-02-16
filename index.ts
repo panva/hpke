@@ -2425,7 +2425,8 @@ interface SHAKE extends KDF {
 }
 
 async function ShakeDerive(name: string, variant: string, ikm: ArrayBuffer, L: number) {
-  const alg = { name: variant, length: L << 3 }
+  const bits = L << 3
+  const alg = { name: variant, length: bits, outputLength: bits }
   return new Uint8Array(await subtle((c) => c.digest(alg, ikm), name))
 }
 
@@ -3755,8 +3756,9 @@ function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
 
 async function expandDecapsKeyG(PQTKEM: HybridKEM, _seed: Uint8Array) {
   const Nout = PQTKEM.pq.Nseed + PQTKEM.t.Nseed
+  const bits = Nout << 3
   // @ts-expect-error
-  const algorithm: CShakeParams = { name: 'cSHAKE256', length: Nout << 3 }
+  const algorithm: CShakeParams = { name: 'cSHAKE256', length: bits, outputLength: bits }
   const seed = ab(_seed)
   const seed_full = await subtle((c) => c.digest(algorithm, seed), PQTKEM.name)
 
