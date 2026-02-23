@@ -1898,18 +1898,11 @@
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
 
+      import { runAlgorithmTests, runVectorValidation, ALGORITHM_IDS, extractAlgorithms, getTestComponent } from './test/run.js'
+
       // ============================================================================
       // ALGORITHM DISCOVERY
       // ============================================================================
-      // Dynamically extract all algorithms from HPKE and Noble libraries based on
-      // name prefixes (KEM_, KDF_, AEAD_)
-
-      /** Extracts algorithms from a library object by prefix */
-      const extractAlgorithms = (library, prefix, label, isNoble = false) =>
-        Object.keys(library)
-          .filter(key => key.startsWith(prefix))
-          .map(name => ({ name, displayName: `[${label}] ${name}`, factory: library[name], isNoble }))
-          .sort((a, b) => a.name.localeCompare(b.name))
 
       // Extract native HPKE algorithms
       const KEMS = extractAlgorithms(HPKE, 'KEM_', 'native')
@@ -1930,41 +1923,6 @@
       const ALL_KEMS = both ? KEMS.concat(NOBLE_KEMS) : onlyNative ? KEMS : NOBLE_KEMS
       const ALL_KDFS = both ? KDFS.concat(NOBLE_KDFS) : onlyNative ? KDFS : NOBLE_KDFS
       const ALL_AEADS = both ? AEADS.concat(NOBLE_AEADS) : onlyNative ? AEADS : NOBLE_AEADS
-
-      // ============================================================================
-      // ALGORITHM ID MAPPINGS
-      // ============================================================================
-      // Static mapping of algorithm names to their IDs from the HPKE specification
-
-      const ALGORITHM_IDS = {
-        // KEMs
-        KEM_DHKEM_P256_HKDF_SHA256: 0x0010,
-        KEM_DHKEM_P384_HKDF_SHA384: 0x0011,
-        KEM_DHKEM_P521_HKDF_SHA512: 0x0012,
-        KEM_DHKEM_X25519_HKDF_SHA256: 0x0020,
-        KEM_DHKEM_X448_HKDF_SHA512: 0x0021,
-        KEM_ML_KEM_512: 0x0040,
-        KEM_ML_KEM_768: 0x0041,
-        KEM_ML_KEM_1024: 0x0042,
-        KEM_MLKEM768_P256: 0x0050,
-        KEM_MLKEM1024_P384: 0x0051,
-        KEM_MLKEM768_X25519: 0x647a,
-
-        // KDFs
-        KDF_HKDF_SHA256: 0x0001,
-        KDF_HKDF_SHA384: 0x0002,
-        KDF_HKDF_SHA512: 0x0003,
-        KDF_SHAKE128: 0x0010,
-        KDF_SHAKE256: 0x0011,
-        KDF_TurboSHAKE128: 0x0012,
-        KDF_TurboSHAKE256: 0x0013,
-
-        // AEADs
-        AEAD_AES_128_GCM: 0x0001,
-        AEAD_AES_256_GCM: 0x0002,
-        AEAD_ChaCha20Poly1305: 0x0003,
-        AEAD_EXPORT_ONLY: 0xffff,
-      }
 
       // Mapping of algorithm names to their display names
       const ALGORITHM_NAMES = {
@@ -2030,16 +1988,6 @@
       }
 
       // ============================================================================
-      // BASELINE CONFIGURATION
-      // ============================================================================
-      // When testing a specific component (e.g., a KEM), we pair it with baseline
-      // KDF and AEAD to isolate the test. These are the baseline algorithms.
-
-      const baselineKEM = KEMS.find((k) => k.name === 'KEM_DHKEM_P256_HKDF_SHA256')
-      const baselineKDF = KDFS.find((k) => k.name === 'KDF_HKDF_SHA256')
-      const baselineAEAD = AEADS.find((a) => a.name === 'AEAD_AES_128_GCM')
-
-      // ============================================================================
       // BROWSER COMPATIBILITY
       // ============================================================================
       // Some algorithms are not supported in browsers due to missing Web Crypto APIs
@@ -2073,14 +2021,6 @@
           // https://bugzilla.mozilla.org/show_bug.cgi?id=1932396
           unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
           break
-      }
-
-      /** Determines if a test is expected to fail based on browser support */
-      const isExpectedToFail = (test) => {
-        const component = test[test.testingComponent]
-        // Noble implementations provide fallbacks and always pass
-        if (component.isNoble) return false
-        return unsupported[test.testingComponent].includes(component.name)
       }
 
       // ============================================================================
@@ -2189,51 +2129,11 @@
       // ============================================================================
 
       let tests = []
-
-      // Track passing implementations by algorithm ID
-      const passingImplementations = {
-        kem: new Map(), // id -> [factories]
-        kdf: new Map(), // id -> [factories]
-        aead: new Map(), // id -> [factories]
-      }
-
-      // ============================================================================
-      // TEST GENERATION
-      // ============================================================================
-
-      /** Generates the full test suite - tests each component with baseline values for others */
-      const generateTests = () => {
-        const testList = []
-        const testConfigs = [
-          { algorithms: ALL_KEMS, component: 'kem', baselines: { kdf: baselineKDF, aead: baselineAEAD } },
-          { algorithms: ALL_KDFS, component: 'kdf', baselines: { kem: baselineKEM, aead: baselineAEAD } },
-          { algorithms: ALL_AEADS, component: 'aead', baselines: { kem: baselineKEM, kdf: baselineKDF } }
-        ]
-
-        testConfigs.forEach(({ algorithms, component, baselines }) => {
-          algorithms.forEach(algorithm => {
-            const test = {
-              id: testList.length,
-              ...baselines,
-              [component]: algorithm,
-              testingComponent: component,
-              status: 'pending',
-              error: null,
-              expectedToFail: false
-            }
-            test.expectedToFail = isExpectedToFail(test)
-            testList.push(test)
-          })
-        })
-        return testList
-      }
+      let passingImplementations = null
 
       // ============================================================================
       // UI RENDERING FUNCTIONS
       // ============================================================================
-
-      /** Gets the component object from a test based on the test's component type */
-      const getTestComponent = (test) => test[test.testingComponent]
 
       /** Determines the display status for an algorithm card */
       function getAlgorithmStatus(algoName, algoType) {
@@ -3717,259 +3617,25 @@
         }
       })
 
-      // ============================================================================
-      // TEST EXECUTION
-      // ============================================================================
-
-      /** Performs encryption/decryption test for regular AEAD modes */
-      async function testRegularAEAD(suite, recipientKeyPair) {
-        const plaintext = new TextEncoder().encode('Hello, HPKE!')
-        const aad = new TextEncoder().encode('additional data')
-
-        // Sender seals using recipient's public key
-        const { encapsulatedSecret, ciphertext } = await suite.Seal(
-          recipientKeyPair.publicKey,
-          plaintext,
-        )
-
-        // Recipient opens using their private key
-        const decrypted = await suite.Open(recipientKeyPair, encapsulatedSecret, ciphertext)
-
-        // Verify decrypted matches plaintext
-        const decryptedText = new TextDecoder().decode(decrypted)
-        if (decryptedText !== 'Hello, HPKE!') {
-          throw new Error(`Decryption mismatch: expected "Hello, HPKE!", got "${decryptedText}"`)
-        }
-      }
-
-      /** Performs export-only mode test */
-      async function testExportOnlyMode(suite, recipientKeyPair) {
-        const exporterContext = new TextEncoder().encode('test context')
-        const L = 32
-
-        // Sender exports secret using recipient's public key
-        const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
-          recipientKeyPair.publicKey,
-          exporterContext,
-          L,
-        )
-
-        // Recipient receives exported secret using their private key
-        const receivedSecret = await suite.ReceiveExport(
-          recipientKeyPair,
-          encapsulatedSecret,
-          exporterContext,
-          L,
-        )
-
-        // Verify the secrets match
-        assertUint8ArraysEqual(exportedSecret, receivedSecret, 'Exported secret mismatch')
-      }
-
-      /** Helper to find a matching implementation, preferring native over Noble */
-      function findMatchingImplementation(algorithms, algorithmId, unsupportedList) {
-        // Prefer native implementations that are supported
-        return (
-          algorithms.find((a) => {
-            if (ALGORITHM_IDS[a.name] !== algorithmId) return false
-            return !a.isNoble && !unsupportedList.includes(a.name)
-          }) ||
-          // Fall back to Noble implementation
-          algorithms.find((a) => {
-            if (ALGORITHM_IDS[a.name] !== algorithmId) return false
-            return a.isNoble
-          })
-        )
-      }
-
-      /** Helper to verify two Uint8Arrays match */
-      const assertUint8ArraysEqual = (actual, expected, errorPrefix) => {
-        if (actual.length !== expected.length) throw new Error(`${errorPrefix}: length mismatch`)
-        if (!actual.every((val, i) => val === expected[i])) throw new Error(`${errorPrefix}: content mismatch`)
-      }
-
-      /** Runs a single test for a KEM/KDF/AEAD combination */
-      async function runTest(test) {
-        test.status = 'running'
-        renderAlgorithmSummary()
-
-        try {
-          // Test with baseline components (existing behavior)
-          const suite = new HPKE.CipherSuite(test.kem.factory, test.kdf.factory, test.aead.factory)
-
-          // Generate test key pair
-          await suite.GenerateKeyPair()
-          const ikm = crypto.getRandomValues(new Uint8Array(suite.KEM.Nsk))
-          const keyPair = await suite.DeriveKeyPair(ikm, true)
-
-          // Serialize and deserialize keys to test that functionality
-          const serializedPublicKey = await suite.SerializePublicKey(keyPair.publicKey)
-          const serializedPrivateKey = await suite.SerializePrivateKey(keyPair.privateKey)
-          const recipientPrivateKey = await suite.DeserializePrivateKey(serializedPrivateKey, true)
-          const recipientPublicKey = await suite.DeserializePublicKey(serializedPublicKey)
-          const recipientKeyPair = {
-            publicKey: recipientPublicKey,
-            privateKey: recipientPrivateKey,
-          }
-
-          // Test based on AEAD mode
-          if (test.aead.name === 'AEAD_EXPORT_ONLY') {
-            await testExportOnlyMode(suite, recipientKeyPair)
-          } else {
-            await testRegularAEAD(suite, recipientKeyPair)
-          }
-
-          test.status = 'passed'
-          test.error = null
-
-          // Collect passing implementation
-          const component = test.testingComponent
-          const componentAlgo = test[component]
-          const algoId = ALGORITHM_IDS[componentAlgo.name]
-
-          if (algoId !== undefined) {
-            if (!passingImplementations[component].has(algoId)) {
-              passingImplementations[component].set(algoId, [])
-            }
-            passingImplementations[component].get(algoId).push({
-              factory: componentAlgo.factory,
-              isNoble: componentAlgo.isNoble,
-            })
-          }
-        } catch (error) {
-          test.status = 'failed'
-          test.error = error.message || String(error)
-
-          // Log unexpected failures to console
-          if (!test.expectedToFail) {
-            // console.error(`Unexpected failure: ${getTestDisplayName(test)}`, error)
-          }
-        }
-
-        renderAlgorithmSummary()
-      }
-
-      /** Runs all tests */
-      async function runAllTests() {
-        // Prioritize baseline algorithms to enable demo section faster
-        const priorityTests = tests.filter(t => {
-          const component = getTestComponent(t)
-          return (
-            (t.testingComponent === 'kem' && component.name === 'KEM_DHKEM_P256_HKDF_SHA256') ||
-            (t.testingComponent === 'kdf' && component.name === 'KDF_HKDF_SHA256') ||
-            (t.testingComponent === 'aead' && component.name === 'AEAD_AES_128_GCM')
-          )
-        })
-        const otherTests = tests.filter(t => !priorityTests.includes(t))
-
-        // Run priority tests first
-        for (const test of priorityTests) {
-          await runTest(test)
-          await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-
-        // Then run remaining tests
-        for (const test of otherTests) {
-          await runTest(test)
-          await new Promise((resolve) => setTimeout(resolve, 10))
-        }
-
-        // Expose results to globalThis after all tests complete
-        updateGlobalResults()
-      }
-
-      // ============================================================================
-      // RESULTS EXPORT
-      // ============================================================================
-
-      /** Exposes test results on globalThis for external access */
-      function updateGlobalResults() {
-        globalThis.hpkeTestResults = {
-          total: tests.length,
-          passed: tests.filter((t) => t.status === 'passed').length,
-          failed: tests.filter((t) => t.status === 'failed').length,
-          expectedFailures: tests.filter((t) => t.status === 'failed' && t.expectedToFail).length,
-          unexpectedFailures: tests.filter((t) => t.status === 'failed' && !t.expectedToFail)
-            .length,
-          unexpectedPasses: tests.filter((t) => t.status === 'passed' && t.expectedToFail).length,
-          tests: tests.map((t) => {
-            const component = getTestComponent(t)
-            return {
-              id: t.id,
-              component: t.testingComponent,
-              name: component.displayName || component.name,
-              suite: {
-                kem: t.kem.displayName || t.kem.name,
-                kdf: t.kdf.displayName || t.kdf.name,
-                aead: t.aead.displayName || t.aead.name,
-              },
-              status: t.status,
-              expectedToFail: t.expectedToFail,
-              error: t.error,
-            }
-          }),
-        }
-      }
-
-      // ============================================================================
-      // INITIALIZATION
-      // ============================================================================
-
-      // ============================================================================
-      // VECTOR VALIDATION
-      // ============================================================================
-
-      /** Runs comprehensive vector validation tests */
-      async function runVectorValidation(allVectors = [...vectors, ...vectorsPq]) {
+      /** Runs vector validation with UI progress display */
+      async function runVectorValidationUI(customVectors) {
         const overlay = document.getElementById('playOverlay')
         const content = document.getElementById('vectorValidationContent')
+        const progressInfo = document.getElementById('vectorProgressInfo')
+        const progressBoxes = document.querySelectorAll('#vectorProgressContainer .progress-box')
 
         // Remove overlay and blur
         overlay.classList.add('hidden')
         content.classList.remove('blurred')
 
-        allVectors = allVectors.filter((v) => {
-          if (v.mode !== 0x00 && v.mode !== 0x01) return false
-          return true
-        })
-        const progressInfo = document.getElementById('vectorProgressInfo')
-
-        let completedOps = 0
-        let passedOps = 0
-        let failedOps = 0
-        let totalOps = 0
-        let lastFailedBox = -1
-        let lastFilledBox = -1
         let failedOpsSinceLastBox = 0
 
-        // Calculate total operations first
-        for (const vector of allVectors) {
-          const kemImpls = passingImplementations.kem.get(vector.kem_id) || []
-          const kdfImpls = passingImplementations.kdf.get(vector.kdf_id) || []
-          const aeadImpls = passingImplementations.aead.get(vector.aead_id) || []
-
-          if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
-
-          const combinations = kemImpls.length * kdfImpls.length * aeadImpls.length
-          totalOps +=
-            combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0))
-        }
-
-        if (totalOps === 0) {
-          progressInfo.innerHTML =
-            '<span>No functional implementations found for vector validation</span>'
-          return
-        }
-
-        const progressBoxes = document.querySelectorAll('#vectorProgressContainer .progress-box')
-
-        const updateProgress = () => {
+        const updateProgressUI = ({ completedOps, passedOps, failedOps, totalOps }) => {
           progressInfo.innerHTML = `
             <span>Total: ${totalOps} operations</span>
             <span><span class="passed">✓ ${passedOps}</span> <span class="failed">✗ ${failedOps}</span></span>
           `
 
-          // Update progress boxes (20 boxes = 5% each)
           const percentComplete = (completedOps / totalOps) * 100
           const boxesToFill = Math.floor(percentComplete / 5)
 
@@ -3980,7 +3646,6 @@
               if (failedOpsSinceLastBox > 0) {
                 box.classList.add('failed')
               }
-              lastFilledBox = index
               boxesJustFilled = true
             }
           })
@@ -3990,125 +3655,46 @@
           }
         }
 
-        updateProgress()
+        const vectorResult = await runVectorValidation({
+          HPKE,
+          vectors: customVectors || vectors,
+          vectorsPq: customVectors ? [] : vectorsPq,
+          passingImplementations,
+          onProgress: updateProgressUI,
+          yieldToEventLoop: true,
+        })
 
-        // Update progress every 50ms during execution
-        const progressInterval = setInterval(() => updateProgress(), 50)
-
-        // Cache for recipient key pairs: Map<kemImpl, Map<ikmR_hex, keyPair>>
-        const recipientKeyPairCache = new Map()
-
-        // Process all vectors with their implementations
-        for (const vector of allVectors) {
-          const kemImpls = passingImplementations.kem.get(vector.kem_id) || []
-          const kdfImpls = passingImplementations.kdf.get(vector.kdf_id) || []
-          const aeadImpls = passingImplementations.aead.get(vector.aead_id) || []
-
-          if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
-
-          for (const kemImpl of kemImpls) {
-            for (const kdfImpl of kdfImpls) {
-              for (const aeadImpl of aeadImpls) {
-                const suite = new HPKE.CipherSuite(
-                  kemImpl.factory,
-                  kdfImpl.factory,
-                  aeadImpl.factory,
-                )
-                const ikmR = Uint8Array.fromHex(vector.ikmR)
-
-                // Check cache for this kemImpl and ikmR combination
-                if (!recipientKeyPairCache.has(kemImpl)) {
-                  recipientKeyPairCache.set(kemImpl, new Map())
-                }
-                const kemCache = recipientKeyPairCache.get(kemImpl)
-
-                let recipientKeyPair
-                if (kemCache.has(vector.ikmR)) {
-                  recipientKeyPair = kemCache.get(vector.ikmR)
-                } else {
-                  recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
-                  kemCache.set(vector.ikmR, recipientKeyPair)
-                }
-                const enc = Uint8Array.fromHex(vector.enc)
-
-                const options = {
-                  info: Uint8Array.fromHex(vector.info),
-                  psk: vector.psk ? Uint8Array.fromHex(vector.psk) : undefined,
-                  pskId: vector.psk_id ? Uint8Array.fromHex(vector.psk_id) : undefined,
-                }
-
-                const ctx = await suite.SetupRecipient(recipientKeyPair, enc, options)
-
-                // Test all encryptions
-                if (vector.encryptions) {
-                  for (const encryption of vector.encryptions) {
-                    try {
-                      const ciphertext = Uint8Array.fromHex(encryption.ct)
-                      const aad = Uint8Array.fromHex(encryption.aad)
-                      const expectedPlaintext = Uint8Array.fromHex(encryption.pt)
-                      const decrypted = await ctx.Open(ciphertext, aad)
-                      assertUint8ArraysEqual(decrypted, expectedPlaintext, 'Plaintext mismatch')
-                      passedOps++
-                    } catch (e) {
-                      failedOps++
-                      failedOpsSinceLastBox++
-                    } finally {
-                      completedOps++
-                    }
-                  }
-                }
-
-                // Test all exports
-                if (vector.exports) {
-                  for (const exportTest of vector.exports) {
-                    try {
-                      const exporterContext = Uint8Array.fromHex(exportTest.exporter_context)
-                      const L = exportTest.L
-                      const expectedExportedValue = Uint8Array.fromHex(exportTest.exported_value)
-                      const exportedValue = await ctx.Export(exporterContext, L)
-                      assertUint8ArraysEqual(
-                        exportedValue,
-                        expectedExportedValue,
-                        'Export mismatch',
-                      )
-                      passedOps++
-                    } catch (e) {
-                      failedOps++
-                      failedOpsSinceLastBox++
-                    } finally {
-                      completedOps++
-                    }
-                  }
-                }
-
-                updateProgress()
-                // Yield to event loop to allow UI updates
-                await new Promise((resolve) => setTimeout(resolve, 0))
-              }
-            }
-          }
+        if (vectorResult.total === 0) {
+          progressInfo.innerHTML =
+            '<span>No functional implementations found for vector validation</span>'
+          return
         }
-
-        // Final update
-        clearInterval(progressInterval)
 
         // Add vector results to globalThis
-        globalThis.hpkeTestResults.vectorValidation = {
-          total: totalOps,
-          passed: passedOps,
-          failed: failedOps,
-        }
+        globalThis.hpkeTestResults.vectorValidation = vectorResult
       }
 
       /** Initializes the test suite and starts execution */
       async function init() {
         const playOverlay = document.getElementById('playOverlay')
 
-        tests = generateTests()
+        const result = await runAlgorithmTests({
+          HPKE,
+          Noble,
+          unsupported,
+          mode: { onlyNative, onlyNoble },
+          onTestComplete: () => {
+            renderAlgorithmSummary()
+          },
+          yieldToEventLoop: true,
+        })
+        tests = result.tests
+        passingImplementations = result.passingImplementations
+
         renderAlgorithmSummary()
 
-        // Run tests in background without blocking UI
-        await runAllTests()
+        // Expose results to globalThis
+        globalThis.hpkeTestResults = result.results
 
         // Show play button now that tests are complete
         playOverlay.classList.remove('hidden')
@@ -4155,7 +3741,7 @@
         // Set up play button click handler
         document.getElementById('playOverlay').addEventListener('click', async () => {
           // Start validation
-          await runVectorValidation()
+          await runVectorValidationUI()
         })
 
         // Auto-click play button in CI mode
@@ -4194,7 +3780,7 @@
             progressInfo.innerHTML = '<span>Running custom vectors...</span>'
 
             // Run validation with custom vectors
-            await runVectorValidation(customVectors)
+            await runVectorValidationUI(customVectors)
 
             // Clear file input
             vectorFileInput.value = ''

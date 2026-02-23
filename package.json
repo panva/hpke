@@ -43,12 +43,13 @@
     "build": "node build.cjs",
     "build:other": "npx tsc -p tsconfig.test.json && npx tsc -p tsconfig.examples.json",
     "docs": "npx typedoc",
-    "format": "prettier --log-level silent --cache --write '**/*.{ts,mjs,cjs,json,yml}' '**/README.md'",
+    "format": "prettier --log-level silent --cache --write '**/*.{ts,js,mjs,cjs,json,yml}' '**/README.md'",
     "test": "node --test --no-warnings test/*.ts",
     "test:browsers": "node test/browser.mjs",
     "test:bun": "bun test ./test/*.ts",
     "test:deno": "deno test --no-check --allow-read test/*.ts",
-    "test:docs": "./check-examples.sh"
+    "test:docs": "./check-examples.sh",
+    "test:workerd": "./test/.workerd.sh"
   },
   "devDependencies": {
     "@noble/ciphers": "^2.1.1",
@@ -58,6 +59,7 @@
     "@types/node": "^24.10.11",
     "@types/web": "^0.0.327",
     "amaro": "^1.1.7",
+    "esbuild": "^0.27.0",
     "playwright": "^1.58.2",
     "prettier": "^3.8.1",
     "prettier-plugin-jsdoc": "^1.8.0",

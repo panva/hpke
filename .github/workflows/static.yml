@@ -34,7 +34,7 @@ jobs:
       - run: |
           mkdir -p static/node_modules static/examples/noble-suite static/test
           cp index.js index.html static/
-          cp test/*.json static/test/
+          cp test/*.json test/run.js static/test/
           cp -r node_modules/@noble static/node_modules
           cp examples/noble-suite/*.js static/examples/noble-suite
       - name: Setup Pages

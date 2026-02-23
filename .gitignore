@@ -120,16 +120,9 @@ dist-browser-tests
 
 
 .npmrc
-tap/*.js
-tap/*.js.map
-tap/run-*.mjs
-tap/run-*.mjs.map
-tap/run-*.cjs
-tap/run-*.cjs.map
+test/.workerd.capnp
+test/run-workerd.bundle.js
 *.bak
-*.bun
-tap/.workerd.capnp
-tap/.workers.capnp
 index.js
 index.d.ts
 index.d.ts.map
