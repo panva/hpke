@@ -112,7 +112,7 @@ const customSuite = new HPKE.CipherSuite(
 
 ## See
 
-[HPKE Cryptographic Dependencies](https://www.ietf.org/archive/id/draft-ietf-hpke-hpke-02.html#section-4)
+[HPKE Key Encapsulation Mechanisms](https://www.ietf.org/archive/id/draft-ietf-hpke-hpke-03.html#section-4.1)
 
 ## Methods
 

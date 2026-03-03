@@ -20,7 +20,7 @@ CVE identifiers for confirmed vulnerabilities will only be requested by the main
 
 ## Threat Model
 
-This section documents the threat model for `hpke` and `@panva/hpke-noble`. `hpke` is a JavaScript implementation of [Hybrid Public Key Encryption (draft-ietf-hpke-hpke)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
+This section documents the threat model for `hpke` and `@panva/hpke-noble`. `hpke` is a JavaScript implementation of [Hybrid Public Key Encryption (draft-ietf-hpke-hpke)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
 
 ### Purpose and Intended Users
 
@@ -48,7 +48,7 @@ This library delegates all cryptographic operations to the underlying Web Crypto
 
 This library aims to provide the following security guarantees:
 
-- **Specification compliance**: Correct implementation of [Hybrid Public Key Encryption (HPKE)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03), validated against test vectors from the respective specifications.
+- **Specification compliance**: Correct implementation of [Hybrid Public Key Encryption (HPKE)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03) and [Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04), validated against test vectors from the respective specifications.
 - **Nonce/sequence number handling**: Proper management of nonces and sequence numbers as required by the HPKE specification to prevent nonce reuse.
 - **Input validation**: Validation of inputs to prevent misuse of the API.
 
@@ -68,7 +68,7 @@ This library supports extensibility by allowing users to provide their own KEM, 
 
 ### Threat Actors and Security Properties
 
-This library aims to provide the security properties defined by the HPKE specification. For a detailed analysis of threat models, security properties, and security considerations, refer to [Section 9 of HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02#section-9).
+This library aims to provide the security properties defined by the HPKE specification. For a detailed analysis of threat models, security properties, and security considerations, refer to [Section 9 of HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03#section-9).
 
 ### What is NOT Considered a Vulnerability
 

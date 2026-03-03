@@ -126,8 +126,8 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 
 ## Specifications
 
-- [Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-02)
-- [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-03)
+- [Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03)
+- [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04)
 
 The algorithm implementations are being tested using test vectors from their respective
 specifications.
