@@ -369,7 +369,10 @@ export async function runVectorValidation({
     if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
 
     const combinations = kemImpls.length * kdfImpls.length * aeadImpls.length
-    totalOps += combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0))
+    // +1 per KEM impl for the skRm verification (once per kemImpl, not per kdf/aead combo)
+    totalOps +=
+      combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0)) +
+      kemImpls.length
   }
 
   if (totalOps === 0) {
@@ -402,6 +405,27 @@ export async function runVectorValidation({
             recipientKeyPair = kemCache.get(vector.ikmR)
           } else {
             recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
+
+            // Verify the derived private key matches skRm
+            try {
+              const serializedPrivateKey = await suite.SerializePrivateKey(
+                recipientKeyPair.privateKey,
+              )
+              assertUint8ArraysEqual(
+                serializedPrivateKey,
+                Uint8Array.fromHex(vector.skRm),
+                'skRm mismatch',
+              )
+              passedOps++
+            } catch (e) {
+              failedOps++
+            } finally {
+              completedOps++
+              if (onProgress) {
+                onProgress({ completedOps, passedOps, failedOps, totalOps })
+              }
+            }
+
             kemCache.set(vector.ikmR, recipientKeyPair)
           }
           const enc = Uint8Array.fromHex(vector.enc)

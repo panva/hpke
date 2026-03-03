@@ -161,8 +161,8 @@ for (const impl of implementations) {
           })
 
           it('SerializePrivateKey', async (t: test.TestContext) => {
-            const skRDeserialized = await suite.DeserializePrivateKey(hex(vector.skRm), true)
-            const skRm = await suite.SerializePrivateKey(skRDeserialized)
+            const { privateKey } = await suite.DeriveKeyPair(hex(vector.ikmR), true)
+            const skRm = await suite.SerializePrivateKey(privateKey)
             t.assert.deepStrictEqual(skRm, hex(vector.skRm))
           })
 
