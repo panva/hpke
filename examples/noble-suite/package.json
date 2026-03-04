@@ -1,6 +1,6 @@
 {
   "name": "@panva/hpke-noble",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "@noble/* based HPKE algorithm implementations for hpke",
   "keywords": [],
   "homepage": "https://github.com/panva/hpke/tree/main/examples/noble-suite",

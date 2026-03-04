@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.6](https://github.com/panva/hpke/compare/v1.0.5...v1.0.6) (2026-03-04)
+
+
+### Fixes
+
+* build script munching unintended symbols ([b76a031](https://github.com/panva/hpke/commit/b76a031f215ca31b2a85ff2cc7bfbcbce1032436))
+
 ## [1.0.5](https://github.com/panva/hpke/compare/v1.0.4...v1.0.5) (2026-03-04)
 
 
