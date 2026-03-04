@@ -9,3 +9,7 @@ functionality. Used when HPKE is employed solely for key agreement and derivatio
 message encryption. Cannot be used with Seal/Open operations.
 
 This is a factory function that must be passed to the [CipherSuite](../classes/CipherSuite.md) constructor.
+
+## See
+
+[HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)

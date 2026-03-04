@@ -67,7 +67,7 @@ const customSuite = new HPKE.CipherSuite(
 
 ## See
 
-[HPKE AEAD Encryption Algorithm](https://www.ietf.org/archive/id/draft-ietf-hpke-hpke-03.html#section-4.3)
+[HPKE AEAD Encryption Algorithm](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.3)
 
 ## Methods
 

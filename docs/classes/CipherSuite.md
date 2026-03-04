@@ -170,6 +170,10 @@ let ct2!: Uint8Array
 const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 ```
 
+#### See
+
+[SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.1.1)
+
 ***
 
 ### SetupSender()
@@ -223,6 +227,10 @@ const aad2: Uint8Array = new TextEncoder().encode('message 2 aad')
 const pt2: Uint8Array = new TextEncoder().encode('Second message')
 const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 ```
+
+#### See
+
+[SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.1.1)
 
 ## Key Management
 
@@ -452,6 +460,10 @@ let ciphertext!: Uint8Array
 const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, ciphertext)
 ```
 
+#### See
+
+[Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.1)
+
 ***
 
 ### ReceiveExport()
@@ -500,6 +512,10 @@ const exported: Uint8Array = await suite.ReceiveExport(
 )
 ```
 
+#### See
+
+[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.2)
+
 ***
 
 ### Seal()
@@ -544,6 +560,10 @@ const plaintext: Uint8Array = new TextEncoder().encode('Hello, World!')
 
 const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext)
 ```
+
+#### See
+
+[Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.1)
 
 ***
 
@@ -590,6 +610,10 @@ const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
   32,
 )
 ```
+
+#### See
+
+[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.2)
 
 ## Other
 

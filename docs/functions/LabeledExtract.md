@@ -28,3 +28,7 @@ pseudorandom key. This ensures domain separation between different uses of the K
 ## Returns
 
 `Promise`<`Uint8Array`>
+
+## See
+
+[LabeledExtract](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.4)

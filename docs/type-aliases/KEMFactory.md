@@ -18,7 +18,7 @@ Traditional:
 Post-quantum/Traditional (PQ/T Hybrid):
 
 - [MLKEM768-P256](../variables/KEM_MLKEM768_P256.md)
-- [MLKEM768-X25519 (aka X-Wing)](../variables/KEM_MLKEM768_X25519.md)
+- [MLKEM768-X25519](../variables/KEM_MLKEM768_X25519.md)
 - [MLKEM1024-P384](../variables/KEM_MLKEM1024_P384.md)
 
 Post-quantum (PQ):

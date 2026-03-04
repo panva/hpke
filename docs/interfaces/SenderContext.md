@@ -61,6 +61,10 @@ const exportedSecret: Uint8Array = await ctx.Export(exporterContext, 32)
 // The recipient can derive the same secret using the same exporterContext
 ```
 
+#### See
+
+[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.3)
+
 ***
 
 ### Seal()
@@ -98,6 +102,10 @@ const aad2: Uint8Array = new TextEncoder().encode('message 2 aad')
 const pt2: Uint8Array = new TextEncoder().encode('Second message')
 const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 ```
+
+#### See
+
+[Context.Seal](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
 
 ## Accessors
 

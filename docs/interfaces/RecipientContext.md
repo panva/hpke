@@ -60,6 +60,10 @@ const exported: Uint8Array = await ctx.Export(exporterContext, 32)
 // The sender can derive the same secret using the same exporterContext
 ```
 
+#### See
+
+[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.3)
+
 ***
 
 ### Open()
@@ -98,6 +102,10 @@ let aad2!: Uint8Array | undefined
 let ct2!: Uint8Array
 const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 ```
+
+#### See
+
+[Context.Open](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
 
 ## Accessors
 

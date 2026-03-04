@@ -31,3 +31,7 @@ of the KDF in HPKE.
 ## Returns
 
 `Promise`<`Uint8Array`>
+
+## See
+
+[LabeledExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.4)

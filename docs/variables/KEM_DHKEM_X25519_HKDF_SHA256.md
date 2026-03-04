@@ -17,3 +17,7 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 > \[!TIP]\
 > An implementation of this algorithm not reliant on Web Cryptography is also exported by
 > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+
+## See
+
+[HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)

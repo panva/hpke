@@ -18,3 +18,7 @@ implementations.
 `Uint8Array`
 
 A Uint8Array of length w containing the big-endian representation of n
+
+## See
+
+[I2OSP](https://www.rfc-editor.org/rfc/rfc8017#section-4.1)

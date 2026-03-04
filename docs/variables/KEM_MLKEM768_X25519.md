@@ -2,7 +2,7 @@
 
 > `const` **KEM\_MLKEM768\_X25519**: [`KEMFactory`](../type-aliases/KEMFactory.md)
 
-Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519 aka X-Wing).
+Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519).
 
 Depends on the following Web Cryptography algorithms being supported in the runtime:
 
@@ -16,3 +16,7 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 > \[!TIP]\
 > An implementation of this algorithm not reliant on Web Cryptography is also exported by
 > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+
+## See
+
+[HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-4)

@@ -28,6 +28,8 @@ import { p256, p384, p521 } from '@noble/curves/nist.js'
  * Uses AES in Galois/Counter Mode with 128-bit keys.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
 export const AEAD_AES_128_GCM: HPKE.AEADFactory = () => createAead(0x0001, 'AES-128-GCM', 16, gcm)
 
@@ -37,6 +39,8 @@ export const AEAD_AES_128_GCM: HPKE.AEADFactory = () => createAead(0x0001, 'AES-
  * Uses AES in Galois/Counter Mode with 256-bit keys.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
 export const AEAD_AES_256_GCM: HPKE.AEADFactory = () => createAead(0x0002, 'AES-256-GCM', 32, gcm)
 
@@ -46,6 +50,8 @@ export const AEAD_AES_256_GCM: HPKE.AEADFactory = () => createAead(0x0002, 'AES-
  * Uses ChaCha20 stream cipher with Poly1305 MAC.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
 export const AEAD_ChaCha20Poly1305: HPKE.AEADFactory = () =>
   createAead(0x0003, 'ChaCha20Poly1305', 32, chacha20poly1305)
@@ -79,6 +85,8 @@ function createAead(
  * hash function with an output length (Nh) of 32 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.2)
  */
 export const KDF_HKDF_SHA256: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0001, 'HKDF-SHA256', 32, sha256)
@@ -90,6 +98,8 @@ export const KDF_HKDF_SHA256: HPKE.KDFFactory = () =>
  * hash function with an output length (Nh) of 48 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.2)
  */
 export const KDF_HKDF_SHA384: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0002, 'HKDF-SHA384', 48, sha384)
@@ -101,6 +111,8 @@ export const KDF_HKDF_SHA384: HPKE.KDFFactory = () =>
  * hash function with an output length (Nh) of 64 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.2)
  */
 export const KDF_HKDF_SHA512: HPKE.KDFFactory = () =>
   createTwoStageKdf(0x0003, 'HKDF-SHA512', 64, sha512)
@@ -112,6 +124,8 @@ export const KDF_HKDF_SHA512: HPKE.KDFFactory = () =>
  * 32 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
  */
 export const KDF_SHAKE128: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0010, 'SHAKE128', 32, shake128)
@@ -123,6 +137,8 @@ export const KDF_SHAKE128: HPKE.KDFFactory = () =>
  * 64 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
  */
 export const KDF_SHAKE256: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0011, 'SHAKE256', 64, shake256)
@@ -134,6 +150,8 @@ export const KDF_SHAKE256: HPKE.KDFFactory = () =>
  * (Nh) of 32 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
  */
 export const KDF_TurboSHAKE128: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0012, 'TurboSHAKE128', 32, turboshake128, 0x1f)
@@ -145,6 +163,8 @@ export const KDF_TurboSHAKE128: HPKE.KDFFactory = () =>
  * (Nh) of 64 bytes.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
  */
 export const KDF_TurboSHAKE256: HPKE.KDFFactory = () =>
   createOneStageKdf(0x0013, 'TurboSHAKE256', 64, turboshake256, 0x1f)
@@ -203,6 +223,8 @@ const Unreachable = () => {
  * HKDF-SHA256 for key derivation.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
  */
 export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
   createDhKemNist({
@@ -225,6 +247,8 @@ export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
  * HKDF-SHA384 for key derivation.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
  */
 export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
   createDhKemNist({
@@ -248,6 +272,8 @@ export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
  * HKDF-SHA512 for key derivation.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
  */
 export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
   createDhKemNist({
@@ -271,6 +297,8 @@ export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
  * for key derivation.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
  */
 export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
   createDhKemX({
@@ -291,6 +319,8 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: HPKE.KEMFactory = () =>
  * key derivation.
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
  */
 export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
   createDhKemX({
@@ -310,6 +340,8 @@ export const KEM_DHKEM_X448_HKDF_SHA512: HPKE.KEMFactory = () =>
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-3)
  */
 export const KEM_ML_KEM_512: HPKE.KEMFactory = () =>
   createPqKem({
@@ -328,6 +360,8 @@ export const KEM_ML_KEM_512: HPKE.KEMFactory = () =>
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-3)
  */
 export const KEM_ML_KEM_768: HPKE.KEMFactory = () =>
   createPqKem({
@@ -346,6 +380,8 @@ export const KEM_ML_KEM_768: HPKE.KEMFactory = () =>
  * A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-3)
  */
 export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
   createPqKem({
@@ -362,6 +398,8 @@ export const KEM_ML_KEM_1024: HPKE.KEMFactory = () =>
  * Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-4)
  */
 export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
   createPqKem({
@@ -378,6 +416,8 @@ export const KEM_MLKEM768_X25519: HPKE.KEMFactory = () =>
  * Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-4)
  */
 export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
   createPqKem({
@@ -394,6 +434,8 @@ export const KEM_MLKEM768_P256: HPKE.KEMFactory = () =>
  * Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
  *
  * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-4)
  */
 export const KEM_MLKEM1024_P384: HPKE.KEMFactory = () =>
   createPqKem({

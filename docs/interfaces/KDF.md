@@ -79,7 +79,7 @@ const customSuite = new HPKE.CipherSuite(
 
 ## See
 
-[HPKE Key Derivation Functions](https://www.ietf.org/archive/id/draft-ietf-hpke-hpke-03.html#section-4.2)
+[HPKE Key Derivation Functions](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.2)
 
 ## Methods
 
