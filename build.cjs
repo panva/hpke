@@ -101,15 +101,19 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
 // ============================================================================
 
 function cleanJavaScript(code) {
-  // Remove inline // comments while preserving the code and removing trailing whitespace
-  code = code.replace(/^(.*)\/\/.*$/gm, (match, code) => {
-    return code.trimEnd()
-  })
-
   // Replace multi-line JSDoc comment blocks with equivalent blank lines to preserve line numbers
+  // NOTE: This must run before the inline // comment removal below, because single-line
+  // /** @see [Name](https://...) */ comments contain // in URLs. If the inline comment
+  // regex ran first, it would strip everything after the // (including the closing */),
+  // creating orphaned /** openings that cause the JSDoc regex to swallow subsequent code.
   code = code.replace(/^[ \t]*\/\*\*[\s\S]*?\*\/[ \t]*$/gm, (match) => {
     const lineCount = (match.match(/\n/g) || []).length
     return '\n'.repeat(lineCount)
+  })
+
+  // Remove inline // comments while preserving the code and removing trailing whitespace
+  code = code.replace(/^(.*)\/\/.*$/gm, (match, code) => {
+    return code.trimEnd()
   })
 
   // Remove coverage ignore directives by replacing them with blank lines
