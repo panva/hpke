@@ -68,7 +68,7 @@ async function ContextExport(
   if (!Number.isInteger(L) || L <= 0 || L > 0xffff) {
     throw new TypeError('"L" must be a positive integer not exceeding 65535')
   }
-  const Export = stages === 1 ? ExportOneStage : ExportTwoStage
+  const Export = stages === 1 ? Export_OneStage : Export_TwoStage
   return await Export(suite.KDF, suite.id, exporterSecret, exporterContext, L)
 }
 
@@ -1495,7 +1495,7 @@ export async function LabeledDerive(
   return await KDF.Derive(labeled_ikm, L)
 }
 
-async function ExportOneStage(
+async function Export_OneStage(
   KDF: KDF,
   suite_id: Uint8Array,
   exporter_secret: Uint8Array,
@@ -1506,7 +1506,7 @@ async function ExportOneStage(
   return await LabeledDerive(KDF, suite_id, exporter_secret, encode('sec'), exporter_context, L)
 }
 
-async function CombineSecretsOneStage(
+async function CombineSecrets_OneStage(
   suite: Triple,
   mode: number,
   shared_secret: Uint8Array,
@@ -1559,7 +1559,7 @@ function checkExtractable(extractable: unknown): asserts extractable is boolean 
   }
 }
 
-async function CombineSecretsTwoStage(
+async function CombineSecrets_TwoStage(
   suite: Triple,
   mode: number,
   shared_secret: Uint8Array,
@@ -1608,7 +1608,7 @@ async function CombineSecretsTwoStage(
   return { key, base_nonce, exporter_secret }
 }
 
-async function ExportTwoStage(
+async function Export_TwoStage(
   KDF: KDF,
   suite_id: Uint8Array,
   exporter_secret: Uint8Array,
@@ -2201,7 +2201,7 @@ async function KeySchedule(
   checkUint8Array(pskId, 'pskId')
 
   const stages = KDFStages(suite.KDF)
-  const CombineSecrets = stages === 1 ? CombineSecretsOneStage : CombineSecretsTwoStage
+  const CombineSecrets = stages === 1 ? CombineSecrets_OneStage : CombineSecrets_TwoStage
 
   VerifyPSKInputs(psk, pskId)
   return await CombineSecrets(suite, mode, shared_secret, info, psk, pskId)
@@ -2592,7 +2592,7 @@ function b64u(input: string): Uint8Array {
 // KEM (Key Encapsulation Mechanism) - DHKEM Helper Functions
 // ============================================================================
 
-async function DeriveCandidate(
+async function DeriveCandidate_TwoStage(
   DHKEM: DHKEM,
   suite_id: Uint8Array,
   ikm: Uint8Array,
@@ -2657,6 +2657,28 @@ function assertCryptoKey(key: Key): asserts key is CryptoKey {
   }
 }
 
+async function ExtractAndExpand_TwoStage(
+  DHKEM: DHKEM,
+  dh: Uint8Array,
+  kem_context: Uint8Array,
+): Promise<Uint8Array> {
+  const eae_prk = await LabeledExtract(
+    DHKEM.kdf,
+    DHKEM.suite_id,
+    new Uint8Array(),
+    encode('eae_prk'),
+    dh,
+  )
+  return await LabeledExpand(
+    DHKEM.kdf,
+    DHKEM.suite_id,
+    eae_prk,
+    encode('shared_secret'),
+    kem_context,
+    DHKEM.Nsecret,
+  )
+}
+
 // ============================================================================
 // KEM (Key Encapsulation Mechanism) - DHKEM Shared Implementation
 // ============================================================================
@@ -2705,21 +2727,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       const enc = await this.SerializePublicKey(pkE)
       const pkRm = await this.SerializePublicKey(pkR)
       const kem_context = concat(enc, pkRm)
-      const eae_prk = await LabeledExtract(
-        this.kdf,
-        this.suite_id,
-        new Uint8Array(),
-        encode('eae_prk'),
-        dh,
-      )
-      const shared_secret = await LabeledExpand(
-        this.kdf,
-        this.suite_id,
-        eae_prk,
-        encode('shared_secret'),
-        kem_context,
-        this.Nsecret,
-      )
+      const shared_secret = await ExtractAndExpand_TwoStage(this, dh, kem_context)
       return { shared_secret, enc }
     },
     async Decap(this: DHKEM, enc, skR, pkR) {
@@ -2746,21 +2754,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
 
       const pkRm = await this.SerializePublicKey(pkR)
       const kem_context = concat(enc, pkRm)
-      const eae_prk = await LabeledExtract(
-        this.kdf,
-        this.suite_id,
-        new Uint8Array(),
-        encode('eae_prk'),
-        dh,
-      )
-      const shared_secret = await LabeledExpand(
-        this.kdf,
-        this.suite_id,
-        eae_prk,
-        encode('shared_secret'),
-        kem_context,
-        this.Nsecret,
-      )
+      const shared_secret = await ExtractAndExpand_TwoStage(this, dh, kem_context)
       return shared_secret
     },
   }
@@ -2957,18 +2951,18 @@ async function DeriveKeyPairNist(
 ) {
   let sk = 0n
   let counter = 0
-  let bytes: Uint8Array
+  let candidate: Uint8Array
   while (sk === 0n || sk >= this.order) {
     if (counter > 255) {
       throw new DeriveKeyPairError('Key derivation exceeded maximum iterations')
     }
-    bytes = await DeriveCandidate(this, this.suite_id, ikm, counter)
-    bytes[0] = bytes[0]! & this.bitmask
-    sk = OS2IP(bytes)
+    candidate = await DeriveCandidate_TwoStage(this, this.suite_id, ikm, counter)
+    candidate[0] = candidate[0]! & this.bitmask
+    sk = OS2IP(candidate)
     counter = counter + 1
   }
 
-  return GetKeyPairNist(this, bytes!, extractable, this.name)
+  return GetKeyPairNist(this, candidate!, extractable, this.name)
 }
 
 async function GetKeyPairNist(
