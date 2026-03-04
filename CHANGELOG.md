@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.5](https://github.com/panva/hpke/compare/v1.0.4...v1.0.5) (2026-03-04)
+
+
+### Refactor
+
+* align internal naming with HPKE spec conventions ([a926ca1](https://github.com/panva/hpke/commit/a926ca13c5f941f287a09976aa8edce71ecf3a67))
+
+
+### Documentation
+
+* add links to IETF spec sections ([0bcfdb3](https://github.com/panva/hpke/commit/0bcfdb37a4b0d041445a7c691e3a5a0c89e2aec3))
+
 ## [1.0.4](https://github.com/panva/hpke/compare/v1.0.3...v1.0.4) (2026-02-16)
 
 
