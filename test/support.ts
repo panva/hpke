@@ -51,10 +51,12 @@ function supports(op: string, algorithm: AlgorithmIdentifier & { length?: number
 
 export const supported: Record<string, () => boolean | undefined> = {
   KDF_SHAKE128() {
-    return supports('digest', { name: 'cSHAKE128', length: 512 })
+    // @ts-expect-error
+    return supports('digest', { name: 'cSHAKE128', outputLength: 256, length: 256 })
   },
   KDF_SHAKE256() {
-    return supports('digest', { name: 'cSHAKE256', length: 512 })
+    // @ts-expect-error
+    return supports('digest', { name: 'cSHAKE256', outputLength: 512, length: 512 })
   },
   KEM_ML_KEM_512() {
     return supports('generateKey', 'ML-KEM-512')
