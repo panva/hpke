@@ -2071,6 +2071,11 @@
         const nativeAlgo = algorithms.find(a => a.name === algoName && !a.isNoble)
         const nobleAlgo = algorithms.find(a => a.name === algoName && a.isNoble)
 
+        // Prefer native for algorithms not known to be unsupported
+        if (nativeAlgo && !unsupported[algoType]?.includes(algoName)) {
+          return nativeAlgo
+        }
+
         const nativeTest = tests.find(t => {
           const component = getTestComponent(t)
           return component.name === algoName && t.testingComponent === algoType && !component.isNoble
