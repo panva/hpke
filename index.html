@@ -2186,8 +2186,37 @@
         pskId: null,
       }
 
+      /** Updates dropdown option statuses without rebuilding or re-selecting */
+      function updateDropdownStatuses() {
+        const selects = [
+          { el: document.getElementById('kemSelect'), type: 'kem' },
+          { el: document.getElementById('kdfSelect'), type: 'kdf' },
+          { el: document.getElementById('aeadSelect'), type: 'aead' },
+        ]
+        for (const { el, type } of selects) {
+          for (const opt of el.options) {
+            if (!opt.value) continue
+            const status = getAlgorithmStatus(opt.value, type)
+            opt.dataset.status = status
+            opt.disabled = status === 'unsupported' || (type === 'aead' && opt.value === 'AEAD_EXPORT_ONLY')
+          }
+        }
+      }
+
+      /** Update label to show package name based on selected algorithm */
+      const updateAlgoLabel = (labelId, selectedAlgo, defaultText) => {
+        const label = document.getElementById(labelId)
+        if (selectedAlgo) {
+          const pkg = selectedAlgo.isNoble ? 'Noble Cryptography' : 'Web Cryptography'
+          label.innerHTML = `${defaultText} <span class="pkg-name">(${pkg})</span>`
+        } else {
+          label.textContent = defaultText
+        }
+      }
+
       /**
-       * Renders the algorithm dropdowns and algorithm cards for vector validation
+       * Renders the algorithm dropdowns, attaches event listeners, and auto-selects.
+       * Should only be called once.
        */
       function renderAlgorithmSummary() {
         // Get unique algorithm names
@@ -2274,36 +2303,25 @@
           aeadSelect.appendChild(opt)
         })
 
-        // Update label to show package name based on selected algorithm
-        const updateLabel = (labelId, selectedAlgo, defaultText) => {
-          const label = document.getElementById(labelId)
-          if (selectedAlgo) {
-            const pkg = selectedAlgo.isNoble ? 'Noble Cryptography' : 'Web Cryptography'
-            label.innerHTML = `${defaultText} <span class="pkg-name">(${pkg})</span>`
-          } else {
-            label.textContent = defaultText
-          }
-        }
-
         // Add change handlers for dropdowns
         kemSelect.addEventListener('change', () => {
           const algoName = kemSelect.value
           demoState.selectedKEM = selectPreferredAlgorithm(ALL_KEMS, algoName, 'kem')
-          updateLabel('kemLabel', demoState.selectedKEM, 'KEM')
+          updateAlgoLabel('kemLabel', demoState.selectedKEM, 'KEM')
           updateDemoSection()
         })
 
         kdfSelect.addEventListener('change', () => {
           const algoName = kdfSelect.value
           demoState.selectedKDF = selectPreferredAlgorithm(ALL_KDFS, algoName, 'kdf')
-          updateLabel('kdfLabel', demoState.selectedKDF, 'KDF')
+          updateAlgoLabel('kdfLabel', demoState.selectedKDF, 'KDF')
           updateDemoSection()
         })
 
         aeadSelect.addEventListener('change', () => {
           const algoName = aeadSelect.value
           demoState.selectedAEAD = selectPreferredAlgorithm(ALL_AEADS, algoName, 'aead')
-          updateLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
+          updateAlgoLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
           updateDemoSection()
         })
 
@@ -2323,9 +2341,9 @@
         autoSelectFirst(aeadSelect, ALL_AEADS, 'aead')
 
         // Update labels after auto-selection
-        updateLabel('kemLabel', demoState.selectedKEM, 'KEM')
-        updateLabel('kdfLabel', demoState.selectedKDF, 'KDF')
-        updateLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
+        updateAlgoLabel('kemLabel', demoState.selectedKEM, 'KEM')
+        updateAlgoLabel('kdfLabel', demoState.selectedKDF, 'KDF')
+        updateAlgoLabel('aeadLabel', demoState.selectedAEAD, 'AEAD')
 
         // Update demo section once after all three are selected
         updateDemoSection()
@@ -3678,20 +3696,24 @@
       async function init() {
         const playOverlay = document.getElementById('playOverlay')
 
+        // Render dropdowns once before tests so the form is populated immediately
+        renderAlgorithmSummary()
+
         const result = await runAlgorithmTests({
           HPKE,
           Noble,
           unsupported,
           mode: { onlyNative, onlyNoble },
           onTestComplete: () => {
-            renderAlgorithmSummary()
+            updateDropdownStatuses()
           },
           yieldToEventLoop: true,
         })
         tests = result.tests
         passingImplementations = result.passingImplementations
 
-        renderAlgorithmSummary()
+        // Final status update after all tests
+        updateDropdownStatuses()
 
         // Expose results to globalThis
         globalThis.hpkeTestResults = result.results
