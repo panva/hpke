@@ -1,4 +1,4 @@
-# Type Alias: AEADFactory()
+# Type Alias: AEADFactory
 
 > **AEADFactory** = () => `Readonly`<[`AEAD`](../interfaces/AEAD.md)>
 

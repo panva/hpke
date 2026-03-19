@@ -1,4 +1,4 @@
-# Type Alias: KDFFactory()
+# Type Alias: KDFFactory
 
 > **KDFFactory** = () => `Readonly`<[`KDF`](../interfaces/KDF.md)>
 

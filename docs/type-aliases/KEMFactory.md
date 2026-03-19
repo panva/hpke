@@ -1,4 +1,4 @@
-# Type Alias: KEMFactory()
+# Type Alias: KEMFactory
 
 > **KEMFactory** = () => `Readonly`<[`KEM`](../interfaces/KEM.md)>
 
