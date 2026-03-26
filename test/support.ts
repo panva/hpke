@@ -87,10 +87,6 @@ export const supported: Record<string, () => boolean | undefined> = {
     // @ts-ignore
     return typeof Deno !== 'object' && typeof Bun !== 'object'
   },
-  KEM_DHKEM_P521_HKDF_SHA512() {
-    // @ts-ignore
-    return typeof Deno !== 'object'
-  },
 }
 
 type AlgorithmEntry<T> = {

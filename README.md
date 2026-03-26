@@ -93,7 +93,7 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | :--------------------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
 | DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓     |      |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓     |  ✓   |     |     ✓      |      ✓       |         ✓         |
 | DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓     |      |     |            |              |         ✓         |
 | ML-KEM-512 <sub>`0x0040`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
