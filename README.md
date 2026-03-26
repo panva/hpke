@@ -89,40 +89,40 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 
 ### Key Encapsulation Mechanisms (KEM)
 
-| Name                                           | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
-| :--------------------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
-| DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓     |  ✓   |     |     ✓      |      ✓       |         ✓         |
-| DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓     |      |     |            |              |         ✓         |
-| ML-KEM-512 <sub>`0x0040`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
-| ML-KEM-768 <sub>`0x0041`</sub>                 | ✓[^24.7] |      |     |            |              |         ✓         |
-| ML-KEM-1024 <sub>`0x0042`</sub>                | ✓[^24.7] |      |     |            |              |         ✓         |
-| MLKEM768-P256 <sub>`0x0050`</sub>              | ✓[^24.7] |      |     |            |              |         ✓         |
-| MLKEM768-X25519 <sub>`0x647a`</sub>            | ✓[^24.7] |      |     |            |              |         ✓         |
-| MLKEM1024-P384 <sub>`0x0051`</sub>             | ✓[^24.7] |      |     |            |              |         ✓         |
+| Name                                           | Node.js | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :--------------------------------------------- | :-----: | :--: | :-: | :--------: | :----------: | :---------------: |
+| DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓    |  ✓   |     |     ✓      |      ✓       |         ✓         |
+| DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓    |      |     |            |              |         ✓         |
+| ML-KEM-512 <sub>`0x0040`</sub>                 |    ✓    |      |     |            |              |         ✓         |
+| ML-KEM-768 <sub>`0x0041`</sub>                 |    ✓    |      |     |            |              |         ✓         |
+| ML-KEM-1024 <sub>`0x0042`</sub>                |    ✓    |      |     |            |              |         ✓         |
+| MLKEM768-P256 <sub>`0x0050`</sub>              |    ✓    |      |     |            |              |         ✓         |
+| MLKEM768-X25519 <sub>`0x647a`</sub>            |    ✓    |      |     |            |              |         ✓         |
+| MLKEM1024-P384 <sub>`0x0051`</sub>             |    ✓    |      |     |            |              |         ✓         |
 
 ### Key Derivation Functions (KDF)
 
-| Name                              | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
-| :-------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
-| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| SHAKE128 <sub>`0x0010`</sub>      | ✓[^24.7] |      |     |            |              |         ✓         |
-| SHAKE256 <sub>`0x0011`</sub>      | ✓[^24.7] |      |     |            |              |         ✓         |
-| TurboSHAKE128 <sub>`0x0012`</sub> |          |      |     |            |              |         ✓         |
-| TurboSHAKE256 <sub>`0x0013`</sub> |          |      |     |            |              |         ✓         |
+| Name                              | Node.js | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :-------------------------------- | :-----: | :--: | :-: | :--------: | :----------: | :---------------: |
+| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |      |     |            |              |         ✓         |
+| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |      |     |            |              |         ✓         |
+| TurboSHAKE128 <sub>`0x0012`</sub> |         |      |     |            |              |         ✓         |
+| TurboSHAKE256 <sub>`0x0013`</sub> |         |      |     |            |              |         ✓         |
 
 ### Authenticated Encryption (AEAD)
 
-| Name                                 | Node.js  | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
-| :----------------------------------- | :------: | :--: | :-: | :--------: | :----------: | :---------------: |
-| AES-128-GCM <sub>`0x0001`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| AES-256-GCM <sub>`0x0002`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| ChaCha20Poly1305 <sub>`0x0003`</sub> | ✓[^24.7] |      |     |            |              |         ✓         |
-| Export-only <sub>`0xffff`</sub>      |    ✓     |  ✓   |  ✓  |     ✓      |      ✓       |                   |
+| Name                                 | Node.js | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
+| :----------------------------------- | :-----: | :--: | :-: | :--------: | :----------: | :---------------: |
+| AES-128-GCM <sub>`0x0001`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| AES-256-GCM <sub>`0x0002`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |      |     |            |              |         ✓         |
+| Export-only <sub>`0xffff`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |                   |
 
 ## Specifications
 
@@ -144,5 +144,3 @@ specifications.
 [Modern Algorithms]: https://wicg.github.io/webcrypto-modern-algos/
 [extensibility]: https://github.com/panva/hpke/tree/main/examples/noble-suite#readme
 [browsers]: https://panva.github.io/hpke/
-
-[^24.7]: Available in Node.js versions >= 24.7.0
