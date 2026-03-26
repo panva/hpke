@@ -122,7 +122,6 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | AES-128-GCM <sub>`0x0001`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | AES-256-GCM <sub>`0x0002`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |      |     |            |              |         ✓         |
-| Export-only <sub>`0xffff`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |                   |
 
 ## Specifications
 
