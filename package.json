@@ -67,10 +67,10 @@
     "remark-insert-headings": "^0.0.0",
     "remark-toc": "^9.0.0",
     "serve": "^14.2.6",
-    "typedoc": "^0.28.17",
+    "typedoc": "^0.28.18",
     "typedoc-plugin-markdown": "^4.11.0",
     "typedoc-plugin-remark": "^2.0.1",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.2"
   },
   "publishConfig": {
     "access": "public"
