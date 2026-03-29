@@ -1331,6 +1331,8 @@ export type KEMFactory = () => Readonly<KEM>
  * - {@link KDF_HKDF_SHA512 | HKDF-SHA512}
  * - {@link KDF_SHAKE128 | SHAKE128}
  * - {@link KDF_SHAKE256 | SHAKE256}
+ * - {@link KDF_TurboSHAKE128 | TurboSHAKE128}
+ * - {@link KDF_TurboSHAKE256 | TurboSHAKE256}
  *
  * > [!TIP]\
  * > {@link CipherSuite} is not limited to using only these exported KDF implementations. Any function
@@ -2528,6 +2530,66 @@ export const KDF_SHAKE256: KDFFactory = function (): SHAKE {
     name: 'SHAKE256',
     Nh: 64,
     algorithm: 'cSHAKE256',
+    ...SHAKE_SHARED(),
+  }
+}
+
+/**
+ * TurboSHAKE128 key derivation function.
+ *
+ * A one-stage KDF using the TurboSHAKE128 extendable-output function (XOF) with an output length
+ * (Nh) of 32 bytes.
+ *
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ *
+ * - TurboSHAKE128 digest
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @group KDF Algorithms
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
+ */
+export const KDF_TurboSHAKE128: KDFFactory = function (): SHAKE {
+  return {
+    id: 0x0012,
+    type: 'KDF',
+    name: 'TurboSHAKE128',
+    Nh: 32,
+    algorithm: 'TurboSHAKE128',
+    ...SHAKE_SHARED(),
+  }
+}
+
+/**
+ * TurboSHAKE256 key derivation function.
+ *
+ * A one-stage KDF using the TurboSHAKE256 extendable-output function (XOF) with an output length
+ * (Nh) of 64 bytes.
+ *
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ *
+ * - TurboSHAKE256 digest
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @group KDF Algorithms
+ * @see [HPKE-PQ One-Stage KDFs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5)
+ */
+export const KDF_TurboSHAKE256: KDFFactory = function (): SHAKE {
+  return {
+    id: 0x0013,
+    type: 'KDF',
+    name: 'TurboSHAKE256',
+    Nh: 64,
+    algorithm: 'TurboSHAKE256',
     ...SHAKE_SHARED(),
   }
 }

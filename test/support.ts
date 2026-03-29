@@ -58,6 +58,14 @@ export const supported: Record<string, () => boolean | undefined> = {
     // @ts-expect-error
     return supports('digest', { name: 'cSHAKE256', outputLength: 512, length: 512 })
   },
+  KDF_TurboSHAKE128() {
+    // @ts-expect-error
+    return supports('digest', { name: 'TurboSHAKE128', outputLength: 256 })
+  },
+  KDF_TurboSHAKE256() {
+    // @ts-expect-error
+    return supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
+  },
   KEM_ML_KEM_512() {
     return supports('generateKey', 'ML-KEM-512')
   },

@@ -64,6 +64,8 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 - [KDF\_HKDF\_SHA512](variables/KDF_HKDF_SHA512.md)
 - [KDF\_SHAKE128](variables/KDF_SHAKE128.md)
 - [KDF\_SHAKE256](variables/KDF_SHAKE256.md)
+- [KDF\_TurboSHAKE128](variables/KDF_TurboSHAKE128.md)
+- [KDF\_TurboSHAKE256](variables/KDF_TurboSHAKE256.md)
 
 ## AEAD Algorithms
 

@@ -12,6 +12,8 @@ exported by this module:
 - [HKDF-SHA512](../variables/KDF_HKDF_SHA512.md)
 - [SHAKE128](../variables/KDF_SHAKE128.md)
 - [SHAKE256](../variables/KDF_SHAKE256.md)
+- [TurboSHAKE128](../variables/KDF_TurboSHAKE128.md)
+- [TurboSHAKE256](../variables/KDF_TurboSHAKE256.md)
 
 > \[!TIP]\
 > [CipherSuite](../classes/CipherSuite.md) is not limited to using only these exported KDF implementations. Any function
