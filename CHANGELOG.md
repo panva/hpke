@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/panva/hpke/compare/v1.0.6...v1.1.0) (2026-03-31)
+
+
+### Features
+
+* add Web Cryptography-based TurboSHAKE KDF exports ([a29413b](https://github.com/panva/hpke/commit/a29413b7969cd7ccf65ca23e21c5e23a7545abce))
+
 ## [1.0.6](https://github.com/panva/hpke/compare/v1.0.5...v1.0.6) (2026-03-04)
 
 
