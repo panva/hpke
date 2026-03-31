@@ -17,7 +17,7 @@ const unsupported = {
     'KEM_MLKEM768_P256',
     'KEM_MLKEM1024_P384',
   ],
-  kdf: ['KDF_SHAKE128', 'KDF_SHAKE256'],
+  kdf: ['KDF_SHAKE128', 'KDF_SHAKE256', 'KDF_TurboSHAKE128', 'KDF_TurboSHAKE256'],
   aead: ['AEAD_ChaCha20Poly1305'],
 }
 
