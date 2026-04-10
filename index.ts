@@ -2907,6 +2907,16 @@ interface ECPoint {
   y: bigint
 }
 
+// Jacobian projective coordinates: (X, Y, Z) represents affine (X/Z², Y/Z³)
+// Uses wNAF scalar multiplication — only one modular inverse at the very end.
+type JP = [bigint, bigint, bigint] // [X, Y, Z]
+
+// Non-negative modular reduction
+function mod(a: bigint, p: bigint): bigint {
+  const r = a % p
+  return r < 0n ? r + p : r
+}
+
 // Modular inverse using Extended Euclidean Algorithm
 function modInverse(a: bigint, m: bigint): bigint {
   a = ((a % m) + m) % m
@@ -2924,73 +2934,84 @@ function modInverse(a: bigint, m: bigint): bigint {
   return t
 }
 
-// Point doubling: 2P
-function pointDouble(p: ECPoint, prime: bigint, a: bigint): ECPoint {
-  const { x, y } = p
-
-  // Slope: s = (3x² + a) / (2y) mod prime
-  const numerator = (((3n * x * x) % prime) + a) % prime
-  const denominator = (2n * y) % prime
-  const s = (numerator * modInverse(denominator, prime)) % prime
-
-  // x₃ = s² - 2x mod prime
-  const x3 = (((s * s) % prime) - ((2n * x) % prime) + prime) % prime
-
-  // y₃ = s(x - x₃) - y mod prime
-  const y3 = (((s * ((x - x3 + prime) % prime)) % prime) - y + prime) % prime
-
-  return { x: x3, y: y3 }
+function jDouble(p: JP, P: bigint, a: bigint): JP {
+  const [X, Y, Z] = p
+  if (Y === 0n) return [1n, 1n, 0n]
+  const Y2 = mod(Y * Y, P)
+  const S = mod(4n * X * Y2, P)
+  const Z2 = mod(Z * Z, P)
+  const M = mod(3n * X * X + a * Z2 * Z2, P)
+  const X3 = mod(M * M - 2n * S, P)
+  return [X3, mod(M * (S - X3) - 8n * Y2 * Y2, P), mod(2n * Y * Z, P)]
 }
 
-// Point addition: P + Q
-function pointAdd(p: ECPoint, q: ECPoint, prime: bigint, a: bigint): ECPoint {
-  if (p.x === q.x && p.y === q.y) {
-    return pointDouble(p, prime, a)
-  }
-
-  const { x: x1, y: y1 } = p
-  const { x: x2, y: y2 } = q
-
-  // Check for P + (-P) = point at infinity case
-  // This should not occur in normal ECDH operations, but guards against invalid inputs
-  if (p.x === q.x) {
-    throw new Error('Point addition resulted in point at infinity')
-  }
-
-  // Slope: s = (y₂ - y₁) / (x₂ - x₁) mod prime
-  const numerator = (((y2 - y1) % prime) + prime) % prime
-  const denominator = (((x2 - x1) % prime) + prime) % prime
-  const s = (numerator * modInverse(denominator, prime)) % prime
-
-  // x₃ = s² - x₁ - x₂ mod prime
-  const x3 = (((s * s) % prime) - x1 - x2 + prime + prime) % prime
-
-  // y₃ = s(x₁ - x₃) - y₁ mod prime
-  const y3 = (((s * ((x1 - x3 + prime) % prime)) % prime) - y1 + prime) % prime
-
-  return { x: x3, y: y3 }
+function jAdd(p: JP, q: JP, P: bigint, a: bigint): JP {
+  if (p[2] === 0n) return q
+  if (q[2] === 0n) return p
+  const pZ2 = mod(p[2] * p[2], P)
+  const qZ2 = mod(q[2] * q[2], P)
+  const U1 = mod(p[0] * qZ2, P)
+  const U2 = mod(q[0] * pZ2, P)
+  const S1 = mod(p[1] * qZ2 * q[2], P)
+  const S2 = mod(q[1] * pZ2 * p[2], P)
+  if (U1 === U2) return S1 === S2 ? jDouble(p, P, a) : [1n, 1n, 0n]
+  const H = mod(U2 - U1, P)
+  const R = mod(S2 - S1, P)
+  const H2 = mod(H * H, P)
+  const H3 = mod(H * H2, P)
+  const U1H2 = mod(U1 * H2, P)
+  const X3 = mod(R * R - H3 - 2n * U1H2, P)
+  return [X3, mod(R * (U1H2 - X3) - S1 * H3, P), mod(H * p[2] * q[2], P)]
 }
 
-// Scalar multiplication using double-and-add algorithm: k * G
+// Scalar multiplication using wNAF with Jacobian coordinates: k * G
+//
+// This is used to compute the public key from a private scalar for NIST curves so that
+// the private key can be imported via JWK. Importing via PKCS8 (which would avoid the need
+// for computing the public key) is not viable cross-browser:
+// - WebKit: https://bugs.webkit.org/show_bug.cgi?id=302707
+// - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=2000795
 function scalarMult(k: bigint, G: ECPoint, prime: bigint, a: bigint, order: bigint): ECPoint {
   if (k === 0n || k >= order) {
     throw new Error('Invalid scalar')
   }
 
-  let result: ECPoint | null = null
-  let addend = G
-  let scalar = k
+  // Precompute odd multiples: 1G, 3G, 5G, 7G, 9G, 11G, 13G, 15G
+  const precomp: JP[] = new Array(8)
+  const Gj: JP = [G.x, G.y, 1n]
+  const G2 = jDouble(Gj, prime, a)
+  precomp[0] = Gj
+  for (let i = 1; i < 8; i++) precomp[i] = jAdd(precomp[i - 1]!, G2, prime, a)
 
-  while (scalar > 0n) {
-    if (scalar & 1n) {
-      result = result === null ? addend : pointAdd(result, addend, prime, a)
+  // wNAF encoding (w=4)
+  const naf: number[] = []
+  let s = k
+  while (s > 0n) {
+    if (s & 1n) {
+      let d = Number(s & 15n)
+      if (d >= 8) d -= 16
+      naf.push(d)
+      s -= BigInt(d)
+    } else {
+      naf.push(0)
     }
-    addend = pointDouble(addend, prime, a)
-    scalar = scalar >> 1n
+    s >>= 1n
   }
 
-  if (result === null) throw new Error('Invalid result')
-  return result
+  let r: JP = [1n, 1n, 0n]
+  for (let i = naf.length - 1; i >= 0; i--) {
+    r = jDouble(r, prime, a)
+    const d = naf[i]!
+    if (d > 0) r = jAdd(r, precomp[(d - 1) >> 1]!, prime, a)
+    else if (d < 0) {
+      const t = precomp[(-d - 1) >> 1]!
+      r = jAdd(r, [t[0], mod(-t[1], prime), t[2]], prime, a)
+    }
+  }
+
+  const zI = modInverse(r[2], prime)
+  const zI2 = mod(zI * zI, prime)
+  return { x: mod(r[0] * zI2, prime), y: mod(r[1] * zI2 * zI, prime) }
 }
 
 interface NistCurveConfig {
