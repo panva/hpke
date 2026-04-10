@@ -122,7 +122,6 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: node --run build
       - run: npm upgrade playwright
       - name: get playwright version
         id: playwright-version

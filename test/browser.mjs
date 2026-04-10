@@ -1,5 +1,7 @@
 import { chromium, firefox, webkit } from 'playwright'
-import { spawn } from 'node:child_process'
+import { execFileSync, spawn } from 'node:child_process'
+
+execFileSync(process.execPath, ['--run', 'build'], { stdio: 'inherit' })
 
 const PORT = 3000
 const testUrls = [
