@@ -111,8 +111,11 @@ function cleanJavaScript(code) {
     return '\n'.repeat(lineCount)
   })
 
-  // Remove inline // comments while preserving the code and removing trailing whitespace
-  code = code.replace(/^(.*)\/\/.*$/gm, (match, code) => {
+  // Remove lines that are purely // comments (including those containing URLs with //)
+  code = code.replace(/^[ \t]*\/\/.*$/gm, '')
+
+  // Remove inline // comments on code lines while preserving the code
+  code = code.replace(/^(.+?)\/\/.*$/gm, (match, code) => {
     return code.trimEnd()
   })
 
