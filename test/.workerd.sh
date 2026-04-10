@@ -4,14 +4,19 @@ COMPATIBILITY_DATE=$(node -p "const d = require('workerd').compatibilityDate, t 
 
 echo "Using compatibility date $COMPATIBILITY_DATE"
 
+node --run build
+
+rm -f test/run-workerd.bundle.js
 ./node_modules/.bin/esbuild \
   --log-level=warning \
   --format=esm \
   --bundle \
   --target=esnext \
+  --alias:hpke=./index.js \
   --outfile=test/run-workerd.bundle.js \
   test/run-workerd.js
 
+rm -f test/.workerd.capnp
 cat <<EOT > $(pwd)/test/.workerd.capnp
 using Workerd = import "/workerd/workerd.capnp";
 
