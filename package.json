@@ -52,10 +52,10 @@
     "test:workerd": "./test/.workerd.sh"
   },
   "devDependencies": {
-    "@noble/ciphers": "^2.1.1",
-    "@noble/curves": "^2.0.1",
-    "@noble/hashes": "^2.0.1",
-    "@noble/post-quantum": "^0.6.0",
+    "@noble/ciphers": "^2.2.0",
+    "@noble/curves": "^2.2.0",
+    "@noble/hashes": "^2.2.0",
+    "@noble/post-quantum": "^0.6.1",
     "@types/node": "^24.12.2",
     "amaro": "^1.1.8",
     "esbuild": "^0.28.0",
