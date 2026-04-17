@@ -573,6 +573,11 @@ function createDhKemNist(config: {
       bytes[0]! &= bitmask
       const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
       sk = 0n
+      // NOTE: The `else` branch hard-codes `getUint16` and is only correct when
+      // the trailing tail is exactly 2 bytes. This is fine for the curves wired
+      // up here (Nsk ∈ {32, 48, 66} → tail ∈ {0, 2}). Adding any curve with
+      // Nsk % 8 ∉ {0, 2} would silently produce wrong scalars — switch to a
+      // byte-wise accumulator (see OS2IP in ../../index.ts) before doing so.
       for (let i = 0; i < Nsk; i += 8) {
         const remaining = Nsk - i
         if (remaining >= 8) {
