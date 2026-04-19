@@ -31,10 +31,12 @@ const recipientDerivedKey1 = await recipientCtx.Export(exporterContext1, 32)
 const recipientDerivedKey2 = await recipientCtx.Export(exporterContext2, 16)
 
 // Verify both parties derived the same secrets
+const equal = (a: Uint8Array, b: Uint8Array) =>
+  a.length === b.length && a.every((byte, i) => byte === b[i])
+
 console.log(
   'Keys match:',
-  senderDerivedKey1.every((byte, i) => byte === recipientDerivedKey1[i]) &&
-    senderDerivedKey2.every((byte, i) => byte === recipientDerivedKey2[i]),
+  equal(senderDerivedKey1, recipientDerivedKey1) && equal(senderDerivedKey2, recipientDerivedKey2),
 ) // true
 
 // These derived secrets can be used for:

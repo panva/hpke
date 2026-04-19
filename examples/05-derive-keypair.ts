@@ -1,6 +1,7 @@
 import * as HPKE from '../index.ts'
 
 const encoder = new TextEncoder()
+const decoder = new TextDecoder()
 
 // Cipher suite components (agreed upon by both sender and recipient upfront)
 const suite = new HPKE.CipherSuite(
@@ -14,7 +15,9 @@ const suite = new HPKE.CipherSuite(
 // different KEM.
 const ikm = crypto.getRandomValues(new Uint8Array(suite.KEM.Nsk))
 
-// Recipient: Derive key pair from IKM (extractable for demonstration)
+// Recipient: Derive key pair from IKM
+// Note: `extractable: true` is only used here so the derived public keys can be serialized and
+// compared below. Prefer the default (non-extractable) for production use.
 const recipientKeyPair = await suite.DeriveKeyPair(ikm, true)
 
 // The same IKM will always produce the same key pair
@@ -26,7 +29,7 @@ const pk2 = await suite.SerializePublicKey(recipientKeyPair2.publicKey)
 
 console.log(
   'Public keys match:',
-  pk1.every((byte, i) => byte === pk2[i]),
+  pk1.length === pk2.length && pk1.every((byte, i) => byte === pk2[i]),
 ) // true
 
 // Sender: Setup sender context
@@ -42,7 +45,7 @@ const ciphertext = await senderCtx.Seal(plaintext, aad)
 
 // Recipient decrypts the message
 const decrypted = await recipientCtx.Open(ciphertext, aad)
-console.log('Decrypted:', new TextDecoder().decode(decrypted))
+console.log('Decrypted:', decoder.decode(decrypted))
 
 // Use cases for DeriveKeyPair:
 // - Deriving keys from passwords (with proper KDF like PBKDF2 first)

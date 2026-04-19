@@ -18,7 +18,7 @@ const plaintext = encoder.encode('Single encrypted message')
 
 const { encapsulatedSecret, ciphertext } = await suite.Seal(recipientKeyPair.publicKey, plaintext)
 
-// Sender → Recipient: Send enc, and ct
+// Sender → Recipient: Send enc and ct
 
 // Recipient: Single-shot decryption (open one message)
 const decrypted = await suite.Open(recipientKeyPair, encapsulatedSecret, ciphertext)

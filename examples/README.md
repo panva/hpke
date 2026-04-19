@@ -55,6 +55,14 @@ Export-only AEAD mode for key agreement. Demonstrates:
 - Pure key agreement without encryption overhead
 - Use cases: deriving session keys for external protocols
 
+### [07-send-receive-export.ts](07-send-receive-export.ts)
+
+Single-shot secret export API. Demonstrates:
+
+- `SendExport()` and `ReceiveExport()` for one-shot key agreement
+- Pairing naturally with `AEAD_EXPORT_ONLY`
+- Simpler API than managing sender/recipient contexts when only one exported secret is needed
+
 ## External Library Integration
 
 ### [noble-suite/](noble-suite/)

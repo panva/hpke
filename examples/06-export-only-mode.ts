@@ -27,7 +27,8 @@ const recipientSecret = await recipientCtx.Export(exporterContext, 32)
 
 console.log(
   'Secrets match:',
-  senderSecret.every((byte, i) => byte === recipientSecret[i]),
+  senderSecret.length === recipientSecret.length &&
+    senderSecret.every((byte, i) => byte === recipientSecret[i]),
 ) // true
 
 // Use cases for Export-only mode:
