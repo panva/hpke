@@ -44,8 +44,17 @@
 
 /** @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
 function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
-  const seq_bytes = I2OSP(seq, Nn)
-  return xor(base_nonce, seq_bytes)
+  // Equivalent to xor(base_nonce, I2OSP(seq, Nn)) but avoids allocating the
+  // intermediate seq_bytes array and fuses the two byte-wise passes into one.
+  // seq is a safe integer (≥0, ≤2^53-1) guaranteed by IncrementSeq.
+  const nonce = new Uint8Array(Nn)
+  nonce.set(base_nonce)
+  let s = seq
+  for (let i = Nn - 1; i >= 0 && s > 0; i--) {
+    nonce[i] = nonce[i]! ^ (s & 0xff)
+    s = Math.floor(s / 256)
+  }
+  return nonce
 }
 
 /** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
@@ -1456,17 +1465,6 @@ export function encode(string: string): Uint8Array {
     bytes[i] = code
   }
   return bytes
-}
-
-function xor(a: Uint8Array, b: Uint8Array): Uint8Array {
-  if (a.byteLength !== b.byteLength) {
-    throw new Error('XOR operands must have equal length')
-  }
-  const buf = new Uint8Array(a.byteLength)
-  for (let i = 0; i < a.byteLength; i++) {
-    buf[i] = a[i]! ^ b[i]!
-  }
-  return buf
 }
 
 function lengthPrefixed(x: Uint8Array): Uint8Array {
