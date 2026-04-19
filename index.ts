@@ -3602,20 +3602,30 @@ interface WebCryptoAEAD extends AEAD {
 type AEAD_BASE = Pick<AEAD, 'Seal' | 'Open'>
 
 function AEAD_SHARED(): AEAD_BASE {
+  // Cache the WebCrypto CryptoKey derived from a given key-bytes Uint8Array.
+  // Across the lifetime of a SenderContext/RecipientContext, `this.#key` is a
+  // stable Uint8Array, so crypto.subtle.importKey() would otherwise be called
+  // on every Seal/Open. The WeakMap ensures the cache entry is reclaimed once
+  // the underlying Uint8Array is unreachable.
+  const cache = new WeakMap<Uint8Array, CryptoKey>()
+  async function importKey(this: WebCryptoAEAD, _key: Uint8Array): Promise<CryptoKey> {
+    const key = ab(_key)
+    const cryptoKey = await subtle(
+      (c) => c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt', 'decrypt']),
+      this.name,
+    )
+    cache.set(_key, cryptoKey)
+    return cryptoKey
+  }
   return {
     async Seal(this: WebCryptoAEAD, _key, _nonce, _aad, _pt) {
       const nonce = ab(_nonce)
       const aad = ab(_aad)
-      const key = ab(_key)
       const pt = ab(_pt)
+      const cryptoKey = cache.get(_key) ?? (await importKey.call(this, _key))
       return new Uint8Array(
         await subtle(
-          async (c) =>
-            c.encrypt(
-              { name: this.algorithm, iv: nonce, additionalData: aad },
-              await c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt']),
-              pt,
-            ),
+          (c) => c.encrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, pt),
           this.name,
         ),
       )
@@ -3623,16 +3633,11 @@ function AEAD_SHARED(): AEAD_BASE {
     async Open(this: WebCryptoAEAD, _key, _nonce, _aad, _ct) {
       const nonce = ab(_nonce)
       const aad = ab(_aad)
-      const key = ab(_key)
       const ct = ab(_ct)
+      const cryptoKey = cache.get(_key) ?? (await importKey.call(this, _key))
       return new Uint8Array(
         await subtle(
-          async (c) =>
-            c.decrypt(
-              { name: this.algorithm, iv: nonce, additionalData: aad },
-              await c.importKey(this.keyFormat, key, this.algorithm, false, ['decrypt']),
-              ct,
-            ),
+          (c) => c.decrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, ct),
           this.name,
         ),
       )
