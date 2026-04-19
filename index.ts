@@ -509,7 +509,7 @@ export class CipherSuite {
       KEM: kem,
       KDF: kdf,
       AEAD: aead,
-      id: concat(encode('HPKE'), I2OSP(kem.id, 2), I2OSP(kdf.id, 2), I2OSP(aead.id, 2)),
+      id: concat(L_HPKE, I2OSP(kem.id, 2), I2OSP(kdf.id, 2), I2OSP(aead.id, 2)),
     }
   }
 
@@ -1467,6 +1467,27 @@ export function encode(string: string): Uint8Array {
   return bytes
 }
 
+// Module-level cached encodings of static ASCII labels used on HPKE hot paths.
+// Each is a freshly-allocated Uint8Array held as a constant to avoid repeating
+// the per-call `encode()` validation+allocation loop. These are only ever read
+// (and copied into concat() outputs), never mutated.
+const L_HPKE_v1 = encode('HPKE-v1')
+const L_HPKE = encode('HPKE')
+const L_KEM = encode('KEM')
+const L_sec = encode('sec')
+const L_secret = encode('secret')
+const L_key = encode('key')
+const L_base_nonce = encode('base_nonce')
+const L_exp = encode('exp')
+const L_psk_id_hash = encode('psk_id_hash')
+const L_info_hash = encode('info_hash')
+const L_dkp_prk = encode('dkp_prk')
+const L_candidate = encode('candidate')
+const L_eae_prk = encode('eae_prk')
+const L_shared_secret = encode('shared_secret')
+const L_sk = encode('sk')
+const L_DeriveKeyPair = encode('DeriveKeyPair')
+
 function lengthPrefixed(x: Uint8Array): Uint8Array {
   return concat(I2OSP(x.byteLength, 2), x)
 }
@@ -1502,14 +1523,7 @@ export async function LabeledDerive(
   context: Uint8Array,
   L: number,
 ): Promise<Uint8Array> {
-  const labeled_ikm = concat(
-    ikm,
-    encode('HPKE-v1'),
-    suite_id,
-    lengthPrefixed(label),
-    I2OSP(L, 2),
-    context,
-  )
+  const labeled_ikm = concat(ikm, L_HPKE_v1, suite_id, lengthPrefixed(label), I2OSP(L, 2), context)
   return await KDF.Derive(labeled_ikm, L)
 }
 
@@ -1522,7 +1536,7 @@ async function Export_OneStage(
   L: number,
 ) {
   checkLength(exporter_context, 'Exporter context', MAX_LENGTH_ONE_STAGE)
-  return await LabeledDerive(KDF, suite_id, exporter_secret, encode('sec'), exporter_context, L)
+  return await LabeledDerive(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
 }
 
 /** @see [CombineSecrets_OneStage](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04.html#section-5) */
@@ -1545,7 +1559,7 @@ async function CombineSecrets_OneStage(
     suite.KDF,
     suite.id,
     secrets,
-    encode('secret'),
+    L_secret,
     context,
     suite.AEAD.Nk + suite.AEAD.Nn + suite.KDF.Nh,
   )
@@ -1593,12 +1607,12 @@ async function CombineSecrets_TwoStage(
   checkLength(info, 'Info', MAX_LENGTH_TWO_STAGE)
 
   const [psk_id_hash, info_hash] = await Promise.all([
-    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), encode('psk_id_hash'), psk_id),
-    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), encode('info_hash'), info),
+    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_psk_id_hash, psk_id),
+    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_info_hash, info),
   ])
 
   const key_schedule_context = concat(I2OSP(mode, 1), psk_id_hash, info_hash)
-  const secret = await LabeledExtract(suite.KDF, suite.id, shared_secret, encode('secret'), psk)
+  const secret = await LabeledExtract(suite.KDF, suite.id, shared_secret, L_secret, psk)
 
   // For export-only AEAD, we only need the exporter_secret
   if (suite.AEAD.id === EXPORT_ONLY) {
@@ -1606,7 +1620,7 @@ async function CombineSecrets_TwoStage(
       suite.KDF,
       suite.id,
       secret,
-      encode('exp'),
+      L_exp,
       key_schedule_context,
       suite.KDF.Nh,
     )
@@ -1614,16 +1628,9 @@ async function CombineSecrets_TwoStage(
   }
 
   const [key, base_nonce, exporter_secret] = await Promise.all([
-    LabeledExpand(suite.KDF, suite.id, secret, encode('key'), key_schedule_context, suite.AEAD.Nk),
-    LabeledExpand(
-      suite.KDF,
-      suite.id,
-      secret,
-      encode('base_nonce'),
-      key_schedule_context,
-      suite.AEAD.Nn,
-    ),
-    LabeledExpand(suite.KDF, suite.id, secret, encode('exp'), key_schedule_context, suite.KDF.Nh),
+    LabeledExpand(suite.KDF, suite.id, secret, L_key, key_schedule_context, suite.AEAD.Nk),
+    LabeledExpand(suite.KDF, suite.id, secret, L_base_nonce, key_schedule_context, suite.AEAD.Nn),
+    LabeledExpand(suite.KDF, suite.id, secret, L_exp, key_schedule_context, suite.KDF.Nh),
   ])
 
   return { key, base_nonce, exporter_secret }
@@ -1638,7 +1645,7 @@ async function Export_TwoStage(
   L: number,
 ) {
   checkLength(exporter_context, 'Exporter context', MAX_LENGTH_TWO_STAGE)
-  return await LabeledExpand(KDF, suite_id, exporter_secret, encode('sec'), exporter_context, L)
+  return await LabeledExpand(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
 }
 
 /**
@@ -1788,7 +1795,7 @@ export async function LabeledExtract(
   label: Uint8Array,
   ikm: Uint8Array,
 ): Promise<Uint8Array> {
-  const labeled_ikm = concat(encode('HPKE-v1'), suite_id, label, ikm)
+  const labeled_ikm = concat(L_HPKE_v1, suite_id, label, ikm)
   return await KDF.Extract(salt, labeled_ikm)
 }
 
@@ -1819,7 +1826,7 @@ export async function LabeledExpand(
   info: Uint8Array,
   L: number,
 ): Promise<Uint8Array> {
-  const labeled_info = concat(I2OSP(L, 2), encode('HPKE-v1'), suite_id, label, info)
+  const labeled_info = concat(I2OSP(L, 2), L_HPKE_v1, suite_id, label, info)
   return await KDF.Expand(prk, labeled_info, L)
 }
 
@@ -2692,18 +2699,12 @@ async function DeriveCandidate_TwoStage(
   ikm: Uint8Array,
   counter: number,
 ) {
-  const dkp_prk = await LabeledExtract(
-    DHKEM.kdf,
-    suite_id,
-    new Uint8Array(),
-    encode('dkp_prk'),
-    ikm,
-  )
+  const dkp_prk = await LabeledExtract(DHKEM.kdf, suite_id, new Uint8Array(), L_dkp_prk, ikm)
   return await LabeledExpand(
     DHKEM.kdf,
     suite_id,
     dkp_prk,
-    encode('candidate'),
+    L_candidate,
     I2OSP(counter, 1),
     DHKEM.Nsk,
   )
@@ -2757,18 +2758,12 @@ async function ExtractAndExpand_TwoStage(
   dh: Uint8Array,
   kem_context: Uint8Array,
 ): Promise<Uint8Array> {
-  const eae_prk = await LabeledExtract(
-    DHKEM.kdf,
-    DHKEM.suite_id,
-    new Uint8Array(),
-    encode('eae_prk'),
-    dh,
-  )
+  const eae_prk = await LabeledExtract(DHKEM.kdf, DHKEM.suite_id, new Uint8Array(), L_eae_prk, dh)
   return await LabeledExpand(
     DHKEM.kdf,
     DHKEM.suite_id,
     eae_prk,
-    encode('shared_secret'),
+    L_shared_secret,
     kem_context,
     DHKEM.Nsecret,
   )
@@ -3110,21 +3105,8 @@ async function GetKeyPairNist(
 
 /** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1.3) */
 async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean) {
-  const dkp_prk = await LabeledExtract(
-    this.kdf,
-    this.suite_id,
-    new Uint8Array(),
-    encode('dkp_prk'),
-    ikm,
-  )
-  const sk = await LabeledExpand(
-    this.kdf,
-    this.suite_id,
-    dkp_prk,
-    encode('sk'),
-    new Uint8Array(),
-    this.Nsk,
-  )
+  const dkp_prk = await LabeledExtract(this.kdf, this.suite_id, new Uint8Array(), L_dkp_prk, ikm)
+  const sk = await LabeledExpand(this.kdf, this.suite_id, dkp_prk, L_sk, new Uint8Array(), this.Nsk)
   return await createKeyPairFromPrivateKey(this, sk, extractable)
 }
 
@@ -3171,7 +3153,7 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistC
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     kdf,
@@ -3226,7 +3208,7 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistC
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     kdf,
@@ -3281,7 +3263,7 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistC
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     kdf,
@@ -3327,7 +3309,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { p
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     kdf,
@@ -3374,7 +3356,7 @@ export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM & { pkc
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     kdf,
@@ -3410,7 +3392,7 @@ function MLKEM_SHARED(): KEM_BASE {
         this.kdf,
         this.suite_id,
         ikm,
-        encode('DeriveKeyPair'),
+        L_DeriveKeyPair,
         new Uint8Array(),
         this.Nsk,
       )
@@ -3519,7 +3501,7 @@ export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
@@ -3559,7 +3541,7 @@ export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
@@ -3599,7 +3581,7 @@ export const KEM_ML_KEM_1024: KEMFactory = function (): MLKEM {
   kdf.name = name
   return {
     id,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
@@ -4019,7 +4001,7 @@ function PQTKEM_SHARED(): KEM_BASE {
         this.kdf,
         this.suite_id,
         ikm,
-        encode('DeriveKeyPair'),
+        L_DeriveKeyPair,
         new Uint8Array(),
         32,
       )
@@ -4160,7 +4142,7 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
   return {
     id,
     kdf,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
@@ -4216,7 +4198,7 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
   return {
     id,
     kdf,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
@@ -4272,7 +4254,7 @@ export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
   return {
     id,
     kdf,
-    suite_id: concat(encode('KEM'), I2OSP(id, 2)),
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
     type: 'KEM',
     name,
     Nsecret: 32,
