@@ -87,10 +87,6 @@ export const supported: Record<string, () => boolean | undefined> = {
   AEAD_ChaCha20Poly1305() {
     return supports('generateKey', 'ChaCha20-Poly1305')
   },
-  KEM_DHKEM_X25519_HKDF_SHA256() {
-    // @ts-ignore
-    return typeof Bun !== 'object'
-  },
   KEM_DHKEM_X448_HKDF_SHA512() {
     // @ts-ignore
     return typeof Deno !== 'object' && typeof Bun !== 'object'
