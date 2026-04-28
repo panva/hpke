@@ -6,6 +6,10 @@ Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-512).
 
 A post-quantum KEM based on structured lattices (FIPS 203 / CRYSTALS-Kyber).
 
+> \[!CAUTION]\
+> This KEM is included for completeness and interoperability. Prefer ML-KEM-768, ML-KEM-1024, or a
+> post-quantum/traditional hybrid KEM unless ML-KEM-512 is specifically required.
+
 Depends on the following Web Cryptography algorithms being supported in the runtime:
 
 - ML-KEM-512 key encapsulation
