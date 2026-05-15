@@ -2901,7 +2901,7 @@ interface ECPoint {
 }
 
 // Jacobian projective coordinates: (X, Y, Z) represents affine (X/Z², Y/Z³)
-// Uses wNAF scalar multiplication — only one modular inverse at the very end.
+// Uses wNAF scalar multiplication - only one modular inverse at the very end.
 type JP = [bigint, bigint, bigint] // [X, Y, Z]
 
 // Non-negative modular reduction
