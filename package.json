@@ -56,20 +56,20 @@
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
     "@noble/post-quantum": "^0.6.1",
-    "@types/node": "^24.12.2",
-    "amaro": "^1.1.8",
+    "@types/node": "^24.12.3",
+    "amaro": "^1.1.9",
     "esbuild": "^0.28.0",
     "playwright": "^1.59.1",
-    "prettier": "^3.8.1",
+    "prettier": "^3.8.3",
     "prettier-plugin-jsdoc": "^1.8.0",
     "remark-behead": "^3.1.0",
     "remark-insert-headings": "^0.0.0",
     "remark-toc": "^9.0.0",
     "serve": "^14.2.6",
-    "typedoc": "^0.28.18",
+    "typedoc": "^0.28.19",
     "typedoc-plugin-markdown": "^4.11.0",
     "typedoc-plugin-remark": "^2.0.1",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.3"
   },
   "publishConfig": {
     "access": "public"
