@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.1](https://github.com/panva/hpke/compare/v1.1.0...v1.1.1) (2026-05-15)
+
+
+### Documentation
+
+* add a caution block to the ML-KEM-512 export ([bde2f68](https://github.com/panva/hpke/commit/bde2f68f23940cb322b37c45175cffc2d94483f5))
+* update examples ([cd67c2f](https://github.com/panva/hpke/commit/cd67c2ff2158b4705f6cefa71cfef1d5b0f77ceb))
+
+
+### Refactor
+
+* avoid AEAD key re-import on subsequent Context<Role>.Open/Seal ([c36c54c](https://github.com/panva/hpke/commit/c36c54c082597e8ab4794635537353e35394b716))
+* cache ASCII label encodings at module scope ([20eedf2](https://github.com/panva/hpke/commit/20eedf2142f4ea92d466ca0f3671298247f81bc2))
+* inline ComputeNonce and drop xor helper ([772ca09](https://github.com/panva/hpke/commit/772ca093538163cf4f35c821a76332b307f3b932))
+* NIST curve DeserializePrivateKey and DeriveKeyPair optimizations ([11b6c55](https://github.com/panva/hpke/commit/11b6c557affd9fef75ead15005daf49e1574e673))
+
 ## [1.1.0](https://github.com/panva/hpke/compare/v1.0.6...v1.1.0) (2026-03-31)
 
 
