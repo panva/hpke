@@ -4,15 +4,20 @@ import * as assert from 'node:assert'
 import * as HPKE from '../index.ts'
 import { NOBLE_KEMS, supported } from './support.ts'
 
-// Find a supported PQ KEM that uses HybridKey
+function supportsNativeHybridKem(algorithm: string) {
+  // @ts-expect-error
+  return SubtleCrypto.supports?.('generateKey', algorithm) ?? false
+}
+
+// Find a supported hybrid KEM that uses the local HybridKey fallback.
 function getSupportedPQKEM(): HPKE.KEMFactory | undefined {
-  const pqKEMs: Array<[HPKE.KEMFactory, string]> = [
-    [HPKE.KEM_MLKEM768_P256, 'KEM_MLKEM768_P256'],
-    [HPKE.KEM_MLKEM1024_P384, 'KEM_MLKEM1024_P384'],
-    [HPKE.KEM_MLKEM768_X25519, 'KEM_MLKEM768_X25519'],
+  const pqKEMs: Array<[HPKE.KEMFactory, string, string]> = [
+    [HPKE.KEM_MLKEM768_P256, 'KEM_MLKEM768_P256', 'MLKEM768-P256'],
+    [HPKE.KEM_MLKEM1024_P384, 'KEM_MLKEM1024_P384', 'MLKEM1024-P384'],
+    [HPKE.KEM_MLKEM768_X25519, 'KEM_MLKEM768_X25519', 'MLKEM768-X25519'],
   ]
-  for (const [kemFactory, name] of pqKEMs) {
-    if (supported[name]?.() !== false) {
+  for (const [kemFactory, name, algorithm] of pqKEMs) {
+    if (supported[name]?.() !== false && !supportsNativeHybridKem(algorithm)) {
       return kemFactory
     }
   }

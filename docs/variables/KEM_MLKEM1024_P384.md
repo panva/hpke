@@ -4,7 +4,12 @@
 
 Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
 
-Depends on the following Web Cryptography algorithms being supported in the runtime:
+Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
+
+- MLKEM1024-P384 key encapsulation
+- SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+
+Or:
 
 - ML-KEM-1024 key encapsulation
 - ECDH with P-384 curve

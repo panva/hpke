@@ -3463,18 +3463,20 @@ export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DH
 }
 
 // ============================================================================
-// KEM (Key Encapsulation Mechanism) - ML-KEM Types and Implementation
+// KEM (Key Encapsulation Mechanism) - Direct KEM Types and Implementation
 // ============================================================================
 
-interface MLKEM extends KEM<CryptoKey> {
+type KEMParams = Pick<KEM, 'id' | 'name' | 'Nsecret' | 'Nenc' | 'Npk' | 'Nsk'>
+
+interface DirectKEM extends KEM<CryptoKey> {
   readonly suite_id: Uint8Array
   readonly algorithm: Readonly<KeyAlgorithm>
   readonly kdf: KDF
 }
 
-function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
+function DIRECT_KEM_SHARED(): KEM_BASE<CryptoKey> {
   return {
-    async DeriveKeyPair(this: MLKEM, ikm, extractable) {
+    async DeriveKeyPair(this: DirectKEM, ikm, extractable) {
       const dk = await LabeledDerive(
         this.kdf,
         this.suite_id,
@@ -3491,7 +3493,7 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
 
       return { privateKey, publicKey }
     },
-    async GenerateKeyPair(this: MLKEM, extractable) {
+    async GenerateKeyPair(this: DirectKEM, extractable) {
       // @ts-expect-error
       const usages: KeyUsage[] = ['encapsulateBits', 'decapsulateBits']
       return (await subtle(
@@ -3499,14 +3501,14 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
         this.name,
       )) as CryptoKeyPair
     },
-    async SerializePublicKey(this: MLKEM, key) {
+    async SerializePublicKey(this: DirectKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       assertCryptoKey(key)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
-    async DeserializePublicKey(this: MLKEM, key) {
+    async DeserializePublicKey(this: DirectKEM, key) {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       // @ts-expect-error
@@ -3516,14 +3518,14 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
         this.name,
       )
     },
-    async SerializePrivateKey(this: MLKEM, key) {
+    async SerializePrivateKey(this: DirectKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       assertCryptoKey(key)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
       return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
-    async DeserializePrivateKey(this: MLKEM, key, extractable) {
+    async DeserializePrivateKey(this: DirectKEM, key, extractable) {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
       // @ts-expect-error
@@ -3533,7 +3535,7 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
         this.name,
       )
     },
-    async Encap(this: MLKEM, pkR) {
+    async Encap(this: DirectKEM, pkR) {
       assertKeyAlgorithm(pkR, this.algorithm)
 
       const { sharedKey, ciphertext } = (await subtle(
@@ -3544,7 +3546,7 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
 
       return { shared_secret: new Uint8Array(sharedKey), enc: new Uint8Array(ciphertext) }
     },
-    async Decap(this: MLKEM, enc, skR, _pkR) {
+    async Decap(this: DirectKEM, enc, skR, _pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
       return new Uint8Array(
         await subtle(
@@ -3554,6 +3556,25 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
         ),
       )
     },
+  }
+}
+
+function createDirectKEM({ id, name, Nsecret, Nenc, Npk, Nsk }: KEMParams): DirectKEM {
+  const kdf = KDF_SHAKE256()
+  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
+  kdf.name = name
+  return {
+    id,
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
+    type: 'KEM',
+    name,
+    Nsecret,
+    Nenc,
+    Npk,
+    Nsk,
+    algorithm: { name },
+    kdf,
+    ...DIRECT_KEM_SHARED(),
   }
 }
 
@@ -3584,25 +3605,14 @@ function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_512: KEMFactory<CryptoKey> = function (): MLKEM {
+export const KEM_ML_KEM_512: KEMFactory<CryptoKey> = function (): DirectKEM {
   const id = 0x0040
   const name = 'ML-KEM-512'
-  const kdf = KDF_SHAKE256()
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 768,
-    Npk: 800,
-    Nsk: 64,
-    algorithm: { name: 'ML-KEM-512' },
-    kdf,
-    ...MLKEM_SHARED(),
-  }
+  const Nsecret = 32
+  const Nenc = 768
+  const Npk = 800
+  const Nsk = 64
+  return createDirectKEM({ id, name, Nsecret, Nenc, Npk, Nsk })
 }
 
 /**
@@ -3624,25 +3634,14 @@ export const KEM_ML_KEM_512: KEMFactory<CryptoKey> = function (): MLKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_768: KEMFactory<CryptoKey> = function (): MLKEM {
+export const KEM_ML_KEM_768: KEMFactory<CryptoKey> = function (): DirectKEM {
   const id = 0x0041
   const name = 'ML-KEM-768'
-  const kdf = KDF_SHAKE256()
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 1088,
-    Npk: 1184,
-    Nsk: 64,
-    algorithm: { name: 'ML-KEM-768' },
-    kdf,
-    ...MLKEM_SHARED(),
-  }
+  const Nsecret = 32
+  const Nenc = 1088
+  const Npk = 1184
+  const Nsk = 64
+  return createDirectKEM({ id, name, Nsecret, Nenc, Npk, Nsk })
 }
 
 /**
@@ -3664,25 +3663,14 @@ export const KEM_ML_KEM_768: KEMFactory<CryptoKey> = function (): MLKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_1024: KEMFactory<CryptoKey> = function (): MLKEM {
+export const KEM_ML_KEM_1024: KEMFactory<CryptoKey> = function (): DirectKEM {
   const id = 0x0042
   const name = 'ML-KEM-1024'
-  const kdf = KDF_SHAKE256()
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 1568,
-    Npk: 1568,
-    Nsk: 64,
-    algorithm: { name: 'ML-KEM-1024' },
-    kdf,
-    ...MLKEM_SHARED(),
-  }
+  const Nsecret = 32
+  const Nenc = 1568
+  const Npk = 1568
+  const Nsk = 64
+  return createDirectKEM({ id, name, Nsecret, Nenc, Npk, Nsk })
 }
 
 interface WebCryptoAEAD extends AEAD {
@@ -3856,7 +3844,7 @@ export const AEAD_ChaCha20Poly1305: AEADFactory = function AEAD_ChaCha20Poly1305
 }
 
 // ============================================================================
-// KEM (Key Encapsulation Mechanism) - Hybrid KEM Types and Implementation
+// KEM (Key Encapsulation Mechanism) - Composite Hybrid KEM Types and Implementation
 // ============================================================================
 
 /* c8 ignore next 5 */
@@ -3956,7 +3944,7 @@ function split(N1: number, N2: number, x: Uint8Array): [Uint8Array, Uint8Array] 
   return [x1, x2]
 }
 
-function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
+function RandomScalarNist(t: CompositeHybridKEM['t'], seed: Uint8Array): Uint8Array {
   let sk_bigint = 0n
   let start = 0
   let end = t.Nscalar!
@@ -3974,69 +3962,69 @@ function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
 }
 
 /** @see [expandDecapsKeyG](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-12.html#section-5.1.1) */
-async function expandDecapsKeyG(PQTKEM: HybridKEM, seed: Uint8Array) {
-  const Nout = PQTKEM.pq.Nseed + PQTKEM.t.Nseed
+async function expandDecapsKeyG(kem: CompositeHybridKEM, seed: Uint8Array) {
+  const Nout = kem.pq.Nseed + kem.t.Nseed
   const bits = Nout << 3
   // @ts-expect-error
   const algorithm: CShakeParams = { name: 'cSHAKE256', length: bits, outputLength: bits }
-  const seed_full = await subtle((c) => c.digest(algorithm, seed as BufferSource), PQTKEM.name)
+  const seed_full = await subtle((c) => c.digest(algorithm, seed as BufferSource), kem.name)
 
-  const [seed_PQ, seed_T] = split(PQTKEM.pq.Nseed, PQTKEM.t.Nseed, new Uint8Array(seed_full))
+  const [seed_PQ, seed_T] = split(kem.pq.Nseed, kem.t.Nseed, new Uint8Array(seed_full))
 
   // @ts-expect-error
   const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
   // @ts-expect-error
   const usages: [KeyUsage, KeyUsage] = ['decapsulateBits', 'encapsulateBits']
   const dk_PQ = await subtle(
-    (c) => c.importKey(format, seed_PQ as BufferSource, PQTKEM.pq.algorithm, true, [usages[0]]),
-    PQTKEM.name,
+    (c) => c.importKey(format, seed_PQ as BufferSource, kem.pq.algorithm, true, [usages[0]]),
+    kem.name,
   )
-  const ek_PQ = await getPublicKey(PQTKEM.name, dk_PQ, [usages[1]])
+  const ek_PQ = await getPublicKey(kem.name, dk_PQ, [usages[1]])
 
-  const sk = PQTKEM.t.RandomScalar?.(seed_T) ?? seed_T
-  const { privateKey: dk_T, publicKey: ek_T } = await PQTKEM.t.GetKeyPair(sk)
+  const sk = kem.t.RandomScalar?.(seed_T) ?? seed_T
+  const { privateKey: dk_T, publicKey: ek_T } = await kem.t.GetKeyPair(sk)
 
   return { ek_PQ, ek_T, dk_PQ, dk_T }
 }
 
 /** @see [C2PRICombiner](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-12.html#section-5.1.3) */
 async function C2PRICombiner(
-  PQTKEM: HybridKEM,
+  kem: CompositeHybridKEM,
   ss_PQ: Uint8Array,
   ss_T: Uint8Array,
   ct_T: Uint8Array,
   _ek_T: CryptoKey,
   label: Uint8Array,
 ): Promise<Uint8Array> {
-  const ek_T = new Uint8Array(await subtle((c) => c.exportKey('raw', _ek_T), PQTKEM.name))
+  const ek_T = new Uint8Array(await subtle((c) => c.exportKey('raw', _ek_T), kem.name))
   const data = concat(ss_PQ, ss_T, ct_T, ek_T, label) as BufferSource
-  return new Uint8Array(await subtle((c) => c.digest('SHA3-256', data), PQTKEM.name))
+  return new Uint8Array(await subtle((c) => c.digest('SHA3-256', data), kem.name))
 }
 
 /** @see [prepareEncapsG](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-12.html#section-5.1.1) */
 async function prepareEncapsG(
-  PQTKEM: HybridKEM,
+  kem: CompositeHybridKEM,
   ek_PQ: CryptoKey,
   ek_T: CryptoKey,
 ): Promise<[Uint8Array, Uint8Array, Uint8Array, Uint8Array]> {
   const res = (await subtle(
     // @ts-expect-error
-    (c) => c.encapsulateBits(PQTKEM.pq.algorithm, ek_PQ),
-    PQTKEM.name,
+    (c) => c.encapsulateBits(kem.pq.algorithm, ek_PQ),
+    kem.name,
   )) as { sharedKey: ArrayBuffer; ciphertext: ArrayBuffer }
   const ss_PQ = new Uint8Array(res.sharedKey)
   const ct_PQ = new Uint8Array(res.ciphertext)
 
   const { privateKey: sk_E, publicKey } = (await subtle(
-    (c) => c.generateKey(PQTKEM.t.algorithm, false, ['deriveBits']),
-    PQTKEM.name,
+    (c) => c.generateKey(kem.t.algorithm, true, ['deriveBits']),
+    kem.name,
   )) as CryptoKeyPair
-  const ct_T = new Uint8Array(await subtle((c) => c.exportKey('raw', publicKey), PQTKEM.name))
+  const ct_T = new Uint8Array(await subtle((c) => c.exportKey('raw', publicKey), kem.name))
 
   const ss_T = new Uint8Array(
     await subtle(
-      (c) => c.deriveBits({ name: PQTKEM.t.algorithm.name, public: ek_T }, sk_E, PQTKEM.t.Nss << 3),
-      PQTKEM.name,
+      (c) => c.deriveBits({ name: kem.t.algorithm.name, public: ek_T }, sk_E, kem.t.Nss << 3),
+      kem.name,
     ),
   )
   checkNotAllZeros(ss_T)
@@ -4046,7 +4034,7 @@ async function prepareEncapsG(
 
 /** @see [prepareDecapsG](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-12.html#section-5.1.1) */
 async function prepareDecapsG(
-  PQTKEM: HybridKEM,
+  kem: CompositeHybridKEM,
   dk_PQ: CryptoKey,
   dk_T: CryptoKey,
   ct_PQ: Uint8Array,
@@ -4055,20 +4043,20 @@ async function prepareDecapsG(
   const ss_PQ = new Uint8Array(
     await subtle(
       // @ts-expect-error
-      (c) => c.decapsulateBits(PQTKEM.pq.algorithm, dk_PQ, ct_PQ),
-      PQTKEM.name,
+      (c) => c.decapsulateBits(kem.pq.algorithm, dk_PQ, ct_PQ),
+      kem.name,
     ),
   )
 
   const pub = await subtle(
-    (c) => c.importKey('raw', ct_T as BufferSource, PQTKEM.t.algorithm, true, []),
-    PQTKEM.name,
+    (c) => c.importKey('raw', ct_T as BufferSource, kem.t.algorithm, true, []),
+    kem.name,
   )
 
   const ss_T = new Uint8Array(
     await subtle(
-      (c) => c.deriveBits({ name: PQTKEM.t.algorithm.name, public: pub }, dk_T, PQTKEM.t.Nss << 3),
-      PQTKEM.name,
+      (c) => c.deriveBits({ name: kem.t.algorithm.name, public: pub }, dk_T, kem.t.Nss << 3),
+      kem.name,
     ),
   )
   checkNotAllZeros(ss_T)
@@ -4076,7 +4064,7 @@ async function prepareDecapsG(
   return [ss_PQ, ss_T]
 }
 
-interface HybridKEM extends KEM<HybridKey> {
+interface CompositeHybridKEM extends KEM<HybridKey> {
   readonly suite_id: Uint8Array
   readonly kdf: KDF
   readonly algorithm: KeyAlgorithm
@@ -4096,18 +4084,20 @@ interface HybridKEM extends KEM<HybridKey> {
     readonly Nsk: number
     readonly Nscalar?: number
     readonly GetKeyPair: (
-      this: HybridKEM['t'],
+      this: CompositeHybridKEM['t'],
       sk: Uint8Array,
     ) => Promise<{ privateKey: CryptoKey; publicKey: CryptoKey }>
     readonly order?: bigint
-    readonly RandomScalar?: (this: HybridKEM['t'], seed: Uint8Array) => Uint8Array
+    readonly RandomScalar?: (this: CompositeHybridKEM['t'], seed: Uint8Array) => Uint8Array
   }
 }
 
-function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
+type CompositeHybridKEMParams = KEMParams & Pick<CompositeHybridKEM, 'pq' | 't' | 'label'>
+
+function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
   Object.freeze(HybridKey.prototype)
   return {
-    async DeriveKeyPair(this: HybridKEM, ikm: Uint8Array, extractable) {
+    async DeriveKeyPair(this: CompositeHybridKEM, ikm: Uint8Array, extractable) {
       const seed = await LabeledDerive(
         this.kdf,
         this.suite_id,
@@ -4133,10 +4123,10 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 
       return { privateKey, publicKey }
     },
-    async GenerateKeyPair(this: HybridKEM, extractable) {
+    async GenerateKeyPair(this: CompositeHybridKEM, extractable) {
       return await this.DeriveKeyPair(crypto.getRandomValues(new Uint8Array(32)), extractable)
     },
-    async SerializePublicKey(this: HybridKEM, key) {
+    async SerializePublicKey(this: CompositeHybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       HybridKey.validate(key, true)
       // @ts-expect-error
@@ -4150,7 +4140,7 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 
       return concat(ek_PQ, ek_T)
     },
-    async DeserializePublicKey(this: HybridKEM, key) {
+    async DeserializePublicKey(this: CompositeHybridKEM, key) {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       // @ts-expect-error
@@ -4164,13 +4154,13 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 
       return new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
     },
-    async SerializePrivateKey(this: HybridKEM, key) {
+    async SerializePrivateKey(this: CompositeHybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
       HybridKey.validate(key, true)
 
       return key.getSeed(priv)
     },
-    async DeserializePrivateKey(this: HybridKEM, key, extractable) {
+    async DeserializePrivateKey(this: CompositeHybridKEM, key, extractable) {
       const { ek_PQ, ek_T, dk_PQ, dk_T } = await expandDecapsKeyG(this, key)
       const publicKey = new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
       const privateKey = new HybridKey(
@@ -4186,7 +4176,7 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 
       return privateKey
     },
-    async Encap(this: HybridKEM, pkR) {
+    async Encap(this: CompositeHybridKEM, pkR) {
       assertKeyAlgorithm(pkR, this.algorithm)
       HybridKey.validate(pkR)
 
@@ -4198,7 +4188,7 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 
       return { shared_secret: ss_H, enc: ct_H }
     },
-    async Decap(this: HybridKEM, enc, skR, pkR) {
+    async Decap(this: CompositeHybridKEM, enc, skR, pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
       HybridKey.validate(skR)
 
@@ -4220,6 +4210,20 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
   }
 }
 
+function createCompositeHybridKEM(parameters: CompositeHybridKEMParams): CompositeHybridKEM {
+  const kdf = KDF_SHAKE256()
+  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
+  kdf.name = parameters.name
+  return {
+    ...parameters,
+    suite_id: concat(L_KEM, I2OSP(parameters.id, 2)),
+    type: 'KEM',
+    algorithm: { name: parameters.name },
+    kdf,
+    ...COMPOSITE_HYBRID_KEM_SHARED(),
+  }
+}
+
 // ============================================================================
 // KEM (Key Encapsulation Mechanism) - Hybrid KEM Suite Exports
 // ============================================================================
@@ -4227,7 +4231,12 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
 /**
  * Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519).
  *
- * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
+ *
+ * - MLKEM768-X25519 key encapsulation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ *
+ * Or:
  *
  * - ML-KEM-768 key encapsulation
  * - X25519 key agreement
@@ -4243,24 +4252,22 @@ function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
  * @group KEM Algorithms
  * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-4)
  */
-export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
+export const KEM_MLKEM768_X25519: KEMFactory = function (): CompositeHybridKEM | DirectKEM {
   const id = 0x647a
   const name = 'MLKEM768-X25519'
-  const kdf = KDF_SHAKE256()
+  const Nsecret = 32
+  const Nenc = 1120
+  const Npk = 1216
+  const Nsk = 32
+  const kem = { id, name, Nsecret, Nenc, Npk, Nsk }
+  // @ts-expect-error
+  if (SubtleCrypto.supports?.('generateKey', name) ?? false) {
+    return createDirectKEM(kem)
+  }
+
   const pkcs8 = Uint8Array.of(0x30, 0x2e, 0x02, 0x01, 0x00, 0x30, 0x05, 0x06, 0x03, 0x2b, 0x65, 0x6e, 0x04, 0x22, 0x04, 0x20) // prettier-ignore
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    kdf,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 1120,
-    Npk: 1216,
-    Nsk: 32,
-    algorithm: { name: 'MLKEM768-X25519' },
+  return createCompositeHybridKEM({
+    ...kem,
     pq: { algorithm: { name: 'ML-KEM-768' }, Nseed: 64, Npk: 1184, Nct: 1088 },
     t: {
       algorithm: { name: 'X25519' },
@@ -4277,14 +4284,18 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
       },
     },
     label: Uint8Array.of(0x5c, 0x2e, 0x2f, 0x2f, 0x5e, 0x5c), // prettier-ignore
-    ...PQTKEM_SHARED(),
-  }
+  })
 }
 
 /**
  * Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
  *
- * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
+ *
+ * - MLKEM768-P256 key encapsulation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ *
+ * Or:
  *
  * - ML-KEM-768 key encapsulation
  * - ECDH with P-256 curve
@@ -4300,23 +4311,21 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): HybridKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-4)
  */
-export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
+export const KEM_MLKEM768_P256: KEMFactory = function (): CompositeHybridKEM | DirectKEM {
   const id = 0x0050
   const name = 'MLKEM768-P256'
-  const kdf = KDF_SHAKE256()
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    kdf,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 1153,
-    Npk: 1249,
-    Nsk: 32,
-    algorithm: { name: 'MLKEM768-P256' },
+  const Nsecret = 32
+  const Nenc = 1153
+  const Npk = 1249
+  const Nsk = 32
+  const kem = { id, name, Nsecret, Nenc, Npk, Nsk }
+  // @ts-expect-error
+  if (SubtleCrypto.supports?.('generateKey', name) ?? false) {
+    return createDirectKEM(kem)
+  }
+
+  return createCompositeHybridKEM({
+    ...kem,
     pq: { algorithm: { name: 'ML-KEM-768' }, Nseed: 64, Npk: 1184, Nct: 1088 },
     t: {
       ...P256,
@@ -4333,14 +4342,18 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
       },
     },
     label: Uint8Array.of(0x4d, 0x4c, 0x4b, 0x45, 0x4d, 0x37, 0x36, 0x38, 0x2d, 0x50, 0x32, 0x35, 0x36), // prettier-ignore
-    ...PQTKEM_SHARED(),
-  }
+  })
 }
 
 /**
  * Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
  *
- * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
+ *
+ * - MLKEM1024-P384 key encapsulation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ *
+ * Or:
  *
  * - ML-KEM-1024 key encapsulation
  * - ECDH with P-384 curve
@@ -4356,23 +4369,21 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): HybridKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-4)
  */
-export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
+export const KEM_MLKEM1024_P384: KEMFactory = function (): CompositeHybridKEM | DirectKEM {
   const id = 0x0051
   const name = 'MLKEM1024-P384'
-  const kdf = KDF_SHAKE256()
-  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
-  kdf.name = name
-  return {
-    id,
-    kdf,
-    suite_id: concat(L_KEM, I2OSP(id, 2)),
-    type: 'KEM',
-    name,
-    Nsecret: 32,
-    Nenc: 1665,
-    Npk: 1665,
-    Nsk: 32,
-    algorithm: { name: 'MLKEM1024-P384' },
+  const Nsecret = 32
+  const Nenc = 1665
+  const Npk = 1665
+  const Nsk = 32
+  const kem = { id, name, Nsecret, Nenc, Npk, Nsk }
+  // @ts-expect-error
+  if (SubtleCrypto.supports?.('generateKey', name) ?? false) {
+    return createDirectKEM(kem)
+  }
+
+  return createCompositeHybridKEM({
+    ...kem,
     pq: { algorithm: { name: 'ML-KEM-1024' }, Nseed: 64, Npk: 1568, Nct: 1568 },
     t: {
       ...P384,
@@ -4390,6 +4401,5 @@ export const KEM_MLKEM1024_P384: KEMFactory = function (): HybridKEM {
       },
     },
     label: Uint8Array.of(0x4d, 0x4c, 0x4b, 0x45, 0x4d, 0x31, 0x30, 0x32, 0x34, 0x2d, 0x50, 0x33, 0x38, 0x34), // prettier-ignore
-    ...PQTKEM_SHARED(),
-  }
+  })
 }
