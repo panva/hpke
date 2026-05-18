@@ -68,14 +68,15 @@ export const extractAlgorithms = (library, prefix, label, isNoble = false) =>
 export const getTestComponent = (test) => test[test.testingComponent]
 
 function supports(op, algorithm) {
-  return globalThis.SubtleCrypto.supports?.(op, algorithm) ?? false
+  return SubtleCrypto.supports?.(op, algorithm) ?? false
 }
 
 function supportsAll(...checks) {
   return checks.every(([op, algorithm]) => supports(op, algorithm))
 }
 
-const supportsHybridKem = (pqAlgorithm, traditionalAlgorithm) =>
+const supportsHybridKem = (hybridAlgorithm, pqAlgorithm, traditionalAlgorithm) =>
+  supports('generateKey', hybridAlgorithm) ||
   supportsAll(
     ['digest', { name: 'cSHAKE256', outputLength: 512 }],
     ['digest', 'SHA3-256'],
@@ -119,13 +120,13 @@ const WEBCRYPTO_USABLE_CHECKS = {
     )
   },
   KEM_MLKEM768_X25519() {
-    return supportsHybridKem('ML-KEM-768', 'X25519')
+    return supportsHybridKem('MLKEM768-X25519', 'ML-KEM-768', 'X25519')
   },
   KEM_MLKEM768_P256() {
-    return supportsHybridKem('ML-KEM-768', { name: 'ECDH', namedCurve: 'P-256' })
+    return supportsHybridKem('MLKEM768-P256', 'ML-KEM-768', { name: 'ECDH', namedCurve: 'P-256' })
   },
   KEM_MLKEM1024_P384() {
-    return supportsHybridKem('ML-KEM-1024', { name: 'ECDH', namedCurve: 'P-384' })
+    return supportsHybridKem('MLKEM1024-P384', 'ML-KEM-1024', { name: 'ECDH', namedCurve: 'P-384' })
   },
   AEAD_ChaCha20Poly1305() {
     return supports('generateKey', 'ChaCha20-Poly1305')
