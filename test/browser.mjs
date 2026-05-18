@@ -1,9 +1,12 @@
 import { chromium, firefox, webkit } from 'playwright'
 import { execFileSync, spawn } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { findReadmeSupportMismatches, formatReadmeSupportMismatch } from './run.js'
 
 execFileSync(process.execPath, ['--run', 'build'], { stdio: 'inherit' })
 
 const PORT = 3000
+const readme = readFileSync(new URL('../README.md', import.meta.url), 'utf8')
 const testUrls = [
   new URL(`http://localhost:${PORT}/?ci&native`),
   new URL(`http://localhost:${PORT}/?ci&noble`),
@@ -80,10 +83,10 @@ async function waitForTestsToComplete(page, browserName, timeout = 180000) {
 }
 
 // Run tests in a specific browser
-async function runBrowserTests(browserType, browserName, channel = null) {
+async function runBrowserTests({ type: browserType, name: browserName, channel, args = [] }) {
   console.log(`\nTesting with ${browserName}...`)
 
-  const launchOptions = channel ? { channel } : {}
+  const launchOptions = { ...(channel ? { channel } : {}), ...(args.length ? { args } : {}) }
   const browser = await browserType.launch(launchOptions)
   const results = []
 
@@ -131,6 +134,10 @@ async function runBrowserTests(browserType, browserName, channel = null) {
         )
       }
 
+      const readmeMismatches = testUrl.searchParams.has('native')
+        ? findReadmeSupportMismatches({ results: testResults, readme, runtime: 'browser' })
+        : []
+
       // Check for unexpected results
       if (testResults.unexpectedFailures > 0) {
         console.error(
@@ -149,6 +156,21 @@ async function runBrowserTests(browserType, browserName, channel = null) {
           `\n    ✗ ${browserName} (${urlLabel}): ${testResults.vectorValidation.failed} vector validation failure(s)!`,
         )
         results.push({ browserName, urlLabel, success: false, results: testResults })
+      } else if (readmeMismatches.length > 0) {
+        console.error(
+          `\n    ✗ ${browserName} (${urlLabel}): ${readmeMismatches.length} README.md support mismatch(es)!`,
+        )
+        console.error('\n    These native algorithms passed but README.md does not list support:')
+        readmeMismatches.forEach((mismatch) => {
+          console.error(`      - ${formatReadmeSupportMismatch(mismatch)}`)
+        })
+        results.push({
+          browserName,
+          urlLabel,
+          success: false,
+          results: testResults,
+          readmeMismatches,
+        })
       } else if (testResults.unexpectedPasses > 0) {
         console.error(
           `\n    ✗ ${browserName} (${urlLabel}): ${testResults.unexpectedPasses} unexpected pass(es)!`,
@@ -186,16 +208,29 @@ async function main() {
     console.log('Starting server...')
     server = await startServer()
 
-    const allBrowsers = [
+    const defaultBrowsers = [
       { type: chromium, name: 'Chromium' },
       { type: firefox, name: 'Firefox' },
       { type: webkit, name: 'Safari' },
     ]
+    const localBrowsers = [
+      {
+        type: chromium,
+        name: 'Chrome Canary',
+        aliases: ['chrome-canary'],
+        channel: 'chrome-canary',
+        args: ['--enable-features=WebCryptoPQC'],
+      },
+    ]
 
     // Filter browsers based on BROWSER env var if set
+    const allBrowsers = [...defaultBrowsers, ...localBrowsers]
+    const requestedBrowser = process.env.BROWSER?.toLowerCase()
     const browsers = process.env.BROWSER
-      ? allBrowsers.filter((b) => b.name.toLowerCase() === process.env.BROWSER.toLowerCase())
-      : allBrowsers
+      ? allBrowsers.filter((b) => {
+          return b.name.toLowerCase() === requestedBrowser || b.aliases?.includes(requestedBrowser)
+        })
+      : defaultBrowsers
 
     if (browsers.length === 0) {
       throw new Error(`Unknown browser: ${process.env.BROWSER}`)
@@ -206,7 +241,7 @@ async function main() {
     const skipped = []
     for (const browser of browsers) {
       try {
-        const browserResults = await runBrowserTests(browser.type, browser.name, browser.channel)
+        const browserResults = await runBrowserTests(browser)
         results.push(...browserResults)
       } catch (error) {
         console.log(`\n  ⚠ Skipping ${browser.name}: ${error.message}`)

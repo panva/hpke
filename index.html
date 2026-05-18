@@ -39,8 +39,7 @@
           "hpke": "./index.js",
           "@panva/hpke-noble": "./examples/noble-suite/index.js",
           "@noble/": "./node_modules/@noble/",
-          "./index.ts": "./index.js",
-          "bowser": "https://cdn.jsdelivr.net/npm/bowser@2/+esm"
+          "./index.ts": "./index.js"
         }
       }
     </script>
@@ -930,6 +929,7 @@
       }
 
       .demo-controls button:disabled,
+      .ikm-input-wrapper button:disabled,
       .chat-input-container button:disabled,
       .message-actions button:disabled {
         opacity: 0.5;
@@ -938,6 +938,7 @@
       }
 
       .demo-controls button:disabled:hover,
+      .ikm-input-wrapper button:disabled:hover,
       .chat-input-container button:disabled:hover {
         transform: none;
         box-shadow: none;
@@ -1012,6 +1013,10 @@
         font-size: var(--font-size-base);
         white-space: nowrap;
         line-height: var(--line-height-base);
+      }
+
+      .ikm-section.derivation-bypassed .ikm-input-wrapper input {
+        color: var(--color-text-tertiary);
       }
 
       /* Advanced Options */
@@ -1722,14 +1727,15 @@
         </div>
 
         <!-- Key Derivation from IKM -->
-        <div class="ikm-section">
+        <div class="ikm-section" id="ikmSection">
           <div class="demo-input-group">
-            <label>Input Keying Material (IKM, hex):</label>
+            <label id="ikmLabel">Input Keying Material (IKM, hex):</label>
             <div class="ikm-input-wrapper">
               <input type="text" id="ikmInput" value="…">
               <button id="zeroIkmButton" title="Set to zero">0x00…</button>
               <button id="randomIkmButton" title="Randomize">rand()</button>
             </div>
+            <div class="helper-text hidden" id="ikmHelp"></div>
           </div>
         </div>
 
@@ -1893,12 +1899,11 @@
 
       import * as HPKE from 'hpke'
       import * as Noble from '@panva/hpke-noble'
-      import Bowser from 'bowser'
 
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
 
-      import { runAlgorithmTests, runVectorValidation, ALGORITHM_IDS, extractAlgorithms, getTestComponent } from './test/run.js'
+      import { runAlgorithmTests, runVectorValidation, ALGORITHM_IDS, extractAlgorithms, getTestComponent, getUnsupportedAlgorithms } from './test/run.js'
 
       // ============================================================================
       // ALGORITHM DISCOVERY
@@ -1955,6 +1960,15 @@
         AEAD_EXPORT_ONLY: 'Export-only',
       }
 
+      const PQ_KEMS = new Set([
+        'KEM_ML_KEM_512',
+        'KEM_ML_KEM_768',
+        'KEM_ML_KEM_1024',
+        'KEM_MLKEM768_X25519',
+        'KEM_MLKEM768_P256',
+        'KEM_MLKEM1024_P384',
+      ])
+
       // Validate that all algorithms have IDs and names in the maps
       const allAlgorithms = [
         ...KEMS,
@@ -1990,43 +2004,7 @@
       // ============================================================================
       // BROWSER COMPATIBILITY
       // ============================================================================
-      // Some algorithms are not supported in browsers due to missing Web Crypto APIs
-      // Noble implementations provide fallbacks for these
-      // Browser-specific unsupported algorithms based on Web Crypto API availability
-
-      /** Detects the current browser engine and version */
-      const detectBrowser = () => {
-        const browser = Bowser.getParser(navigator.userAgent)
-        return { engine: browser.getEngineName(), version: parseInt(browser.getBrowserVersion()) }
-      }
-
-      const unsupported = {
-        kem: [
-          'KEM_DHKEM_X448_HKDF_SHA512',
-          'KEM_ML_KEM_512',
-          'KEM_ML_KEM_768',
-          'KEM_ML_KEM_1024',
-          'KEM_MLKEM768_X25519',
-          'KEM_MLKEM768_P256',
-          'KEM_MLKEM1024_P384',
-        ],
-        kdf: [
-          'KDF_SHAKE128',
-          'KDF_SHAKE256',
-          'KDF_TurboSHAKE128',
-          'KDF_TurboSHAKE256',
-        ],
-        aead: ['AEAD_ChaCha20Poly1305'],
-      }
-
-      const browser = detectBrowser()
-
-      switch (true) {
-        case browser.engine === 'Gecko' && browser.version < 143:
-          // https://bugzilla.mozilla.org/show_bug.cgi?id=1932396
-          unsupported.kem.push('KEM_DHKEM_X25519_HKDF_SHA256')
-          break
-      }
+      const unsupported = getUnsupportedAlgorithms()
 
       // ============================================================================
       // HELPER FUNCTIONS
@@ -2034,7 +2012,12 @@
 
       // Cache commonly used DOM elements
       const elements = {
+        ikmSection: document.getElementById('ikmSection'),
+        ikmLabel: document.getElementById('ikmLabel'),
         ikmInput: document.getElementById('ikmInput'),
+        ikmHelp: document.getElementById('ikmHelp'),
+        zeroIkmButton: document.getElementById('zeroIkmButton'),
+        randomIkmButton: document.getElementById('randomIkmButton'),
         infoInput: document.getElementById('infoInput'),
         pskInput: document.getElementById('pskInput'),
         pskIdInput: document.getElementById('pskIdInput'),
@@ -2187,6 +2170,8 @@
         selectedAEAD: null,
         suite: null,
         recipientKeyPair: null,
+        recipientKeyPairDerivedFromIkm: false,
+        keyDerivationBypassed: false,
         senderContext: null,
         recipientContext: null,
         encapsulatedSecret: null,
@@ -2194,6 +2179,33 @@
         info: null,
         psk: null,
         pskId: null,
+      }
+
+      const selectedKemIsNativePQKEM = () =>
+        demoState.selectedKEM &&
+        !demoState.selectedKEM.isNoble &&
+        PQ_KEMS.has(demoState.selectedKEM.name)
+
+      function setKeyDerivationBypassed(bypassed) {
+        demoState.keyDerivationBypassed = bypassed
+        elements.ikmSection.classList.toggle('derivation-bypassed', bypassed)
+        elements.ikmInput.disabled = bypassed
+        elements.zeroIkmButton.disabled = bypassed
+        elements.randomIkmButton.textContent = bypassed ? 'keygen()' : 'rand()'
+        elements.randomIkmButton.title = bypassed ? 'Generate random key pair' : 'Randomize'
+        elements.ikmLabel.textContent = bypassed
+          ? 'Recipient Key Pair:'
+          : 'Input Keying Material (IKM, hex):'
+        elements.ikmInput.placeholder = bypassed ? 'deterministic key derivation unavailable' : ''
+        elements.ikmHelp.textContent = bypassed
+          ? 'IKM-based key derivation is unavailable for this KEM in this browser. The playground generated a fresh key pair instead, and vector export is disabled.'
+          : ''
+        elements.ikmHelp.classList.toggle('hidden', !bypassed)
+
+        if (bypassed) {
+          elements.ikmInput.value = ''
+          elements.ikmInput.classList.remove('error')
+        }
       }
 
       /** Updates dropdown option statuses without rebuilding or re-selecting */
@@ -2366,8 +2378,10 @@
       function resetDemoState() {
         // Reset all demo state
         demoState.recipientKeyPair = null
+        demoState.recipientKeyPairDerivedFromIkm = false
         demoState.senderContext = null
         demoState.encapsulatedSecret = null
+        setKeyDerivationBypassed(false)
 
         // Clear inputs and messages
         elements.ikmInput.value = ''
@@ -2433,7 +2447,7 @@
             const ikmLength = demoState.suite.KEM.Nsk
             const randomIkm = crypto.getRandomValues(new Uint8Array(ikmLength))
             elements.ikmInput.value = randomIkm.toHex()
-            deriveFromIkm(randomIkm.toHex())
+            await deriveFromIkm(randomIkm.toHex())
           } else if (suiteChanged) {
             // KDF/AEAD changed but KEM stayed the same - reset context, keep keys
             resetContextState()
@@ -2446,15 +2460,60 @@
       }
 
       // IKM button handlers
-      document.getElementById('zeroIkmButton').addEventListener('click', async () => {
+      elements.zeroIkmButton.addEventListener('click', async () => {
         if (!demoState.suite) return
         await deriveFromIkm(setZeroHex(elements.ikmInput, demoState.suite.KEM.Nsk).toHex())
       })
 
-      document.getElementById('randomIkmButton').addEventListener('click', async () => {
+      elements.randomIkmButton.addEventListener('click', async () => {
         if (!demoState.suite) return
+        if (demoState.keyDerivationBypassed) {
+          await generateRandomRecipientKeyPair()
+          return
+        }
         await deriveFromIkm(setRandomHex(elements.ikmInput, demoState.suite.KEM.Nsk).toHex())
       })
+
+      async function showRecipientKeyPair(keyPair, derivedFromIkm) {
+        demoState.recipientKeyPair = keyPair
+        demoState.recipientKeyPairDerivedFromIkm = derivedFromIkm
+
+        const publicKeyBytes = await demoState.suite.SerializePublicKey(keyPair.publicKey)
+        elements.publicKeyOutput.textContent = publicKeyBytes.toHex()
+        elements.publicKeyOutput.classList.remove('placeholder')
+
+        if (keyPair.privateKey) {
+          const privateKeyBytes = await demoState.suite.SerializePrivateKey(keyPair.privateKey)
+          elements.privateKeyOutput.textContent = privateKeyBytes.toHex()
+          elements.privateKeyOutput.classList.remove('placeholder')
+          elements.privateKeyOutputGroup.classList.remove('hidden')
+        } else {
+          setPlaceholder(elements.privateKeyOutput)
+          elements.privateKeyOutputGroup.classList.add('hidden')
+        }
+
+        await setupSenderContext()
+      }
+
+      async function generateRandomRecipientKeyPair() {
+        if (!demoState.suite) return
+
+        try {
+          const keyPair = await demoState.suite.GenerateKeyPair(true)
+          elements.ikmInput.classList.remove('error')
+          setKeyDerivationBypassed(true)
+          await showRecipientKeyPair(keyPair, false)
+        } catch (e) {
+          demoState.recipientKeyPair = null
+          demoState.recipientKeyPairDerivedFromIkm = false
+          setPlaceholder(elements.publicKeyOutput)
+          setPlaceholder(elements.privateKeyOutput)
+          resetContextState()
+          console.error('Failed to generate key pair:', e.message)
+        }
+
+        updateButtonStates()
+      }
 
       async function deriveFromIkm(ikmHex) {
         if (!demoState.suite) return
@@ -2463,6 +2522,33 @@
           // Empty IKM - show error and reset keys and context
           elements.ikmInput.classList.add('error')
           demoState.recipientKeyPair = null
+          demoState.recipientKeyPairDerivedFromIkm = false
+          setPlaceholder(elements.publicKeyOutput)
+          setPlaceholder(elements.privateKeyOutput)
+          resetContextState()
+          updateButtonStates()
+          return
+        }
+
+        let ikm
+        try {
+          ikm = Uint8Array.fromHex(ikmHex)
+        } catch (e) {
+          elements.ikmInput.classList.add('error')
+          demoState.recipientKeyPair = null
+          demoState.recipientKeyPairDerivedFromIkm = false
+          setPlaceholder(elements.publicKeyOutput)
+          setPlaceholder(elements.privateKeyOutput)
+          resetContextState()
+          console.error('Invalid IKM hex:', e.message)
+          updateButtonStates()
+          return
+        }
+
+        if (ikm.byteLength < demoState.suite.KEM.Nsk) {
+          elements.ikmInput.classList.add('error')
+          demoState.recipientKeyPair = null
+          demoState.recipientKeyPairDerivedFromIkm = false
           setPlaceholder(elements.publicKeyOutput)
           setPlaceholder(elements.privateKeyOutput)
           resetContextState()
@@ -2471,29 +2557,21 @@
         }
 
         try {
-          const ikm = Uint8Array.fromHex(ikmHex)
-          demoState.recipientKeyPair = await demoState.suite.DeriveKeyPair(ikm, true)
+          const keyPair = await demoState.suite.DeriveKeyPair(ikm, true)
           elements.ikmInput.classList.remove('error')
-
-          // Show keys
-          const publicKeyBytes = await demoState.suite.SerializePublicKey(demoState.recipientKeyPair.publicKey)
-          elements.publicKeyOutput.textContent = publicKeyBytes.toHex()
-          elements.publicKeyOutput.classList.remove('placeholder')
-
-          if (demoState.recipientKeyPair.privateKey) {
-            const privateKeyBytes = await demoState.suite.SerializePrivateKey(demoState.recipientKeyPair.privateKey)
-            elements.privateKeyOutput.textContent = privateKeyBytes.toHex()
-            elements.privateKeyOutput.classList.remove('placeholder')
-            elements.privateKeyOutputGroup.classList.remove('hidden')
-          } else {
-            elements.privateKeyOutputGroup.classList.add('hidden')
+          setKeyDerivationBypassed(false)
+          await showRecipientKeyPair(keyPair, true)
+        } catch (e) {
+          if (selectedKemIsNativePQKEM()) {
+            console.warn('Key derivation unavailable, falling back to generated key pair:', e.message)
+            await generateRandomRecipientKeyPair()
+            return
           }
 
-          await setupSenderContext()
-        } catch (e) {
           // Highlight input field on error and reset keys
           elements.ikmInput.classList.add('error')
           demoState.recipientKeyPair = null
+          demoState.recipientKeyPairDerivedFromIkm = false
           setPlaceholder(elements.publicKeyOutput)
           setPlaceholder(elements.privateKeyOutput)
           resetContextState()
@@ -2503,6 +2581,7 @@
       }
 
       elements.ikmInput.addEventListener('input', async (e) => {
+        if (demoState.keyDerivationBypassed) return
         await deriveFromIkm(e.target.value.trim())
       })
 
@@ -2779,8 +2858,12 @@
 
         const hasMessages = elements.chatContainer.children.length > 0
 
-        // Enable download button if we have a valid suite and messages
-        elements.downloadVectorBtn.disabled = !demoState.suite || !hasMessages || hasErrors
+        // Enable download button if we have a valid deterministic vector state
+        elements.downloadVectorBtn.disabled =
+          !demoState.suite ||
+          !hasMessages ||
+          hasErrors ||
+          !demoState.recipientKeyPairDerivedFromIkm
       }
 
       // Initialize button states
@@ -2818,6 +2901,11 @@
         // Gather demo state and messages for export
         if (!demoState.suite || !demoState.recipientKeyPair) {
           alert('Demo state is incomplete. Please select algorithms and generate a key pair first.');
+          return;
+        }
+
+        if (!demoState.recipientKeyPairDerivedFromIkm) {
+          alert('Vector download requires an IKM-derived recipient key pair.');
           return;
         }
 

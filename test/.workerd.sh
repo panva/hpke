@@ -13,6 +13,7 @@ rm -f test/run-workerd.bundle.js
   --bundle \
   --target=esnext \
   --alias:hpke=./index.js \
+  --loader:.md=text \
   --outfile=test/run-workerd.bundle.js \
   test/run-workerd.js
 

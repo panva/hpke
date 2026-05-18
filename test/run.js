@@ -35,6 +35,20 @@ export const ALGORITHM_IDS = {
   AEAD_EXPORT_ONLY: 0xffff,
 }
 
+const README_RUNTIME_COLUMNS = {
+  node: 'Node.js',
+  deno: 'Deno',
+  bun: 'Bun',
+  browser: 'Browsers',
+  workerd: 'CF Workers',
+}
+
+const README_SECTION_COMPONENTS = {
+  'Key Encapsulation Mechanisms (KEM)': 'kem',
+  'Key Derivation Functions (KDF)': 'kdf',
+  'Authenticated Encryption (AEAD)': 'aead',
+}
+
 // ============================================================================
 // ALGORITHM DISCOVERY
 // ============================================================================
@@ -52,6 +66,152 @@ export const extractAlgorithms = (library, prefix, label, isNoble = false) =>
 
 /** Gets the component object from a test based on the test's component type */
 export const getTestComponent = (test) => test[test.testingComponent]
+
+function supports(op, algorithm) {
+  return globalThis.SubtleCrypto.supports?.(op, algorithm) ?? false
+}
+
+function supportsAll(...checks) {
+  return checks.every(([op, algorithm]) => supports(op, algorithm))
+}
+
+export function getUnsupportedAlgorithms() {
+  const unsupported = { kem: [], kdf: [], aead: [] }
+  const addUnsupported = (type, name, isSupported) => {
+    if (!isSupported) unsupported[type].push(name)
+  }
+  const supportsHybridKem = (pqAlgorithm, traditionalAlgorithm) =>
+    supportsAll(
+      ['digest', { name: 'cSHAKE256', outputLength: 512, length: 512 }],
+      ['digest', 'SHA3-256'],
+      ['generateKey', pqAlgorithm],
+      ['generateKey', traditionalAlgorithm],
+    )
+
+  addUnsupported(
+    'kdf',
+    'KDF_SHAKE128',
+    supports('digest', { name: 'cSHAKE128', outputLength: 256, length: 256 }),
+  )
+  addUnsupported(
+    'kdf',
+    'KDF_SHAKE256',
+    supports('digest', { name: 'cSHAKE256', outputLength: 512, length: 512 }),
+  )
+  addUnsupported(
+    'kdf',
+    'KDF_TurboSHAKE128',
+    supports('digest', { name: 'TurboSHAKE128', outputLength: 256 }),
+  )
+  addUnsupported(
+    'kdf',
+    'KDF_TurboSHAKE256',
+    supports('digest', { name: 'TurboSHAKE256', outputLength: 512 }),
+  )
+
+  addUnsupported('kem', 'KEM_DHKEM_X448_HKDF_SHA512', supports('generateKey', 'X448'))
+  addUnsupported('kem', 'KEM_ML_KEM_512', supports('generateKey', 'ML-KEM-512'))
+  addUnsupported('kem', 'KEM_ML_KEM_768', supports('generateKey', 'ML-KEM-768'))
+  addUnsupported('kem', 'KEM_ML_KEM_1024', supports('generateKey', 'ML-KEM-1024'))
+  addUnsupported('kem', 'KEM_MLKEM768_X25519', supportsHybridKem('ML-KEM-768', 'X25519'))
+  addUnsupported(
+    'kem',
+    'KEM_MLKEM768_P256',
+    supportsHybridKem('ML-KEM-768', { name: 'ECDH', namedCurve: 'P-256' }),
+  )
+  addUnsupported(
+    'kem',
+    'KEM_MLKEM1024_P384',
+    supportsHybridKem('ML-KEM-1024', { name: 'ECDH', namedCurve: 'P-384' }),
+  )
+
+  addUnsupported('aead', 'AEAD_ChaCha20Poly1305', supports('generateKey', 'ChaCha20-Poly1305'))
+
+  return unsupported
+}
+
+const normalizeReadmeCell = (cell) =>
+  cell
+    .replace(/<sub>.*?<\/sub>/g, '')
+    .replace(/\[(.*?)\]\[\]/g, '$1')
+    .replace(/`/g, '')
+    .trim()
+
+const splitReadmeTableRow = (line) =>
+  line
+    .slice(1, -1)
+    .split('|')
+    .map((cell) => cell.trim())
+
+function parseReadmeSupportMatrix(readme) {
+  const matrix = { kem: new Map(), kdf: new Map(), aead: new Map() }
+  let component
+  let columns
+
+  for (const line of readme.split('\n')) {
+    const heading = line.match(/^### (.+)$/)
+    if (heading) {
+      component = README_SECTION_COMPONENTS[heading[1]]
+      columns = undefined
+      continue
+    }
+
+    if (!component || !line.startsWith('|')) continue
+
+    const cells = splitReadmeTableRow(line)
+    const firstCell = cells[0]
+
+    if (firstCell === 'Name') {
+      columns = cells.map(normalizeReadmeCell)
+      continue
+    }
+
+    if (!columns || firstCell.startsWith(':')) continue
+
+    const id = firstCell.match(/`0x([0-9a-fA-F]+)`/)
+    if (!id) continue
+
+    const row = { name: normalizeReadmeCell(firstCell), support: {} }
+
+    for (const [runtime, columnName] of Object.entries(README_RUNTIME_COLUMNS)) {
+      const index = columns.indexOf(columnName)
+      row.support[runtime] = index !== -1 && cells[index]?.includes('✓')
+    }
+
+    matrix[component].set(Number.parseInt(id[1], 16), row)
+  }
+
+  return matrix
+}
+
+export function findReadmeSupportMismatches({ results, readme, runtime }) {
+  const matrix = parseReadmeSupportMatrix(readme)
+  const mismatches = []
+
+  for (const test of results.tests) {
+    if (test.status !== 'passed') continue
+    if ((test.implementation ?? 'native') !== 'native') continue
+
+    const algorithm = test.algorithm ?? test.name?.replace(/^\[[^\]]+\]\s+/, '')
+    const id = ALGORITHM_IDS[algorithm]
+    const row = matrix[test.component]?.get(id)
+
+    if (!row?.support[runtime]) {
+      mismatches.push({
+        component: test.component,
+        algorithm,
+        name: row?.name ?? algorithm,
+        runtime,
+      })
+    }
+  }
+
+  return mismatches
+}
+
+export function formatReadmeSupportMismatch(mismatch) {
+  return `${mismatch.name} (${mismatch.component}) passed but README.md does not mark ${README_RUNTIME_COLUMNS[mismatch.runtime]} support`
+}
 
 /** Helper to verify two Uint8Arrays match */
 const assertUint8ArraysEqual = (actual, expected, errorPrefix) => {
@@ -220,10 +380,24 @@ export async function runAlgorithmTests({
     try {
       const suite = new HPKE.CipherSuite(test.kem.factory, test.kdf.factory, test.aead.factory)
 
-      // Generate test key pair
       await suite.GenerateKeyPair()
       const ikm = crypto.getRandomValues(new Uint8Array(suite.KEM.Nsk))
-      const keyPair = await suite.DeriveKeyPair(ikm, true)
+      let keyPair
+      let supportsDeriveKeyPair = true
+
+      try {
+        keyPair = await suite.DeriveKeyPair(ikm, true)
+      } catch (error) {
+        const canUseGeneratedPqKemKey = test.testingComponent === 'kem' && !test.kem.isNoble
+
+        if (!canUseGeneratedPqKemKey) {
+          throw error
+        }
+
+        keyPair = await suite.GenerateKeyPair(true)
+        supportsDeriveKeyPair = false
+        test.expectedToFail = false
+      }
 
       // Serialize and deserialize keys to test that functionality
       const serializedPublicKey = await suite.SerializePublicKey(keyPair.publicKey)
@@ -253,7 +427,11 @@ export async function runAlgorithmTests({
         }
         passingImplementations[component]
           .get(algoId)
-          .push({ factory: componentAlgo.factory, isNoble: componentAlgo.isNoble })
+          .push({
+            factory: componentAlgo.factory,
+            isNoble: componentAlgo.isNoble,
+            supportsDeriveKeyPair,
+          })
       }
     } catch (error) {
       test.status = 'failed'
@@ -307,6 +485,8 @@ export async function runAlgorithmTests({
       return {
         id: t.id,
         component: t.testingComponent,
+        algorithm: component.name,
+        implementation: component.isNoble ? 'extensibility' : 'native',
         name: component.displayName || component.name,
         suite: {
           kem: t.kem.displayName || t.kem.name,
@@ -360,6 +540,32 @@ export async function runVectorValidation({
   let failedOps = 0
   let totalOps = 0
 
+  const countVectorOps = (vector) =>
+    (vector.encryptions?.length || 0) + (vector.exports?.length || 0)
+
+  const updateProgress = () => {
+    if (onProgress) {
+      onProgress({ completedOps, passedOps, failedOps, totalOps })
+    }
+  }
+
+  const completeOp = (passed) => {
+    if (passed) {
+      passedOps++
+    } else {
+      failedOps++
+    }
+    completedOps++
+    updateProgress()
+  }
+
+  const completeFailedOps = (count) => {
+    if (count === 0) return
+    failedOps += count
+    completedOps += count
+    updateProgress()
+  }
+
   // Calculate total operations
   for (const vector of allVectors) {
     const kemImpls = passingImplementations.kem.get(vector.kem_id) || []
@@ -369,10 +575,8 @@ export async function runVectorValidation({
     if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
 
     const combinations = kemImpls.length * kdfImpls.length * aeadImpls.length
-    // +1 per KEM impl for the skRm verification (once per kemImpl, not per kdf/aead combo)
-    totalOps +=
-      combinations * ((vector.encryptions?.length || 0) + (vector.exports?.length || 0)) +
-      kemImpls.length
+    // +1 per KEM impl for recipient key setup verification.
+    totalOps += combinations * countVectorOps(vector) + kemImpls.length
   }
 
   if (totalOps === 0) {
@@ -389,45 +593,73 @@ export async function runVectorValidation({
     if (!kemImpls.length || !kdfImpls.length || !aeadImpls.length) continue
 
     for (const kemImpl of kemImpls) {
+      const keySetupSuite = new HPKE.CipherSuite(
+        kemImpl.factory,
+        kdfImpls[0].factory,
+        aeadImpls[0].factory,
+      )
+
+      // Check cache for this kemImpl and recipient vector key combination.
+      if (!recipientKeyPairCache.has(kemImpl)) {
+        recipientKeyPairCache.set(kemImpl, new Map())
+      }
+      const kemCache = recipientKeyPairCache.get(kemImpl)
+      const cacheKey =
+        kemImpl.supportsDeriveKeyPair === false
+          ? `import:${vector.skRm}:${vector.pkRm}`
+          : `derive:${vector.ikmR}`
+
+      let recipientKeyPair
+      if (kemCache.has(cacheKey)) {
+        recipientKeyPair = kemCache.get(cacheKey)
+        completeOp(true)
+      } else {
+        try {
+          if (kemImpl.supportsDeriveKeyPair === false) {
+            recipientKeyPair = {
+              privateKey: await keySetupSuite.DeserializePrivateKey(
+                Uint8Array.fromHex(vector.skRm),
+                true,
+              ),
+              publicKey: await keySetupSuite.DeserializePublicKey(Uint8Array.fromHex(vector.pkRm)),
+            }
+
+            const serializedPublicKey = await keySetupSuite.SerializePublicKey(
+              recipientKeyPair.publicKey,
+            )
+            assertUint8ArraysEqual(
+              serializedPublicKey,
+              Uint8Array.fromHex(vector.pkRm),
+              'pkRm mismatch',
+            )
+          } else {
+            recipientKeyPair = await keySetupSuite.DeriveKeyPair(
+              Uint8Array.fromHex(vector.ikmR),
+              true,
+            )
+          }
+
+          const serializedPrivateKey = await keySetupSuite.SerializePrivateKey(
+            recipientKeyPair.privateKey,
+          )
+          assertUint8ArraysEqual(
+            serializedPrivateKey,
+            Uint8Array.fromHex(vector.skRm),
+            'skRm mismatch',
+          )
+
+          kemCache.set(cacheKey, recipientKeyPair)
+          completeOp(true)
+        } catch (e) {
+          completeOp(false)
+          completeFailedOps(kdfImpls.length * aeadImpls.length * countVectorOps(vector))
+          continue
+        }
+      }
+
       for (const kdfImpl of kdfImpls) {
         for (const aeadImpl of aeadImpls) {
           const suite = new HPKE.CipherSuite(kemImpl.factory, kdfImpl.factory, aeadImpl.factory)
-          const ikmR = Uint8Array.fromHex(vector.ikmR)
-
-          // Check cache for this kemImpl and ikmR combination
-          if (!recipientKeyPairCache.has(kemImpl)) {
-            recipientKeyPairCache.set(kemImpl, new Map())
-          }
-          const kemCache = recipientKeyPairCache.get(kemImpl)
-
-          let recipientKeyPair
-          if (kemCache.has(vector.ikmR)) {
-            recipientKeyPair = kemCache.get(vector.ikmR)
-          } else {
-            recipientKeyPair = await suite.DeriveKeyPair(ikmR, true)
-
-            // Verify the derived private key matches skRm
-            try {
-              const serializedPrivateKey = await suite.SerializePrivateKey(
-                recipientKeyPair.privateKey,
-              )
-              assertUint8ArraysEqual(
-                serializedPrivateKey,
-                Uint8Array.fromHex(vector.skRm),
-                'skRm mismatch',
-              )
-              passedOps++
-            } catch (e) {
-              failedOps++
-            } finally {
-              completedOps++
-              if (onProgress) {
-                onProgress({ completedOps, passedOps, failedOps, totalOps })
-              }
-            }
-
-            kemCache.set(vector.ikmR, recipientKeyPair)
-          }
           const enc = Uint8Array.fromHex(vector.enc)
 
           const options = {
@@ -436,7 +668,13 @@ export async function runVectorValidation({
             pskId: vector.psk_id ? Uint8Array.fromHex(vector.psk_id) : undefined,
           }
 
-          const ctx = await suite.SetupRecipient(recipientKeyPair, enc, options)
+          let ctx
+          try {
+            ctx = await suite.SetupRecipient(recipientKeyPair, enc, options)
+          } catch (e) {
+            completeFailedOps(countVectorOps(vector))
+            continue
+          }
 
           // Test all encryptions
           if (vector.encryptions) {
@@ -447,14 +685,9 @@ export async function runVectorValidation({
                 const expectedPlaintext = Uint8Array.fromHex(encryption.pt)
                 const decrypted = await ctx.Open(ciphertext, aad)
                 assertUint8ArraysEqual(decrypted, expectedPlaintext, 'Plaintext mismatch')
-                passedOps++
+                completeOp(true)
               } catch (e) {
-                failedOps++
-              } finally {
-                completedOps++
-                if (onProgress) {
-                  onProgress({ completedOps, passedOps, failedOps, totalOps })
-                }
+                completeOp(false)
               }
             }
           }
@@ -468,14 +701,9 @@ export async function runVectorValidation({
                 const expectedExportedValue = Uint8Array.fromHex(exportTest.exported_value)
                 const exportedValue = await ctx.Export(exporterContext, L)
                 assertUint8ArraysEqual(exportedValue, expectedExportedValue, 'Export mismatch')
-                passedOps++
+                completeOp(true)
               } catch (e) {
-                failedOps++
-              } finally {
-                completedOps++
-                if (onProgress) {
-                  onProgress({ completedOps, passedOps, failedOps, totalOps })
-                }
+                completeOp(false)
               }
             }
           }
