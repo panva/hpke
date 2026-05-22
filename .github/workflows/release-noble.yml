@@ -21,5 +21,6 @@ jobs:
           registry-url: https://registry.npmjs.org
       - run: npm clean-install
       - run: node --run build
-      - run: npm publish
+      - run: npm install -g npm@latest
+      - run: npm stage publish
         working-directory: './examples/noble-suite'
