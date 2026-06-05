@@ -44,27 +44,28 @@ export const IDs: Record<string, number> = {
   AEAD_EXPORT_ONLY: 0xffff,
 }
 
-function supports(op: string, algorithm: AlgorithmIdentifier & { length?: number }) {
+type SupportedAlgorithmIdentifier = AlgorithmIdentifier & { outputLength?: number }
+
+function supports(op: string, algorithm: SupportedAlgorithmIdentifier) {
   // @ts-expect-error
   return SubtleCrypto.supports?.(op, algorithm) ?? false
 }
 
+// @ts-ignore
+const isDeno = typeof globalThis.Deno === 'object'
+
 export const supported: Record<string, () => boolean | undefined> = {
   KDF_SHAKE128() {
-    // @ts-expect-error
-    return supports('digest', { name: 'cSHAKE128', outputLength: 256, length: 256 })
+    return isDeno || supports('digest', { name: 'cSHAKE128', outputLength: 256 })
   },
   KDF_SHAKE256() {
-    // @ts-expect-error
-    return supports('digest', { name: 'cSHAKE256', outputLength: 512, length: 512 })
+    return isDeno || supports('digest', { name: 'cSHAKE256', outputLength: 512 })
   },
   KDF_TurboSHAKE128() {
-    // @ts-expect-error
-    return supports('digest', { name: 'TurboSHAKE128', outputLength: 256 })
+    return isDeno || supports('digest', { name: 'TurboSHAKE128', outputLength: 256 })
   },
   KDF_TurboSHAKE256() {
-    // @ts-expect-error
-    return supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
+    return isDeno || supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
   },
   KEM_ML_KEM_512() {
     return supports('generateKey', 'ML-KEM-512')

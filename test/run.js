@@ -82,7 +82,7 @@ export function getUnsupportedAlgorithms() {
   }
   const supportsHybridKem = (pqAlgorithm, traditionalAlgorithm) =>
     supportsAll(
-      ['digest', { name: 'cSHAKE256', outputLength: 512, length: 512 }],
+      ['digest', { name: 'cSHAKE256', outputLength: 512 }],
       ['digest', 'SHA3-256'],
       ['generateKey', pqAlgorithm],
       ['generateKey', traditionalAlgorithm],
@@ -91,12 +91,12 @@ export function getUnsupportedAlgorithms() {
   addUnsupported(
     'kdf',
     'KDF_SHAKE128',
-    supports('digest', { name: 'cSHAKE128', outputLength: 256, length: 256 }),
+    supports('digest', { name: 'cSHAKE128', outputLength: 256 }),
   )
   addUnsupported(
     'kdf',
     'KDF_SHAKE256',
-    supports('digest', { name: 'cSHAKE256', outputLength: 512, length: 512 }),
+    supports('digest', { name: 'cSHAKE256', outputLength: 512 }),
   )
   addUnsupported(
     'kdf',

@@ -110,10 +110,10 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |      |     |            |              |         ✓         |
-| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |      |     |            |              |         ✓         |
-| TurboSHAKE128 <sub>`0x0012`</sub> |    ✓    |      |     |            |              |         ✓         |
-| TurboSHAKE256 <sub>`0x0013`</sub> |    ✓    |      |     |            |              |         ✓         |
+| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |  ✓   |     |            |              |         ✓         |
+| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |  ✓   |     |            |              |         ✓         |
+| TurboSHAKE128 <sub>`0x0012`</sub> |    ✓    |  ✓   |     |            |              |         ✓         |
+| TurboSHAKE256 <sub>`0x0013`</sub> |    ✓    |  ✓   |     |            |              |         ✓         |
 
 ### Authenticated Encryption (AEAD)
 

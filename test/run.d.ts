@@ -16,6 +16,23 @@ export type ReadmeSupportMismatch = {
   runtime: ReadmeSupportRuntime
 }
 
+export type AlgorithmTestResults = {
+  total: number
+  passed: number
+  failed: number
+  expectedFailures: number
+  unexpectedFailures: number
+  unexpectedPasses: number
+  tests: ReadmeSupportTestResult[]
+}
+
+export function runAlgorithmTests(options: {
+  HPKE: object
+  Noble: object
+  unsupported: { kem: string[]; kdf: string[]; aead: string[] }
+  mode?: { onlyNative?: boolean; onlyNoble?: boolean }
+}): Promise<{ results: AlgorithmTestResults }>
+
 export function findReadmeSupportMismatches(options: {
   results: { tests: ReadmeSupportTestResult[] }
   readme: string
