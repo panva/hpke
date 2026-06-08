@@ -2324,28 +2324,23 @@ function ab(input: Uint8Array): ArrayBuffer {
 }
 
 function HKDF_SHARED(): KDF_BASE {
+  let emptySalt: CryptoKey | undefined
+  async function importKey(this: HKDF, salt: ArrayBuffer): Promise<CryptoKey> {
+    return await subtle(
+      (c) => c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
+      this.name,
+    )
+  }
   return {
     stages: 2,
     Derive: NotApplicable,
     async Extract(this: HKDF, _salt, _ikm) {
-      let salt: ArrayBuffer
-      if (_salt.byteLength === 0) {
-        salt = new ArrayBuffer(this.Nh)
-      } else {
-        salt = ab(_salt)
-      }
       const ikm = ab(_ikm)
-      return new Uint8Array(
-        await subtle(
-          async (c) =>
-            c.sign(
-              'HMAC',
-              await c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
-              ikm,
-            ),
-          this.name,
-        ),
-      )
+      const key =
+        _salt.byteLength === 0
+          ? (emptySalt ??= await importKey.call(this, new ArrayBuffer(this.Nh)))
+          : await importKey.call(this, ab(_salt))
+      return new Uint8Array(await subtle((c) => c.sign('HMAC', key, ikm), this.name))
     },
     async Expand(this: HKDF, _prk, info, L) {
       if (_prk.byteLength < this.Nh) {
