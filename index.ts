@@ -2331,6 +2331,12 @@ function HKDF_SHARED(): KDF_BASE {
       this.name,
     )
   }
+  // The key schedule expands the same PRK several times (key/base_nonce/exporter),
+  // often concurrently, so memoise the imported HMAC key per PRK — like the
+  // AEAD_SHARED cache above, but storing the in-flight promise so concurrent
+  // expands of one PRK share a single importKey. WeakMap-keyed so the entry is
+  // reclaimed once the PRK Uint8Array is unreachable.
+  const prkKeyCache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
   return {
     stages: 2,
     Derive: NotApplicable,
@@ -2350,11 +2356,15 @@ function HKDF_SHARED(): KDF_BASE {
         throw new Error('L must be <= 255*Nh')
       }
       const N = Math.ceil(L / this.Nh)
-      const prk = ab(_prk)
-      const key = await subtle(
-        (c) => c.importKey('raw', prk, { name: 'HMAC', hash: this.hash }, false, ['sign']),
-        this.name,
-      )
+      let keyPromise = prkKeyCache.get(_prk)
+      if (keyPromise === undefined) {
+        keyPromise = subtle(
+          (c) => c.importKey('raw', ab(_prk), { name: 'HMAC', hash: this.hash }, false, ['sign']),
+          this.name,
+        )
+        prkKeyCache.set(_prk, keyPromise)
+      }
+      const key = await keyPromise
 
       const T = new Uint8Array(N * this.Nh)
       let T_prev = new Uint8Array()
