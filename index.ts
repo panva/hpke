@@ -2324,41 +2324,22 @@ function ab(input: Uint8Array): ArrayBuffer {
 }
 
 function HKDF_SHARED(): KDF_BASE {
-  // HKDF-Extract with an empty salt uses a constant all-zeros HMAC key of length
-  // Nh. The key schedule (RFC 9180) extracts with an empty salt several times, so
-  // memoise that one key per KDF instance instead of re-importing it on every
-  // Extract. This mirrors the importKey caching AEAD_SHARED already does for the
-  // AEAD key; here the key is a fixed, non-secret all-zeros block and the derived
-  // output is unchanged. (Two concurrent empty-salt extracts on a cold cache each
-  // import once, then it stays cached: harmless, same key.)
-  let zeroSaltKey: CryptoKey | undefined
+  let emptySalt: CryptoKey | undefined
+  async function importKey(this: HKDF, salt: ArrayBuffer): Promise<CryptoKey> {
+    return await subtle(
+      (c) => c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
+      this.name,
+    )
+  }
   return {
     stages: 2,
     Derive: NotApplicable,
     async Extract(this: HKDF, _salt, _ikm) {
       const ikm = ab(_ikm)
-      let key: CryptoKey
-      if (_salt.byteLength === 0) {
-        if (zeroSaltKey === undefined) {
-          zeroSaltKey = await subtle(
-            (c) =>
-              c.importKey(
-                'raw',
-                new ArrayBuffer(this.Nh),
-                { name: 'HMAC', hash: this.hash },
-                false,
-                ['sign'],
-              ),
-            this.name,
-          )
-        }
-        key = zeroSaltKey
-      } else {
-        key = await subtle(
-          (c) => c.importKey('raw', ab(_salt), { name: 'HMAC', hash: this.hash }, false, ['sign']),
-          this.name,
-        )
-      }
+      const key =
+        _salt.byteLength === 0
+          ? (emptySalt ??= await importKey.call(this, new ArrayBuffer(this.Nh)))
+          : await importKey.call(this, ab(_salt))
       return new Uint8Array(await subtle((c) => c.sign('HMAC', key, ikm), this.name))
     },
     async Expand(this: HKDF, _prk, info, L) {
