@@ -15,10 +15,16 @@ import * as HPKE from '../index.ts'
 import { supported } from './support.ts'
 
 test.describe('Buffer.prototype.slice() compatibility', () => {
-  const run = supported.KEM_MLKEM768_X25519!() ? it : it.skip
+  const hybridKemOptions = {
+    skip: supported.KEM_MLKEM768_X25519!()
+      ? false
+      : 'KEM_MLKEM768_X25519 is unsupported in this runtime',
+  } satisfies test.TestOptions
+
   test.describe('Hybrid KEM DeserializePrivateKey', () => {
-    run(
+    it(
       'should not be affected by modifications to the original Buffer after deserialization',
+      hybridKemOptions,
       async () => {
         const suite = new HPKE.CipherSuite(
           HPKE.KEM_MLKEM768_X25519,
@@ -55,7 +61,7 @@ test.describe('Buffer.prototype.slice() compatibility', () => {
   })
 
   test.describe('Hybrid KEM Decap (split function)', () => {
-    run('should use copied data, not views that can be corrupted', async () => {
+    it('should use copied data, not views that can be corrupted', hybridKemOptions, async () => {
       const suite = new HPKE.CipherSuite(
         HPKE.KEM_MLKEM768_X25519,
         HPKE.KDF_HKDF_SHA256,
@@ -93,8 +99,9 @@ test.describe('Buffer.prototype.slice() compatibility', () => {
   })
 
   test.describe('Hybrid KEM SerializePrivateKey (getSeed)', () => {
-    run(
+    it(
       'should return independent copies that do not share memory with internal state',
+      hybridKemOptions,
       async () => {
         const suite = new HPKE.CipherSuite(
           HPKE.KEM_MLKEM768_X25519,

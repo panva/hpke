@@ -30,6 +30,7 @@ function getNobleKEM(): HPKE.KEMFactory | undefined {
 }
 
 const pqKEMFactory = getSupportedPQKEM()!
+// TODO: Use test.describe(..., { skip }) once Bun honors node:test suite skip options.
 if (pqKEMFactory) {
   test.describe('HybridKey internal protection', () => {
     async function getHybridKeyPair() {

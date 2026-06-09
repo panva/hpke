@@ -1,5 +1,6 @@
 import it, * as test from 'node:test'
 import * as fs from 'node:fs/promises'
+import { setImmediate } from 'node:timers/promises'
 
 import * as HPKE from '../index.ts'
 import {
@@ -96,9 +97,7 @@ const implementations = [
 
 for (const impl of implementations) {
   test.describe(`vectors ${impl.name}`, () => {
-    // @ts-ignore
-    if (typeof Deno !== 'object')
-      test.afterEach(() => new Promise((resolve) => setImmediate(resolve)))
+    test.afterEach(() => setImmediate())
 
     let total = 0
     for (const vector of vectors) {
@@ -183,14 +182,16 @@ for (const impl of implementations) {
           KDF: KDF ?? { id: vector.kdf_id, name: getSuiteName('KDF', vector.kdf_id) },
           AEAD: AEAD ?? { id: vector.aead_id, name: getSuiteName('AEAD', vector.aead_id) },
         }
-        it.skip(`[${i}][not implemented] ${label(suite as HPKE.CipherSuite, vector.mode)}`)
+        it(`[${i}][not implemented] ${label(suite as HPKE.CipherSuite, vector.mode)}`, {
+          skip: 'not implemented',
+        })
         continue
       }
 
       const suite = new HPKE.CipherSuite(KEM.factory, KDF.factory, AEAD.factory)
 
       if (!KEM.supported || !KDF.supported || !AEAD.supported) {
-        it.skip(`[${i}][not supported] ${label(suite, vector.mode)}`)
+        it(`[${i}][not supported] ${label(suite, vector.mode)}`, { skip: 'not supported' })
         continue
       }
 

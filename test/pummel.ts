@@ -1,4 +1,5 @@
 import it, * as test from 'node:test'
+import { setImmediate } from 'node:timers/promises'
 
 import * as HPKE from '../index.ts'
 import {
@@ -53,9 +54,7 @@ function runPummelTests(
   }
 
   test.describe(`pummel (${name})`, () => {
-    // @ts-ignore
-    if (typeof Deno !== 'object')
-      test.afterEach(() => new Promise((resolve) => setImmediate(resolve)))
+    test.afterEach(() => setImmediate())
 
     test.describe('Algorithm implementation returns', () => {
       for (const Algorithm of [...KEMS.values(), ...KDFS.values(), ...AEADS.values()]) {
@@ -686,20 +685,8 @@ test.describe('Unsupported WebCrypto algorithms', () => {
         await suite.Open(skR, enc, ct)
       },
       (err: Error) => {
-        try {
-          t.assert.strictEqual(err.name, 'NotSupportedError')
-          t.assert.strictEqual(
-            err.message,
-            `${expectedAlgorithmName} is unsupported in this runtime`,
-          )
-        } catch (assertion) {
-          // @ts-ignore Deno doesn't always conform to throwing DOMException with name=NotSupportedError on unsupported algorithms
-          if (typeof Deno === 'object') {
-            if (err.name === 'DeriveKeyPairError') return true
-          }
-
-          throw assertion
-        }
+        t.assert.strictEqual(err.name, 'NotSupportedError')
+        t.assert.strictEqual(err.message, `${expectedAlgorithmName} is unsupported in this runtime`)
 
         return true
       },

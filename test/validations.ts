@@ -25,6 +25,8 @@ const notBoolean = [
   { name: 'object', value: {} },
 ]
 
+// TODO: Replace table-case assertion loops with t.test() subtests once Bun's node:test
+// implementation supports nested tests.
 async function assertRejectsSharedArrayBuffer(
   t: test.TestContext,
   name: string,
