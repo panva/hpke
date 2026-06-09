@@ -2341,7 +2341,12 @@ function HKDF_SHARED(): KDF_BASE {
       this.name,
     )
   }
-  const cache = new WeakMap<Uint8Array, CryptoKey>()
+  const cache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
+  function importPrk(this: HKDF, prk: Uint8Array): Promise<CryptoKey> {
+    const key = importKey.call(this, ab(prk))
+    cache.set(prk, key)
+    return key
+  }
   return {
     stages: 2,
     Derive: NotApplicable,
@@ -2361,8 +2366,7 @@ function HKDF_SHARED(): KDF_BASE {
         throw new Error('L must be <= 255*Nh')
       }
       const N = Math.ceil(L / this.Nh)
-      const key =
-        cache.get(_prk) ?? (await cacheValue(cache, _prk, () => importKey.call(this, ab(_prk))))
+      const key = await (cache.get(_prk) ?? importPrk.call(this, _prk))
 
       const T = new Uint8Array(N * this.Nh)
       let T_prev = new Uint8Array()
