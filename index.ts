@@ -2333,9 +2333,20 @@ async function cacheValue<K extends object, V>(
   return result
 }
 
+// Like ab(), but returns the view itself rather than copying when it is a
+// subarray of a larger buffer. crypto.subtle accepts any ArrayBufferView and
+// honours byteOffset/byteLength, so its inputs need no copy — this avoids
+// duplicating the request/response ciphertext, which is a subarray view.
+function bs(input: Uint8Array): Uint8Array<ArrayBuffer> {
+  if (sab(input.buffer)) {
+    throw new TypeError('input must not be a SharedArrayBuffer')
+  }
+  return input as Uint8Array<ArrayBuffer>
+}
+
 function HKDF_SHARED(): KDF_BASE {
   let emptySalt: CryptoKey | undefined
-  async function importKey(this: HKDF, salt: ArrayBuffer): Promise<CryptoKey> {
+  async function importKey(this: HKDF, salt: BufferSource): Promise<CryptoKey> {
     return await subtle(
       (c) => c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
       this.name,
@@ -2343,7 +2354,7 @@ function HKDF_SHARED(): KDF_BASE {
   }
   const cache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
   function importPrk(this: HKDF, prk: Uint8Array): Promise<CryptoKey> {
-    const key = importKey.call(this, ab(prk))
+    const key = importKey.call(this, bs(prk))
     cache.set(prk, key)
     return key
   }
@@ -2351,11 +2362,11 @@ function HKDF_SHARED(): KDF_BASE {
     stages: 2,
     Derive: NotApplicable,
     async Extract(this: HKDF, _salt, _ikm) {
-      const ikm = ab(_ikm)
+      const ikm = bs(_ikm)
       const key =
         _salt.byteLength === 0
           ? (emptySalt ??= await importKey.call(this, new ArrayBuffer(this.Nh)))
-          : await importKey.call(this, ab(_salt))
+          : await importKey.call(this, bs(_salt))
       return new Uint8Array(await subtle((c) => c.sign('HMAC', key, ikm), this.name))
     },
     async Expand(this: HKDF, _prk, info, L) {
@@ -3620,7 +3631,7 @@ function AEAD_SHARED(): AEAD_BASE {
   // the underlying Uint8Array is unreachable.
   const cache = new WeakMap<Uint8Array, CryptoKey>()
   async function importKey(this: WebCryptoAEAD, _key: Uint8Array): Promise<CryptoKey> {
-    const key = ab(_key)
+    const key = bs(_key)
     return await subtle(
       (c) => c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt', 'decrypt']),
       this.name,
@@ -3628,9 +3639,9 @@ function AEAD_SHARED(): AEAD_BASE {
   }
   return {
     async Seal(this: WebCryptoAEAD, _key, _nonce, _aad, _pt) {
-      const nonce = ab(_nonce)
-      const aad = ab(_aad)
-      const pt = ab(_pt)
+      const nonce = bs(_nonce)
+      const aad = bs(_aad)
+      const pt = bs(_pt)
       const cryptoKey =
         cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
       return new Uint8Array(
@@ -3641,9 +3652,9 @@ function AEAD_SHARED(): AEAD_BASE {
       )
     },
     async Open(this: WebCryptoAEAD, _key, _nonce, _aad, _ct) {
-      const nonce = ab(_nonce)
-      const aad = ab(_aad)
-      const ct = ab(_ct)
+      const nonce = bs(_nonce)
+      const aad = bs(_aad)
+      const ct = bs(_ct)
       const cryptoKey =
         cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
       return new Uint8Array(
