@@ -2323,6 +2323,16 @@ function ab(input: Uint8Array): ArrayBuffer {
   return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength)
 }
 
+async function cacheValue<K extends object, V>(
+  cache: WeakMap<K, V>,
+  key: K,
+  init: () => Promise<V>,
+): Promise<V> {
+  const result = await init()
+  cache.set(key, result)
+  return result
+}
+
 function HKDF_SHARED(): KDF_BASE {
   let emptySalt: CryptoKey | undefined
   async function importKey(this: HKDF, salt: ArrayBuffer): Promise<CryptoKey> {
@@ -2330,6 +2340,12 @@ function HKDF_SHARED(): KDF_BASE {
       (c) => c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
       this.name,
     )
+  }
+  const cache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
+  function importPrk(this: HKDF, prk: Uint8Array): Promise<CryptoKey> {
+    const key = importKey.call(this, ab(prk))
+    cache.set(prk, key)
+    return key
   }
   return {
     stages: 2,
@@ -2350,11 +2366,7 @@ function HKDF_SHARED(): KDF_BASE {
         throw new Error('L must be <= 255*Nh')
       }
       const N = Math.ceil(L / this.Nh)
-      const prk = ab(_prk)
-      const key = await subtle(
-        (c) => c.importKey('raw', prk, { name: 'HMAC', hash: this.hash }, false, ['sign']),
-        this.name,
-      )
+      const key = await (cache.get(_prk) ?? importPrk.call(this, _prk))
 
       const T = new Uint8Array(N * this.Nh)
       let T_prev = new Uint8Array()
@@ -3609,19 +3621,18 @@ function AEAD_SHARED(): AEAD_BASE {
   const cache = new WeakMap<Uint8Array, CryptoKey>()
   async function importKey(this: WebCryptoAEAD, _key: Uint8Array): Promise<CryptoKey> {
     const key = ab(_key)
-    const cryptoKey = await subtle(
+    return await subtle(
       (c) => c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt', 'decrypt']),
       this.name,
     )
-    cache.set(_key, cryptoKey)
-    return cryptoKey
   }
   return {
     async Seal(this: WebCryptoAEAD, _key, _nonce, _aad, _pt) {
       const nonce = ab(_nonce)
       const aad = ab(_aad)
       const pt = ab(_pt)
-      const cryptoKey = cache.get(_key) ?? (await importKey.call(this, _key))
+      const cryptoKey =
+        cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
       return new Uint8Array(
         await subtle(
           (c) => c.encrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, pt),
@@ -3633,7 +3644,8 @@ function AEAD_SHARED(): AEAD_BASE {
       const nonce = ab(_nonce)
       const aad = ab(_aad)
       const ct = ab(_ct)
-      const cryptoKey = cache.get(_key) ?? (await importKey.call(this, _key))
+      const cryptoKey =
+        cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
       return new Uint8Array(
         await subtle(
           (c) => c.decrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, ct),
