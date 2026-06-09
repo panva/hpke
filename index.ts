@@ -1586,6 +1586,9 @@ function checkUint8Array(input: unknown, name: string): asserts input is Uint8Ar
   if (!(input instanceof Uint8Array)) {
     throw new TypeError(`"${name}" must be Uint8Array`)
   }
+  if (typeof SharedArrayBuffer !== 'undefined' && input.buffer instanceof SharedArrayBuffer) {
+    throw new TypeError(`"${name}" must not be backed by a SharedArrayBuffer`)
+  }
 }
 function checkExtractable(extractable: unknown): asserts extractable is boolean {
   if (typeof extractable !== 'boolean') {
@@ -2309,20 +2312,6 @@ interface HKDF extends KDF {
 
 type KDF_BASE = Pick<KDF, 'Expand' | 'Extract' | 'Derive' | 'stages'>
 
-function sab(input: ArrayBufferLike): input is SharedArrayBuffer {
-  return typeof SharedArrayBuffer !== 'undefined' && input instanceof SharedArrayBuffer
-}
-
-function ab(input: Uint8Array): ArrayBuffer {
-  if (sab(input.buffer)) {
-    throw new TypeError('input must not be a SharedArrayBuffer')
-  }
-  if (input.byteLength === input.buffer.byteLength) {
-    return input.buffer
-  }
-  return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength)
-}
-
 async function cacheValue<K extends object, V>(
   cache: WeakMap<K, V>,
   key: K,
@@ -2335,7 +2324,7 @@ async function cacheValue<K extends object, V>(
 
 function HKDF_SHARED(): KDF_BASE {
   let emptySalt: CryptoKey | undefined
-  async function importKey(this: HKDF, salt: ArrayBuffer): Promise<CryptoKey> {
+  async function importKey(this: HKDF, salt: BufferSource): Promise<CryptoKey> {
     return await subtle(
       (c) => c.importKey('raw', salt, { name: 'HMAC', hash: this.hash }, false, ['sign']),
       this.name,
@@ -2343,30 +2332,31 @@ function HKDF_SHARED(): KDF_BASE {
   }
   const cache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
   function importPrk(this: HKDF, prk: Uint8Array): Promise<CryptoKey> {
-    const key = importKey.call(this, ab(prk))
+    const key = importKey.call(this, prk as BufferSource)
     cache.set(prk, key)
     return key
   }
   return {
     stages: 2,
     Derive: NotApplicable,
-    async Extract(this: HKDF, _salt, _ikm) {
-      const ikm = ab(_ikm)
+    async Extract(this: HKDF, salt, ikm) {
       const key =
-        _salt.byteLength === 0
+        salt.byteLength === 0
           ? (emptySalt ??= await importKey.call(this, new ArrayBuffer(this.Nh)))
-          : await importKey.call(this, ab(_salt))
-      return new Uint8Array(await subtle((c) => c.sign('HMAC', key, ikm), this.name))
+          : await importKey.call(this, salt as BufferSource)
+      return new Uint8Array(
+        await subtle((c) => c.sign('HMAC', key, ikm as BufferSource), this.name),
+      )
     },
-    async Expand(this: HKDF, _prk, info, L) {
-      if (_prk.byteLength < this.Nh) {
+    async Expand(this: HKDF, prk, info, L) {
+      if (prk.byteLength < this.Nh) {
         throw new Error('prk.byteLength < this.Nh')
       }
       if (L > 255 * this.Nh) {
         throw new Error('L must be <= 255*Nh')
       }
       const N = Math.ceil(L / this.Nh)
-      const key = await (cache.get(_prk) ?? importPrk.call(this, _prk))
+      const key = await (cache.get(prk) ?? importPrk.call(this, prk))
 
       const T = new Uint8Array(N * this.Nh)
       let T_prev = new Uint8Array()
@@ -2469,7 +2459,7 @@ interface SHAKE extends KDF {
   readonly algorithm: string
 }
 
-async function ShakeDerive(name: string, variant: string, ikm: ArrayBuffer, L: number) {
+async function ShakeDerive(name: string, variant: string, ikm: BufferSource, L: number) {
   const bits = L << 3
   const alg = { name: variant, length: bits, outputLength: bits }
   return new Uint8Array(await subtle((c) => c.digest(alg, ikm), name))
@@ -2479,7 +2469,7 @@ function SHAKE_SHARED(): KDF_BASE {
   return {
     stages: 1,
     async Derive(this: SHAKE, labeled_ikm, L: number) {
-      return await ShakeDerive(this.name, this.algorithm, ab(labeled_ikm), L)
+      return await ShakeDerive(this.name, this.algorithm, labeled_ikm as BufferSource, L)
     },
     Extract: NotApplicable,
     Expand: NotApplicable,
@@ -2793,9 +2783,11 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       assertCryptoKey(key)
       return new Uint8Array(await subtle((c) => c.exportKey('raw', key), this.name))
     },
-    async DeserializePublicKey(this: DHKEM, _key) {
-      const key = ab(_key)
-      return await subtle((c) => c.importKey('raw', key, this.algorithm, true, []), this.name)
+    async DeserializePublicKey(this: DHKEM, key) {
+      return await subtle(
+        (c) => c.importKey('raw', key as BufferSource, this.algorithm, true, []),
+        this.name,
+      )
     },
     async SerializePrivateKey(this: DHKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
@@ -3426,13 +3418,15 @@ function MLKEM_SHARED(): KEM_BASE {
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
-    async DeserializePublicKey(this: MLKEM, _key) {
+    async DeserializePublicKey(this: MLKEM, key) {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       // @ts-expect-error
       const usages: KeyUsage[] = ['encapsulateBits']
-      const key = ab(_key)
-      return await subtle((c) => c.importKey(format, key, this.algorithm, true, usages), this.name)
+      return await subtle(
+        (c) => c.importKey(format, key as BufferSource, this.algorithm, true, usages),
+        this.name,
+      )
     },
     async SerializePrivateKey(this: MLKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
@@ -3441,14 +3435,13 @@ function MLKEM_SHARED(): KEM_BASE {
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
       return new Uint8Array(await subtle((c) => c.exportKey(format, key), this.name))
     },
-    async DeserializePrivateKey(this: MLKEM, _key, extractable) {
+    async DeserializePrivateKey(this: MLKEM, key, extractable) {
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
       // @ts-expect-error
       const usages: KeyUsage[] = ['decapsulateBits']
-      const key = ab(_key)
       return await subtle(
-        (c) => c.importKey(format, key, this.algorithm, extractable, usages),
+        (c) => c.importKey(format, key as BufferSource, this.algorithm, extractable, usages),
         this.name,
       )
     },
@@ -3463,13 +3456,12 @@ function MLKEM_SHARED(): KEM_BASE {
 
       return { shared_secret: new Uint8Array(sharedKey), enc: new Uint8Array(ciphertext) }
     },
-    async Decap(this: MLKEM, _enc, skR, _pkR) {
+    async Decap(this: MLKEM, enc, skR, _pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
-      const enc = ab(_enc)
       return new Uint8Array(
         await subtle(
           // @ts-expect-error
-          (c) => c.decapsulateBits(this.algorithm, skR, enc),
+          (c) => c.decapsulateBits(this.algorithm, skR, enc as BufferSource),
           this.name,
         ),
       )
@@ -3619,36 +3611,51 @@ function AEAD_SHARED(): AEAD_BASE {
   // on every Seal/Open. The WeakMap ensures the cache entry is reclaimed once
   // the underlying Uint8Array is unreachable.
   const cache = new WeakMap<Uint8Array, CryptoKey>()
-  async function importKey(this: WebCryptoAEAD, _key: Uint8Array): Promise<CryptoKey> {
-    const key = ab(_key)
+  async function importKey(this: WebCryptoAEAD, key: Uint8Array): Promise<CryptoKey> {
     return await subtle(
-      (c) => c.importKey(this.keyFormat, key, this.algorithm, false, ['encrypt', 'decrypt']),
+      (c) =>
+        c.importKey(this.keyFormat, key as BufferSource, this.algorithm, false, [
+          'encrypt',
+          'decrypt',
+        ]),
       this.name,
     )
   }
   return {
-    async Seal(this: WebCryptoAEAD, _key, _nonce, _aad, _pt) {
-      const nonce = ab(_nonce)
-      const aad = ab(_aad)
-      const pt = ab(_pt)
+    async Seal(this: WebCryptoAEAD, key, nonce, aad, pt) {
       const cryptoKey =
-        cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
+        cache.get(key) ?? (await cacheValue(cache, key, () => importKey.call(this, key)))
       return new Uint8Array(
         await subtle(
-          (c) => c.encrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, pt),
+          (c) =>
+            c.encrypt(
+              {
+                name: this.algorithm,
+                iv: nonce as BufferSource,
+                additionalData: aad as BufferSource,
+              },
+              cryptoKey,
+              pt as BufferSource,
+            ),
           this.name,
         ),
       )
     },
-    async Open(this: WebCryptoAEAD, _key, _nonce, _aad, _ct) {
-      const nonce = ab(_nonce)
-      const aad = ab(_aad)
-      const ct = ab(_ct)
+    async Open(this: WebCryptoAEAD, key, nonce, aad, ct) {
       const cryptoKey =
-        cache.get(_key) ?? (await cacheValue(cache, _key, () => importKey.call(this, _key)))
+        cache.get(key) ?? (await cacheValue(cache, key, () => importKey.call(this, key)))
       return new Uint8Array(
         await subtle(
-          (c) => c.decrypt({ name: this.algorithm, iv: nonce, additionalData: aad }, cryptoKey, ct),
+          (c) =>
+            c.decrypt(
+              {
+                name: this.algorithm,
+                iv: nonce as BufferSource,
+                additionalData: aad as BufferSource,
+              },
+              cryptoKey,
+              ct as BufferSource,
+            ),
           this.name,
         ),
       )
@@ -3876,23 +3883,21 @@ function RandomScalarNist(t: HybridKEM['t'], seed: Uint8Array): Uint8Array {
 }
 
 /** @see [expandDecapsKeyG](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-10.html#section-5.1.1) */
-async function expandDecapsKeyG(PQTKEM: HybridKEM, _seed: Uint8Array) {
+async function expandDecapsKeyG(PQTKEM: HybridKEM, seed: Uint8Array) {
   const Nout = PQTKEM.pq.Nseed + PQTKEM.t.Nseed
   const bits = Nout << 3
   // @ts-expect-error
   const algorithm: CShakeParams = { name: 'cSHAKE256', length: bits, outputLength: bits }
-  const seed = ab(_seed)
-  const seed_full = await subtle((c) => c.digest(algorithm, seed), PQTKEM.name)
+  const seed_full = await subtle((c) => c.digest(algorithm, seed as BufferSource), PQTKEM.name)
 
-  const [_seed_PQ, seed_T] = split(PQTKEM.pq.Nseed, PQTKEM.t.Nseed, new Uint8Array(seed_full))
-  const seed_PQ = ab(_seed_PQ)
+  const [seed_PQ, seed_T] = split(PQTKEM.pq.Nseed, PQTKEM.t.Nseed, new Uint8Array(seed_full))
 
   // @ts-expect-error
   const format: Exclude<KeyFormat, 'jwk'> = 'raw-seed'
   // @ts-expect-error
   const usages: [KeyUsage, KeyUsage] = ['decapsulateBits', 'encapsulateBits']
   const dk_PQ = await subtle(
-    (c) => c.importKey(format, seed_PQ, PQTKEM.pq.algorithm, true, [usages[0]]),
+    (c) => c.importKey(format, seed_PQ as BufferSource, PQTKEM.pq.algorithm, true, [usages[0]]),
     PQTKEM.name,
   )
   const ek_PQ = await getPublicKey(PQTKEM.name, dk_PQ, [usages[1]])
@@ -3913,7 +3918,7 @@ async function C2PRICombiner(
   label: Uint8Array,
 ): Promise<Uint8Array> {
   const ek_T = new Uint8Array(await subtle((c) => c.exportKey('raw', _ek_T), PQTKEM.name))
-  const data = ab(concat(ss_PQ, ss_T, ct_T, ek_T, label))
+  const data = concat(ss_PQ, ss_T, ct_T, ek_T, label) as BufferSource
   return new Uint8Array(await subtle((c) => c.digest('SHA3-256', data), PQTKEM.name))
 }
 
@@ -3954,7 +3959,7 @@ async function prepareDecapsG(
   dk_PQ: CryptoKey,
   dk_T: CryptoKey,
   ct_PQ: Uint8Array,
-  _ct_T: Uint8Array,
+  ct_T: Uint8Array,
 ): Promise<[Uint8Array, Uint8Array]> {
   const ss_PQ = new Uint8Array(
     await subtle(
@@ -3964,9 +3969,8 @@ async function prepareDecapsG(
     ),
   )
 
-  const ct_T = ab(_ct_T)
   const pub = await subtle(
-    (c) => c.importKey('raw', ct_T, PQTKEM.t.algorithm, true, []),
+    (c) => c.importKey('raw', ct_T as BufferSource, PQTKEM.t.algorithm, true, []),
     PQTKEM.name,
   )
 
@@ -4060,8 +4064,8 @@ function PQTKEM_SHARED(): KEM_BASE {
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       // @ts-expect-error
       const usages: KeyUsage[] = ['encapsulateBits']
-      const pubPq = ab(key.subarray(0, this.pq.Npk))
-      const pubT = ab(key.subarray(this.pq.Npk))
+      const pubPq = key.subarray(0, this.pq.Npk) as BufferSource
+      const pubT = key.subarray(this.pq.Npk) as BufferSource
       const [ek_PQ, ek_T] = await Promise.all([
         subtle((c) => c.importKey(format, pubPq, this.pq.algorithm, true, usages), this.name),
         subtle((c) => c.importKey('raw', pubT, this.t.algorithm, true, []), this.name),

@@ -25,6 +25,24 @@ const notBoolean = [
   { name: 'object', value: {} },
 ]
 
+async function assertRejectsSharedArrayBuffer(
+  t: test.TestContext,
+  name: string,
+  fn: (input: Uint8Array) => unknown | Promise<unknown>,
+) {
+  if (typeof SharedArrayBuffer === 'undefined') {
+    t.skip('SharedArrayBuffer is unavailable')
+    return
+  }
+
+  await t.assert.rejects(
+    async () => {
+      await fn(new Uint8Array(new SharedArrayBuffer(64)))
+    },
+    { name: 'TypeError', message: `"${name}" must not be backed by a SharedArrayBuffer` },
+  )
+}
+
 // Generate shared key pairs for all KEMs to avoid regenerating in every test
 const keys = new Map<number, HPKE.KeyPair>()
 async function getKeyPair(suite: HPKE.CipherSuite) {
@@ -573,6 +591,125 @@ test.describe('Validations', () => {
       HPKE.AEAD_AES_128_GCM,
     )
 
+    test.describe('SharedArrayBuffer-backed inputs', () => {
+      it('rejects Single-Shot Seal inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const psk = new Uint8Array(32)
+        const pskId = new Uint8Array(32)
+
+        await assertRejectsSharedArrayBuffer(t, 'plaintext', (input) =>
+          suite.Seal(kp.publicKey, input),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'aad', (input) =>
+          suite.Seal(kp.publicKey, empty, { aad: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'info', (input) =>
+          suite.Seal(kp.publicKey, empty, { info: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'psk', (input) =>
+          suite.Seal(kp.publicKey, empty, { psk: input, pskId }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'pskId', (input) =>
+          suite.Seal(kp.publicKey, empty, { psk, pskId: input }),
+        )
+      })
+
+      it('rejects Single-Shot Open inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const psk = new Uint8Array(32)
+        const pskId = new Uint8Array(32)
+        const { encapsulatedSecret, ciphertext } = await suite.Seal(kp.publicKey, empty)
+
+        await assertRejectsSharedArrayBuffer(t, 'encapsulatedSecret', (input) =>
+          suite.Open(kp.privateKey, input, ciphertext),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'ciphertext', (input) =>
+          suite.Open(kp.privateKey, encapsulatedSecret, input),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'aad', (input) =>
+          suite.Open(kp.privateKey, encapsulatedSecret, ciphertext, { aad: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'info', (input) =>
+          suite.Open(kp.privateKey, encapsulatedSecret, ciphertext, { info: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'psk', (input) =>
+          suite.Open(kp.privateKey, encapsulatedSecret, ciphertext, { psk: input, pskId }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'pskId', (input) =>
+          suite.Open(kp.privateKey, encapsulatedSecret, ciphertext, { psk, pskId: input }),
+        )
+      })
+
+      it('rejects SetupSender inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const psk = new Uint8Array(32)
+        const pskId = new Uint8Array(32)
+
+        await assertRejectsSharedArrayBuffer(t, 'info', (input) =>
+          suite.SetupSender(kp.publicKey, { info: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'psk', (input) =>
+          suite.SetupSender(kp.publicKey, { psk: input, pskId }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'pskId', (input) =>
+          suite.SetupSender(kp.publicKey, { psk, pskId: input }),
+        )
+      })
+
+      it('rejects SetupRecipient inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const psk = new Uint8Array(32)
+        const pskId = new Uint8Array(32)
+        const { encapsulatedSecret } = await suite.SetupSender(kp.publicKey)
+
+        await assertRejectsSharedArrayBuffer(t, 'encapsulatedSecret', (input) =>
+          suite.SetupRecipient(kp.privateKey, input),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'info', (input) =>
+          suite.SetupRecipient(kp.privateKey, encapsulatedSecret, { info: input }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'psk', (input) =>
+          suite.SetupRecipient(kp.privateKey, encapsulatedSecret, { psk: input, pskId }),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'pskId', (input) =>
+          suite.SetupRecipient(kp.privateKey, encapsulatedSecret, { psk, pskId: input }),
+        )
+      })
+
+      it('rejects single-shot export inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const { encapsulatedSecret } = await suite.SendExport(kp.publicKey, empty, 32)
+
+        await assertRejectsSharedArrayBuffer(t, 'exporterContext', (input) =>
+          suite.SendExport(kp.publicKey, input, 32),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'encapsulatedSecret', (input) =>
+          suite.ReceiveExport(kp.privateKey, input, empty, 32),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'exporterContext', (input) =>
+          suite.ReceiveExport(kp.privateKey, encapsulatedSecret, input, 32),
+        )
+      })
+
+      it('rejects context inputs', async (t: test.TestContext) => {
+        const kp = await getKeyPair(suite)
+        const { encapsulatedSecret, ctx: sender } = await suite.SetupSender(kp.publicKey)
+        const recipient = await suite.SetupRecipient(kp.privateKey, encapsulatedSecret)
+        const ciphertext = await sender.Seal(empty)
+
+        await assertRejectsSharedArrayBuffer(t, 'plaintext', (input) => sender.Seal(input))
+        await assertRejectsSharedArrayBuffer(t, 'aad', (input) => sender.Seal(empty, input))
+        await assertRejectsSharedArrayBuffer(t, 'ciphertext', (input) => recipient.Open(input))
+        await assertRejectsSharedArrayBuffer(t, 'aad', (input) => recipient.Open(ciphertext, input))
+        await assertRejectsSharedArrayBuffer(t, 'exporterContext', (input) =>
+          sender.Export(input, 32),
+        )
+        await assertRejectsSharedArrayBuffer(t, 'exporterContext', (input) =>
+          recipient.Export(input, 32),
+        )
+      })
+    })
+
     test.describe('Single-Shot Seal API', () => {
       it('rejects non-Uint8Array info', async (t: test.TestContext) => {
         const kp = await getKeyPair(suite)
@@ -1103,6 +1240,10 @@ test.describe('Validations', () => {
         }
       })
 
+      it('rejects SharedArrayBuffer-backed ikm', async (t: test.TestContext) => {
+        await assertRejectsSharedArrayBuffer(t, 'ikm', (input) => suite.DeriveKeyPair(input))
+      })
+
       it('rejects non-boolean extractable', async (t: test.TestContext) => {
         const ikm = new Uint8Array(suite.KEM.Nsk)
         for (const { name, value } of notBoolean) {
@@ -1127,6 +1268,12 @@ test.describe('Validations', () => {
             `Failed for ${name}`,
           )
         }
+      })
+
+      it('rejects SharedArrayBuffer-backed key', async (t: test.TestContext) => {
+        await assertRejectsSharedArrayBuffer(t, 'privateKey', (input) =>
+          suite.DeserializePrivateKey(input),
+        )
       })
 
       it('rejects non-boolean extractable', async (t: test.TestContext) => {
@@ -1155,6 +1302,12 @@ test.describe('Validations', () => {
             `Failed for ${name}`,
           )
         }
+      })
+
+      it('rejects SharedArrayBuffer-backed key', async (t: test.TestContext) => {
+        await assertRejectsSharedArrayBuffer(t, 'publicKey', (input) =>
+          suite.DeserializePublicKey(input),
+        )
       })
     })
   })
