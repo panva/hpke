@@ -3944,7 +3944,7 @@ async function prepareEncapsG(
   const ct_PQ = new Uint8Array(res.ciphertext)
 
   const { privateKey: sk_E, publicKey } = (await subtle(
-    (c) => c.generateKey(PQTKEM.t.algorithm, true, ['deriveBits']),
+    (c) => c.generateKey(PQTKEM.t.algorithm, false, ['deriveBits']),
     PQTKEM.name,
   )) as CryptoKeyPair
   const ct_T = new Uint8Array(await subtle((c) => c.exportKey('raw', publicKey), PQTKEM.name))
