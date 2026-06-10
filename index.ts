@@ -3608,6 +3608,10 @@ interface WebCryptoAEAD extends AEAD {
 type AEAD_BASE = Pick<AEAD, 'Seal' | 'Open'>
 
 function AEAD_SHARED(): AEAD_BASE {
+  // Note: The per-invocation plaintext limits (P_MAX, e.g. 2^36 - 31 bytes for
+  // AES-GCM and 2^38 - 64 bytes for ChaCha20-Poly1305) are not explicitly
+  // enforced here as they exceed the maximum ArrayBuffer/Uint8Array sizes
+  // attainable in JavaScript runtimes.
   // Cache the WebCrypto CryptoKey derived from a given key-bytes Uint8Array.
   // Across the lifetime of a SenderContext/RecipientContext, `this.#key` is a
   // stable Uint8Array, so crypto.subtle.importKey() would otherwise be called
