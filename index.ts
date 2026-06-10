@@ -80,6 +80,9 @@ async function ContextExport(
   if (!Number.isInteger(L) || L <= 0 || L > 0xffff) {
     throw new TypeError('"L" must be a positive integer not exceeding 65535')
   }
+  if (stages === 2 && L > 255 * suite.KDF.Nh) {
+    throw new TypeError('"L" must not exceed 255*Nh of the cipher suite KDF')
+  }
   const Export = stages === 1 ? Export_OneStage : Export_TwoStage
   return await Export(suite.KDF, suite.id, exporterSecret, exporterContext, L)
 }
