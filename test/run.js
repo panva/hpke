@@ -98,7 +98,8 @@ const WEBCRYPTO_USABLE_CHECKS = {
   },
   KEM_DHKEM_X448_HKDF_SHA512() {
     if (!supports('generateKey', 'X448')) {
-      return false
+      // 22.x does not have SubtleCrypto.supports but supports X448
+      return globalThis.process?.release?.lts === 'Jod'
     }
 
     // Deno advertises X448, but its native scalar multiplication isn't correct.
@@ -129,7 +130,12 @@ const WEBCRYPTO_USABLE_CHECKS = {
 
 const WEBCRYPTO_ADVERTISED_CHECKS = {
   KEM_DHKEM_X448_HKDF_SHA512() {
-    return supports('generateKey', 'X448')
+    if (!supports('generateKey', 'X448')) {
+      // 22.x does not have SubtleCrypto.supports but supports X448
+      return globalThis.process?.release?.lts === 'Jod'
+    }
+
+    return true
   },
 }
 
