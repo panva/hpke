@@ -1,5 +1,6 @@
 import * as HPKE from '../index.ts'
 import * as noble from '../examples/noble-suite/index.ts'
+import { ALGORITHM_IDS, isAdvertised, isUsable } from './run.js'
 
 export function label(suite: HPKE.CipherSuite, mode: number) {
   const modeStr =
@@ -19,80 +20,11 @@ export function hex(str: string): Uint8Array {
   )
 }
 
-export const IDs: Record<string, number> = {
-  KDF_HKDF_SHA256: 0x0001,
-  KDF_HKDF_SHA384: 0x0002,
-  KDF_HKDF_SHA512: 0x0003,
-  KDF_SHAKE128: 0x0010,
-  KDF_SHAKE256: 0x0011,
-  KDF_TurboSHAKE128: 0x0012,
-  KDF_TurboSHAKE256: 0x0013,
-  KEM_DHKEM_P256_HKDF_SHA256: 0x0010,
-  KEM_DHKEM_P384_HKDF_SHA384: 0x0011,
-  KEM_DHKEM_P521_HKDF_SHA512: 0x0012,
-  KEM_DHKEM_X25519_HKDF_SHA256: 0x0020,
-  KEM_DHKEM_X448_HKDF_SHA512: 0x0021,
-  KEM_ML_KEM_512: 0x0040,
-  KEM_ML_KEM_768: 0x0041,
-  KEM_ML_KEM_1024: 0x0042,
-  KEM_MLKEM768_P256: 0x0050,
-  KEM_MLKEM1024_P384: 0x0051,
-  KEM_MLKEM768_X25519: 0x647a,
-  AEAD_AES_128_GCM: 0x0001,
-  AEAD_AES_256_GCM: 0x0002,
-  AEAD_ChaCha20Poly1305: 0x0003,
-  AEAD_EXPORT_ONLY: 0xffff,
-}
+export const IDs = ALGORITHM_IDS
 
-type SupportedAlgorithmIdentifier = AlgorithmIdentifier & { outputLength?: number }
-
-function supports(op: string, algorithm: SupportedAlgorithmIdentifier) {
-  // @ts-expect-error
-  return SubtleCrypto.supports?.(op, algorithm) ?? false
-}
-
-// @ts-ignore
-const isDeno = typeof globalThis.Deno === 'object'
-
-export const supported: Record<string, () => boolean | undefined> = {
-  KDF_SHAKE128() {
-    return isDeno || supports('digest', { name: 'cSHAKE128', outputLength: 256 })
-  },
-  KDF_SHAKE256() {
-    return isDeno || supports('digest', { name: 'cSHAKE256', outputLength: 512 })
-  },
-  KDF_TurboSHAKE128() {
-    return isDeno || supports('digest', { name: 'TurboSHAKE128', outputLength: 256 })
-  },
-  KDF_TurboSHAKE256() {
-    return isDeno || supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
-  },
-  KEM_ML_KEM_512() {
-    return supports('generateKey', 'ML-KEM-512')
-  },
-  KEM_ML_KEM_768() {
-    return supports('generateKey', 'ML-KEM-768')
-  },
-  KEM_ML_KEM_1024() {
-    return supports('generateKey', 'ML-KEM-1024')
-  },
-  KEM_MLKEM768_P256() {
-    return supports('generateKey', 'ML-KEM-512')
-  },
-  KEM_MLKEM1024_P384() {
-    return supports('generateKey', 'ML-KEM-768')
-  },
-  KEM_MLKEM768_X25519() {
-    return supports('generateKey', 'ML-KEM-1024')
-  },
-  AEAD_ChaCha20Poly1305() {
-    return supports('generateKey', 'ChaCha20-Poly1305')
-  },
-  KEM_DHKEM_X448_HKDF_SHA512() {
-    // @ts-ignore
-    return typeof Deno !== 'object' && typeof Bun !== 'object'
-  },
-}
+export const supported: Record<string, () => boolean | undefined> = Object.fromEntries(
+  Object.keys(IDs).map((name) => [name, () => isUsable(name)]),
+)
 
 type AlgorithmEntry<T> = {
   supported: boolean
@@ -164,7 +96,7 @@ function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | 
   ) as T[]
 
   for (const algorithm of hpkeAlgorithms) {
-    const isSupported = supported[algorithm.name]?.() !== false
+    const isSupported = isAdvertised(algorithm.name)
     if (!isSupported) {
       unsupported.push({ factory: algorithm, name: algorithm.name })
     }

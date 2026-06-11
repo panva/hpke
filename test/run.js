@@ -75,57 +75,81 @@ function supportsAll(...checks) {
   return checks.every(([op, algorithm]) => supports(op, algorithm))
 }
 
+const supportsHybridKem = (pqAlgorithm, traditionalAlgorithm) =>
+  supportsAll(
+    ['digest', { name: 'cSHAKE256', outputLength: 512 }],
+    ['digest', 'SHA3-256'],
+    ['generateKey', pqAlgorithm],
+    ['generateKey', traditionalAlgorithm],
+  )
+
+const WEBCRYPTO_USABLE_CHECKS = {
+  KDF_SHAKE128() {
+    return supports('digest', { name: 'cSHAKE128', outputLength: 256 })
+  },
+  KDF_SHAKE256() {
+    return supports('digest', { name: 'cSHAKE256', outputLength: 512 })
+  },
+  KDF_TurboSHAKE128() {
+    return supports('digest', { name: 'TurboSHAKE128', outputLength: 256 })
+  },
+  KDF_TurboSHAKE256() {
+    return supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
+  },
+  KEM_DHKEM_X448_HKDF_SHA512() {
+    if (!supports('generateKey', 'X448')) {
+      return false
+    }
+
+    // Deno advertises X448, but its native scalar multiplication isn't correct.
+    return !('Deno' in globalThis)
+  },
+  KEM_ML_KEM_512() {
+    return supports('generateKey', 'ML-KEM-512')
+  },
+  KEM_ML_KEM_768() {
+    return supports('generateKey', 'ML-KEM-768')
+  },
+  KEM_ML_KEM_1024() {
+    return supports('generateKey', 'ML-KEM-1024')
+  },
+  KEM_MLKEM768_X25519() {
+    return supportsHybridKem('ML-KEM-768', 'X25519')
+  },
+  KEM_MLKEM768_P256() {
+    return supportsHybridKem('ML-KEM-768', { name: 'ECDH', namedCurve: 'P-256' })
+  },
+  KEM_MLKEM1024_P384() {
+    return supportsHybridKem('ML-KEM-1024', { name: 'ECDH', namedCurve: 'P-384' })
+  },
+  AEAD_ChaCha20Poly1305() {
+    return supports('generateKey', 'ChaCha20-Poly1305')
+  },
+}
+
+const WEBCRYPTO_ADVERTISED_CHECKS = {
+  KEM_DHKEM_X448_HKDF_SHA512() {
+    return supports('generateKey', 'X448')
+  },
+}
+
+export function isUsable(algorithm) {
+  return WEBCRYPTO_USABLE_CHECKS[algorithm]?.() !== false
+}
+
+export function isAdvertised(algorithm) {
+  return (
+    (WEBCRYPTO_ADVERTISED_CHECKS[algorithm] ?? WEBCRYPTO_USABLE_CHECKS[algorithm])?.() !== false
+  )
+}
+
 export function getUnsupportedAlgorithms() {
   const unsupported = { kem: [], kdf: [], aead: [] }
-  const addUnsupported = (type, name, isSupported) => {
-    if (!isSupported) unsupported[type].push(name)
+  for (const algorithm of Object.keys(WEBCRYPTO_USABLE_CHECKS)) {
+    if (!isUsable(algorithm)) {
+      unsupported[algorithm.split('_', 1)[0].toLowerCase()].push(algorithm)
+    }
   }
-  const supportsHybridKem = (pqAlgorithm, traditionalAlgorithm) =>
-    supportsAll(
-      ['digest', { name: 'cSHAKE256', outputLength: 512 }],
-      ['digest', 'SHA3-256'],
-      ['generateKey', pqAlgorithm],
-      ['generateKey', traditionalAlgorithm],
-    )
-
-  addUnsupported(
-    'kdf',
-    'KDF_SHAKE128',
-    supports('digest', { name: 'cSHAKE128', outputLength: 256 }),
-  )
-  addUnsupported(
-    'kdf',
-    'KDF_SHAKE256',
-    supports('digest', { name: 'cSHAKE256', outputLength: 512 }),
-  )
-  addUnsupported(
-    'kdf',
-    'KDF_TurboSHAKE128',
-    supports('digest', { name: 'TurboSHAKE128', outputLength: 256 }),
-  )
-  addUnsupported(
-    'kdf',
-    'KDF_TurboSHAKE256',
-    supports('digest', { name: 'TurboSHAKE256', outputLength: 512 }),
-  )
-
-  addUnsupported('kem', 'KEM_DHKEM_X448_HKDF_SHA512', supports('generateKey', 'X448'))
-  addUnsupported('kem', 'KEM_ML_KEM_512', supports('generateKey', 'ML-KEM-512'))
-  addUnsupported('kem', 'KEM_ML_KEM_768', supports('generateKey', 'ML-KEM-768'))
-  addUnsupported('kem', 'KEM_ML_KEM_1024', supports('generateKey', 'ML-KEM-1024'))
-  addUnsupported('kem', 'KEM_MLKEM768_X25519', supportsHybridKem('ML-KEM-768', 'X25519'))
-  addUnsupported(
-    'kem',
-    'KEM_MLKEM768_P256',
-    supportsHybridKem('ML-KEM-768', { name: 'ECDH', namedCurve: 'P-256' }),
-  )
-  addUnsupported(
-    'kem',
-    'KEM_MLKEM1024_P384',
-    supportsHybridKem('ML-KEM-1024', { name: 'ECDH', namedCurve: 'P-384' }),
-  )
-
-  addUnsupported('aead', 'AEAD_ChaCha20Poly1305', supports('generateKey', 'ChaCha20-Poly1305'))
 
   return unsupported
 }
@@ -184,6 +208,11 @@ function parseReadmeSupportMatrix(readme) {
   return matrix
 }
 
+function isKnownReadmeSupportException(runtime, algorithm) {
+  // Deno advertises X448, but its native scalar multiplication isn't correct.
+  return runtime === 'deno' && algorithm === 'KEM_DHKEM_X448_HKDF_SHA512'
+}
+
 export function findReadmeSupportMismatches({ results, readme, runtime }) {
   const matrix = parseReadmeSupportMatrix(readme)
   const mismatches = []
@@ -193,6 +222,8 @@ export function findReadmeSupportMismatches({ results, readme, runtime }) {
     if ((test.implementation ?? 'native') !== 'native') continue
 
     const algorithm = test.algorithm ?? test.name?.replace(/^\[[^\]]+\]\s+/, '')
+    if (isKnownReadmeSupportException(runtime, algorithm)) continue
+
     const id = ALGORITHM_IDS[algorithm]
     const row = matrix[test.component]?.get(id)
 

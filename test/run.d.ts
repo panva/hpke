@@ -1,6 +1,8 @@
 export type ReadmeSupportRuntime = 'node' | 'deno' | 'bun' | 'browser' | 'workerd'
 export type ReadmeSupportComponent = 'kem' | 'kdf' | 'aead'
 
+export declare const ALGORITHM_IDS: Record<string, number>
+
 export type ReadmeSupportTestResult = {
   status: string
   implementation?: string
@@ -32,6 +34,12 @@ export function runAlgorithmTests(options: {
   unsupported: { kem: string[]; kdf: string[]; aead: string[] }
   mode?: { onlyNative?: boolean; onlyNoble?: boolean }
 }): Promise<{ results: AlgorithmTestResults }>
+
+export function isUsable(algorithm: string): boolean
+
+export function isAdvertised(algorithm: string): boolean
+
+export function getUnsupportedAlgorithms(): { kem: string[]; kdf: string[]; aead: string[] }
 
 export function findReadmeSupportMismatches(options: {
   results: { tests: ReadmeSupportTestResult[] }
