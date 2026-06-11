@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.2](https://github.com/panva/hpke/compare/v1.1.1...v1.1.2) (2026-06-11)
+
+
+### Refactor
+
+* avoid copying/slicing buffersource inputs before subtle() ([afc7ad3](https://github.com/panva/hpke/commit/afc7ad39f3a5ee0d33983727b4d73ef33f8f5d8c)), closes [#38](https://github.com/panva/hpke/issues/38)
+* avoid HKDF empty-salt HMAC key re-import ([e560e1e](https://github.com/panva/hpke/commit/e560e1e7f44c8cd3207ea3aceb8d277e2f5bedbc))
+* avoid HKDF PRK re-import on subsequent Expand calls ([d67626d](https://github.com/panva/hpke/commit/d67626d89b3f4a68cf29b7e186a30c8fa6f2295b))
+* generate non-extractable ephemeral keys in hybrid KEM encapsulation ([ef79333](https://github.com/panva/hpke/commit/ef793337cd9b99054a66dffee6362419dfadc2cc))
+* validate two-stage KDF Export length limit of 255*Nh upfront ([08ddc98](https://github.com/panva/hpke/commit/08ddc9866d6a811aab9db42a94a237e01d5c0a00))
+
 ## [1.1.1](https://github.com/panva/hpke/compare/v1.1.0...v1.1.1) (2026-05-15)
 
 
