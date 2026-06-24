@@ -2709,22 +2709,19 @@ function b64u(input: string): Uint8Array {
 // KEM (Key Encapsulation Mechanism) - DHKEM Helper Functions
 // ============================================================================
 
-/** @see [DeriveKeyPair (DeriveCandidate)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1.3) */
-async function DeriveCandidate_TwoStage(
+/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1.3) */
+async function DeriveKeyPairBytes(
   DHKEM: DHKEM,
-  suite_id: Uint8Array,
   ikm: Uint8Array,
-  counter: number,
+  label: Uint8Array,
+  context: Uint8Array,
 ) {
-  const dkp_prk = await LabeledExtract(DHKEM.kdf, suite_id, new Uint8Array(), L_dkp_prk, ikm)
-  return await LabeledExpand(
-    DHKEM.kdf,
-    suite_id,
-    dkp_prk,
-    L_candidate,
-    I2OSP(counter, 1),
-    DHKEM.Nsk,
-  )
+  if (KDFStages(DHKEM.kdf) === 1) {
+    return await LabeledDerive(DHKEM.kdf, DHKEM.suite_id, ikm, label, context, DHKEM.Nsk)
+  }
+
+  const dkp_prk = await LabeledExtract(DHKEM.kdf, DHKEM.suite_id, new Uint8Array(), L_dkp_prk, ikm)
+  return await LabeledExpand(DHKEM.kdf, DHKEM.suite_id, dkp_prk, label, context, DHKEM.Nsk)
 }
 
 function OS2IP(x: Uint8Array): bigint {
@@ -2770,6 +2767,22 @@ function assertCryptoKey(key: Key): asserts key is CryptoKey {
 }
 
 /** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.5) */
+async function ExtractAndExpand_OneStage(
+  DHKEM: DHKEM,
+  dh: Uint8Array,
+  kem_context: Uint8Array,
+): Promise<Uint8Array> {
+  return await LabeledDerive(
+    DHKEM.kdf,
+    DHKEM.suite_id,
+    dh,
+    L_shared_secret,
+    kem_context,
+    DHKEM.Nsecret,
+  )
+}
+
+/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.5) */
 async function ExtractAndExpand_TwoStage(
   DHKEM: DHKEM,
   dh: Uint8Array,
@@ -2784,6 +2797,16 @@ async function ExtractAndExpand_TwoStage(
     kem_context,
     DHKEM.Nsecret,
   )
+}
+
+/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.5) */
+async function ExtractAndExpand(
+  DHKEM: DHKEM,
+  dh: Uint8Array,
+  kem_context: Uint8Array,
+): Promise<Uint8Array> {
+  const Fn = KDFStages(DHKEM.kdf) === 1 ? ExtractAndExpand_OneStage : ExtractAndExpand_TwoStage
+  return await Fn(DHKEM, dh, kem_context)
 }
 
 // ============================================================================
@@ -2836,7 +2859,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
       const enc = await this.SerializePublicKey(pkE)
       const pkRm = await this.SerializePublicKey(pkR)
       const kem_context = concat(enc, pkRm)
-      const shared_secret = await ExtractAndExpand_TwoStage(this, dh, kem_context)
+      const shared_secret = await ExtractAndExpand(this, dh, kem_context)
       return { shared_secret, enc }
     },
     async Decap(this: DHKEM, enc, skR, pkR) {
@@ -2863,7 +2886,7 @@ function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializeP
 
       const pkRm = await this.SerializePublicKey(pkR)
       const kem_context = concat(enc, pkRm)
-      const shared_secret = await ExtractAndExpand_TwoStage(this, dh, kem_context)
+      const shared_secret = await ExtractAndExpand(this, dh, kem_context)
       return shared_secret
     },
   }
@@ -3087,7 +3110,7 @@ async function DeriveKeyPairNist(
     if (counter > 255) {
       throw new DeriveKeyPairError('Key derivation exceeded maximum iterations')
     }
-    candidate = await DeriveCandidate_TwoStage(this, this.suite_id, ikm, counter)
+    candidate = await DeriveKeyPairBytes(this, ikm, L_candidate, I2OSP(counter, 1))
     candidate[0] = candidate[0]! & this.bitmask
     sk = OS2IP(candidate)
     counter = counter + 1
@@ -3124,8 +3147,7 @@ async function GetKeyPairNist(
 
 /** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1.3) */
 async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean) {
-  const dkp_prk = await LabeledExtract(this.kdf, this.suite_id, new Uint8Array(), L_dkp_prk, ikm)
-  const sk = await LabeledExpand(this.kdf, this.suite_id, dkp_prk, L_sk, new Uint8Array(), this.Nsk)
+  const sk = await DeriveKeyPairBytes(this, ikm, L_sk, new Uint8Array())
   return await createKeyPairFromPrivateKey(this, sk, extractable)
 }
 
