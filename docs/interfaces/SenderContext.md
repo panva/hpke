@@ -155,4 +155,5 @@ context.
 
 The sequence number for this context's next [Seal](#seal), initially zero, increments
 automatically with each successful [Seal](#seal). The sequence number provides AEAD nonce
-uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
+uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
+and `2^53-1`.

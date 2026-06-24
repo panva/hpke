@@ -46,7 +46,7 @@
 function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
   // Equivalent to xor(base_nonce, I2OSP(seq, Nn)) but avoids allocating the
   // intermediate seq_bytes array and fuses the two byte-wise passes into one.
-  // seq is a safe integer (≥0, ≤2^53-1) guaranteed by IncrementSeq.
+  // seq stays exact because IncrementSeq caps it at Number.MAX_SAFE_INTEGER.
   const nonce = new Uint8Array(Nn)
   nonce.set(base_nonce)
   let s = seq
@@ -57,12 +57,15 @@ function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Arr
   return nonce
 }
 
+function MaxSeq(Nn: number): number {
+  // HPKE limits seq to the largest integer encodable in Nn bytes. This
+  // implementation stores seq as a JS number, so it uses the stricter limit.
+  return Math.min(2 ** (8 * Nn) - 1, Number.MAX_SAFE_INTEGER)
+}
+
 /** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
-function IncrementSeq(seq: number): number {
-  // seq is guaranteed to be a safe integer due to:
-  // 1. Initial value is 0
-  // 2. This function throws at MAX_SAFE_INTEGER
-  if (seq >= Number.MAX_SAFE_INTEGER) {
+function IncrementSeq(seq: number, maxSeq: number): number {
+  if (seq >= maxSeq) {
     throw new MessageLimitReachedError('Sequence number overflow')
   }
   return ++seq
@@ -128,6 +131,7 @@ class SenderContext {
   #exporter_secret: Uint8Array
   #mode: typeof MODE_BASE | typeof MODE_PSK
   #seq: number = 0
+  #max_seq: number
   #mutex?: Mutex
 
   constructor(
@@ -142,6 +146,7 @@ class SenderContext {
     this.#key = key
     this.#base_nonce = base_nonce
     this.#exporter_secret = exporter_secret
+    this.#max_seq = MaxSeq(suite.AEAD.Nn)
   }
 
   /**
@@ -156,7 +161,8 @@ class SenderContext {
   /**
    * @returns The sequence number for this context's next {@link Seal}, initially zero, increments
    *   automatically with each successful {@link Seal}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
+   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
+   *   and `2^53-1`.
    */
   get seq(): number {
     return this.#seq
@@ -206,7 +212,7 @@ class SenderContext {
         aad,
         plaintext,
       )
-      this.#seq = IncrementSeq(this.#seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
       return ct
     } finally {
       release()
@@ -276,6 +282,7 @@ class RecipientContext {
   #exporter_secret: Uint8Array
   #mode: typeof MODE_BASE | typeof MODE_PSK
   #seq: number = 0
+  #max_seq: number
   #mutex?: Mutex
 
   constructor(
@@ -290,6 +297,7 @@ class RecipientContext {
     this.#key = key
     this.#base_nonce = base_nonce
     this.#exporter_secret = exporter_secret
+    this.#max_seq = MaxSeq(suite.AEAD.Nn)
   }
 
   /**
@@ -304,7 +312,8 @@ class RecipientContext {
   /**
    * @returns The sequence number for this context's next {@link Open}, initially zero, increments
    *   automatically with each successful {@link Open}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number in this implementation is `2^53-1`.
+   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
+   *   and `2^53-1`.
    */
   get seq(): number {
     return this.#seq
@@ -364,7 +373,7 @@ class RecipientContext {
 
         throw new OpenError('AEAD decryption failed', { cause })
       }
-      this.#seq = IncrementSeq(this.#seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
       return pt
     } finally {
       release()
