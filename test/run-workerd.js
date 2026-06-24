@@ -12,6 +12,7 @@ import * as Noble from '../examples/noble-suite/index.js'
 import readme from '../README.md'
 import vectors from './vectors.json'
 import vectorsPq from './vectors-pq.json'
+import vectorsDnhpke from './vectors-dnhpke.json'
 
 export default {
   async test() {
@@ -56,6 +57,7 @@ export default {
       HPKE,
       vectors,
       vectorsPq,
+      vectorsDnhpke,
       passingImplementations,
     })
 

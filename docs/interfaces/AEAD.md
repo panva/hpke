@@ -82,7 +82,7 @@ Decrypts and verifies ciphertext with associated data.
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `key` | `Uint8Array` | The decryption key of [Nk](#nk) bytes |
-| `nonce` | `Uint8Array` | The nonce of [Nn](#nn) bytes |
+| `nonce` | `Uint8Array` | The nonce of [Nn](#nn) bytes, or an empty Uint8Array when [Nn](#nn) is 0 |
 | `aad` | `Uint8Array` | Additional authenticated data |
 | `ct` | `Uint8Array` | Ciphertext with authentication tag appended |
 
@@ -110,7 +110,7 @@ them as ordinary input range errors, such as `RangeError`.
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `key` | `Uint8Array` | The encryption key of [Nk](#nk) bytes |
-| `nonce` | `Uint8Array` | The nonce of [Nn](#nn) bytes |
+| `nonce` | `Uint8Array` | The nonce of [Nn](#nn) bytes, or an empty Uint8Array when [Nn](#nn) is 0 |
 | `aad` | `Uint8Array` | Additional authenticated data |
 | `pt` | `Uint8Array` | Plaintext to encrypt |
 
@@ -154,7 +154,7 @@ Length in bytes of a key for this AEAD
 
 > `readonly` **Nn**: `number`
 
-Length in bytes of a nonce for this AEAD
+Length in bytes of a nonce for this AEAD. Nonce-less algorithms use 0.
 
 ***
 

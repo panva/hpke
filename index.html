@@ -1902,6 +1902,7 @@
 
       import vectors from './test/vectors.json' with { type: 'json' }
       import vectorsPq from './test/vectors-pq.json' with { type: 'json' }
+      import vectorsDnhpke from './test/vectors-dnhpke.json' with { type: 'json' }
 
       import { runAlgorithmTests, runVectorValidation, ALGORITHM_IDS, extractAlgorithms, getTestComponent, getUnsupportedAlgorithms } from './test/run.js'
 
@@ -1935,6 +1936,9 @@
         KEM_DHKEM_P256_HKDF_SHA256: 'DHKEM(P-256, HKDF-SHA256)',
         KEM_DHKEM_P384_HKDF_SHA384: 'DHKEM(P-384, HKDF-SHA384)',
         KEM_DHKEM_P521_HKDF_SHA512: 'DHKEM(P-521, HKDF-SHA512)',
+        KEM_DHKEM_CP256_HKDF_SHA256: 'DHKEM(CP-256, HKDF-SHA256)',
+        KEM_DHKEM_CP384_HKDF_SHA384: 'DHKEM(CP-384, HKDF-SHA384)',
+        KEM_DHKEM_CP521_HKDF_SHA512: 'DHKEM(CP-521, HKDF-SHA512)',
         KEM_DHKEM_X25519_HKDF_SHA256: 'DHKEM(X25519, HKDF-SHA256)',
         KEM_DHKEM_X448_HKDF_SHA512: 'DHKEM(X448, HKDF-SHA512)',
         KEM_ML_KEM_512: 'ML-KEM-512',
@@ -1957,6 +1961,8 @@
         AEAD_AES_128_GCM: 'AES-128-GCM',
         AEAD_AES_256_GCM: 'AES-256-GCM',
         AEAD_ChaCha20Poly1305: 'ChaCha20Poly1305',
+        AEAD_AES_256_SIV: 'AES-256-SIV',
+        AEAD_AES_512_SIV: 'AES-512-SIV',
         AEAD_EXPORT_ONLY: 'Export-only',
       }
 
@@ -2253,9 +2259,12 @@
             // Custom sort: P-256, X25519, P-384, P-521, X448
             const order = [
               'KEM_DHKEM_P256_HKDF_SHA256',
+              'KEM_DHKEM_CP256_HKDF_SHA256',
               'KEM_DHKEM_X25519_HKDF_SHA256',
               'KEM_DHKEM_P384_HKDF_SHA384',
+              'KEM_DHKEM_CP384_HKDF_SHA384',
               'KEM_DHKEM_P521_HKDF_SHA512',
+              'KEM_DHKEM_CP521_HKDF_SHA512',
               'KEM_DHKEM_X448_HKDF_SHA512',
             ]
             return order.indexOf(a) - order.indexOf(b)
@@ -3775,6 +3784,7 @@
           HPKE,
           vectors: customVectors || vectors,
           vectorsPq: customVectors ? [] : vectorsPq,
+          vectorsDnhpke: customVectors ? [] : vectorsDnhpke,
           passingImplementations,
           onProgress: updateProgressUI,
           yieldToEventLoop: true,

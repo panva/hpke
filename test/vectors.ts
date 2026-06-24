@@ -79,6 +79,7 @@ interface Vector {
 const vectors: Vector[] = [
   ...JSON.parse(await fs.readFile('./test/vectors.json', 'ascii')),
   ...JSON.parse(await fs.readFile('./test/vectors-pq.json', 'ascii')),
+  ...JSON.parse(await fs.readFile('./test/vectors-dnhpke.json', 'ascii')),
 ]
 
 // Cache for derived keys per implementation + vector index

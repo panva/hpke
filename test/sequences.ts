@@ -1,6 +1,7 @@
 import it, * as test from 'node:test'
 
 import * as HPKE from '../index.ts'
+import * as noble from '../examples/noble-suite/index.ts'
 
 const suite = new HPKE.CipherSuite(
   HPKE.KEM_DHKEM_P256_HKDF_SHA256,
@@ -34,6 +35,32 @@ test.describe('IncrementSeq', () => {
     // Check that seq is 1 after first message
     t.assert.strictEqual(contextS.seq, 1)
     t.assert.strictEqual(contextR.seq, 1)
+  })
+
+  it('Nonce-less AEAD contexts do not increment sequence numbers', async (t: test.TestContext) => {
+    const suite = new HPKE.CipherSuite(
+      noble.KEM_DHKEM_CP256_HKDF_SHA256,
+      noble.KDF_HKDF_SHA256,
+      noble.AEAD_AES_256_SIV,
+    )
+
+    const kp = await suite.DeriveKeyPair(new Uint8Array(suite.KEM.Nsk))
+    const { encapsulatedSecret: enc, ctx: contextS } = await suite.SetupSender(kp.publicKey)
+    const contextR = await suite.SetupRecipient(kp, enc)
+
+    const aad1 = new Uint8Array([1, 2, 3])
+    const aad2 = new Uint8Array([4, 5, 6])
+    const pt1 = new Uint8Array([7, 8, 9])
+    const pt2 = new Uint8Array([10, 11, 12])
+
+    const ct1 = await contextS.Seal(pt1, aad1)
+    const ct2 = await contextS.Seal(pt2, aad2)
+    t.assert.strictEqual(contextS.seq, 0)
+
+    t.assert.deepStrictEqual(await contextR.Open(ct2, aad2), pt2)
+    t.assert.strictEqual(contextR.seq, 0)
+    t.assert.deepStrictEqual(await contextR.Open(ct1, aad1), pt1)
+    t.assert.strictEqual(contextR.seq, 0)
   })
 
   it('Concurrent Seal() calls must not reuse sequence numbers (race condition test)', async (t: test.TestContext) => {

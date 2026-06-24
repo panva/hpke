@@ -42,7 +42,10 @@
 // HPKE Context Classes - Sender and Recipient Contexts
 // ============================================================================
 
-/** @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
+/**
+ * @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+ * @see [DNHPKE DAE Nn=0 behavior](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
 function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
   // Equivalent to xor(base_nonce, I2OSP(seq, Nn)) but avoids allocating the
   // intermediate seq_bytes array and fuses the two byte-wise passes into one.
@@ -60,11 +63,24 @@ function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Arr
 function MaxSeq(Nn: number): number {
   // HPKE limits seq to the largest integer encodable in Nn bytes. This
   // implementation stores seq as a JS number, so it uses the stricter limit.
+  if (Nn === 0) {
+    // DNHPKE DAE ciphers set Nn to 0 and do not use sequence-derived nonces.
+    // See draft-irtf-cfrg-dnhpke-08, Section 4.2.
+    return 0
+  }
   return Math.min(2 ** (8 * Nn) - 1, Number.MAX_SAFE_INTEGER)
 }
 
-/** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
-function IncrementSeq(seq: number, maxSeq: number): number {
+/**
+ * @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+ * @see [DNHPKE DAE Nn=0 behavior](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
+function IncrementSeq(seq: number, maxSeq: number, Nn: number): number {
+  if (Nn === 0) {
+    // DNHPKE says DAE Seal/Open do not call IncrementSeq; keeping this helper
+    // a no-op for Nn=0 preserves that behavior at the shared call sites.
+    return seq
+  }
   if (seq >= maxSeq) {
     throw new MessageLimitReachedError('Sequence number overflow')
   }
@@ -110,8 +126,8 @@ class Mutex {
  *
  * `SenderContext` instance is obtained from {@link CipherSuite.SetupSender}.
  *
- * This context maintains an internal sequence number that increments with each {@link Seal}
- * operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
+ * For AEADs with `Nn > 0`, this context maintains an internal sequence number that increments with
+ * each {@link Seal} operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
  *
  * @example
  *
@@ -159,18 +175,17 @@ class SenderContext {
   }
 
   /**
-   * @returns The sequence number for this context's next {@link Seal}, initially zero, increments
-   *   automatically with each successful {@link Seal}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-   *   and `2^53-1`.
+   * @returns The sequence number for this context's next {@link Seal}, initially zero. For AEADs
+   *   with `Nn > 0`, it increments automatically with each successful {@link Seal}. For DNHPKE DAE
+   *   ciphers with `Nn = 0`, it remains zero.
    */
   get seq(): number {
     return this.#seq
   }
 
   /**
-   * Encrypts plaintext with additional authenticated data. Each successful call automatically
-   * increments the sequence number to ensure nonce uniqueness.
+   * Encrypts plaintext with additional authenticated data. For AEADs with `Nn > 0`, each successful
+   * call automatically increments the sequence number to ensure nonce uniqueness.
    *
    * @example
    *
@@ -212,7 +227,7 @@ class SenderContext {
         aad,
         plaintext,
       )
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq, this.#suite.AEAD.Nn)
       return ct
     } finally {
       release()
@@ -310,10 +325,9 @@ class RecipientContext {
   }
 
   /**
-   * @returns The sequence number for this context's next {@link Open}, initially zero, increments
-   *   automatically with each successful {@link Open}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-   *   and `2^53-1`.
+   * @returns The sequence number for this context's next {@link Open}, initially zero. For AEADs
+   *   with `Nn > 0`, it increments automatically with each successful {@link Open}. For DNHPKE DAE
+   *   ciphers with `Nn = 0`, it remains zero.
    */
   get seq(): number {
     return this.#seq
@@ -322,8 +336,8 @@ class RecipientContext {
   /**
    * Decrypts ciphertext with additional authenticated data.
    *
-   * Applications must ensure that ciphertexts are presented to `Open` in the exact order they were
-   * produced by the sender.
+   * For AEADs with `Nn > 0`, applications must ensure that ciphertexts are presented to `Open` in
+   * the exact order they were produced by the sender.
    *
    * @example
    *
@@ -373,7 +387,7 @@ class RecipientContext {
 
         throw new OpenError('AEAD decryption failed', { cause })
       }
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq, this.#suite.AEAD.Nn)
       return pt
     } finally {
       release()
@@ -1318,6 +1332,9 @@ export const MODE_PSK = 0x01
  * - {@link KEM_DHKEM_P256_HKDF_SHA256 | DHKEM(P-256, HKDF-SHA256)}
  * - {@link KEM_DHKEM_P384_HKDF_SHA384 | DHKEM(P-384, HKDF-SHA384)}
  * - {@link KEM_DHKEM_P521_HKDF_SHA512 | DHKEM(P-521, HKDF-SHA512)}
+ * - {@link KEM_DHKEM_CP256_HKDF_SHA256 | DHKEM(CP-256, HKDF-SHA256)}
+ * - {@link KEM_DHKEM_CP384_HKDF_SHA384 | DHKEM(CP-384, HKDF-SHA384)}
+ * - {@link KEM_DHKEM_CP521_HKDF_SHA512 | DHKEM(CP-521, HKDF-SHA512)}
  * - {@link KEM_DHKEM_X25519_HKDF_SHA256 | DHKEM(X25519, HKDF-SHA256)}
  * - {@link KEM_DHKEM_X448_HKDF_SHA512 | DHKEM(X448, HKDF-SHA512)}
  *
@@ -2157,7 +2174,7 @@ export interface AEAD {
   /** Length in bytes of a key for this AEAD */
   readonly Nk: number
 
-  /** Length in bytes of a nonce for this AEAD */
+  /** Length in bytes of a nonce for this AEAD. Nonce-less algorithms use 0. */
   readonly Nn: number
 
   /** Length in bytes of the authentication tag for this AEAD */
@@ -2172,7 +2189,7 @@ export interface AEAD {
    * them as ordinary input range errors, such as `RangeError`.
    *
    * @param key - The encryption key of {@link Nk} bytes
-   * @param nonce - The nonce of {@link Nn} bytes
+   * @param nonce - The nonce of {@link Nn} bytes, or an empty Uint8Array when {@link Nn} is 0
    * @param aad - Additional authenticated data
    * @param pt - Plaintext to encrypt
    *
@@ -2185,7 +2202,7 @@ export interface AEAD {
    * Decrypts and verifies ciphertext with associated data.
    *
    * @param key - The decryption key of {@link Nk} bytes
-   * @param nonce - The nonce of {@link Nn} bytes
+   * @param nonce - The nonce of {@link Nn} bytes, or an empty Uint8Array when {@link Nn} is 0
    * @param aad - Additional authenticated data
    * @param ct - Ciphertext with authentication tag appended
    *
@@ -3052,7 +3069,9 @@ function scalarMult(k: bigint, G: ECPoint, prime: bigint, a: bigint, order: bigi
 interface NistCurveConfig {
   order: bigint
   bitmask: number
+  canonicalizePrivateKey?: boolean
   prime: bigint
+  b: bigint
   Gx: bigint
   Gy: bigint
   algorithm: EcKeyAlgorithm
@@ -3066,7 +3085,7 @@ function getPrivateJwkNist(DHKEM: NistCurveConfig, d: bigint): JsonWebKey {
   const G: ECPoint = { x: DHKEM.Gx, y: DHKEM.Gy }
   const publicPoint = scalarMult(d, G, DHKEM.prime, DHKEM.prime - 3n, DHKEM.order)
 
-  const coordSize = (DHKEM.Npk - 1) / 2
+  const coordSize = DHKEM.Nsk
   const xBytes = bigIntToUint8Array(publicPoint.x, coordSize)
   const yBytes = bigIntToUint8Array(publicPoint.y, coordSize)
   const dBytes = bigIntToUint8Array(d, DHKEM.Nsk)
@@ -3086,7 +3105,13 @@ async function DeserializePrivateKeyNist(
   key: Uint8Array,
   extractable: boolean,
 ) {
-  const d = OS2IP(key)
+  let d = OS2IP(key)
+  if (this.canonicalizePrivateKey) {
+    d %= this.order
+    if (d === 0n) {
+      throw new Error('Invalid scalar')
+    }
+  }
   const jwk = getPrivateJwkNist(this, d)
 
   const privateKey = await subtle(
@@ -3120,7 +3145,7 @@ async function DeriveKeyPairNist(
 }
 
 async function GetKeyPairNist(
-  curveConfig: typeof P256 | typeof P384,
+  curveConfig: typeof P256 | typeof P384 | typeof P521,
   sk: Uint8Array,
   extractable: boolean,
   name: string,
@@ -3139,6 +3164,49 @@ async function GetKeyPairNist(
   )
 
   return { privateKey, publicKey }
+}
+
+function modPow(base: bigint, exponent: bigint, prime: bigint): bigint {
+  let result = 1n
+  base = mod(base, prime)
+  while (exponent > 0n) {
+    if (exponent & 1n) {
+      result = mod(result * base, prime)
+    }
+    base = mod(base * base, prime)
+    exponent >>= 1n
+  }
+  return result
+}
+
+function recoverPublicKeyNist({ prime, b, Nsk }: NistCurveConfig, key: Uint8Array) {
+  const x = OS2IP(key)
+  if (x >= prime) {
+    throw new Error('Invalid public key')
+  }
+
+  const rhs = mod(x * x * x + (prime - 3n) * x + b, prime)
+  const y = modPow(rhs, (prime + 1n) >> 2n, prime)
+  if (mod(y * y, prime) !== rhs) {
+    throw new Error('Invalid public key')
+  }
+
+  return concat(Uint8Array.of(0x04), key, bigIntToUint8Array(y, Nsk))
+}
+
+async function SerializePublicKeyNistCompact(this: DHKEM & NistCurveConfig, key: Key) {
+  assertKeyAlgorithm(key, this.algorithm)
+  assertCryptoKey(key)
+  const raw = new Uint8Array(await subtle((c) => c.exportKey('raw', key), this.name))
+  return slice(raw, 1, 1 + this.Nsk)
+}
+
+async function DeserializePublicKeyNistCompact(this: DHKEM & NistCurveConfig, key: Uint8Array) {
+  const raw = recoverPublicKeyNist(this, key)
+  return await subtle(
+    (c) => c.importKey('raw', raw as BufferSource, this.algorithm, true, []),
+    this.name,
+  )
 }
 
 // ============================================================================
@@ -3162,6 +3230,7 @@ const P256: NistCurveConfig = {
   order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
   bitmask: 0xff,
   prime: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+  b: 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604bn,
   Gx: 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296n,
   Gy: 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5n,
 }
@@ -3208,6 +3277,53 @@ export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistC
   }
 }
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-256 representation and
+ * HKDF-SHA256.
+ *
+ * This KEM is cryptographically identical to {@link KEM_DHKEM_P256_HKDF_SHA256}, but serializes
+ * public keys and encapsulated secrets as the x-coordinate only.
+ *
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ *
+ * - ECDH with P-256 curve
+ * - HMAC with SHA-256 (for HKDF)
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @group KEM Algorithms
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistCurveConfig {
+  const id = 0x0013
+  const name = 'DHKEM(CP-256, HKDF-SHA256)'
+  const kdf = KDF_HKDF_SHA256()
+  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
+  kdf.name = name
+  return {
+    id,
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
+    type: 'KEM',
+    name,
+    kdf,
+    ...P256,
+    Nsecret: 32,
+    Nenc: 32,
+    Npk: 32,
+    Ndh: 32,
+    DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
+    canonicalizePrivateKey: true,
+    ...DHKEM_SHARED(),
+    SerializePublicKey: SerializePublicKeyNistCompact,
+    DeserializePublicKey: DeserializePublicKeyNistCompact,
+  }
+}
+
 const P384: NistCurveConfig = {
   algorithm: { name: 'ECDH', namedCurve: 'P-384' },
   Npk: 97,
@@ -3217,6 +3333,7 @@ const P384: NistCurveConfig = {
   bitmask: 0xff,
   prime:
     0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffffn,
+  b: 0xb3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aefn,
   Gx: 0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7n,
   Gy: 0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5fn,
 }
@@ -3263,6 +3380,53 @@ export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistC
   }
 }
 
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-384 representation and
+ * HKDF-SHA384.
+ *
+ * This KEM is cryptographically identical to {@link KEM_DHKEM_P384_HKDF_SHA384}, but serializes
+ * public keys and encapsulated secrets as the x-coordinate only.
+ *
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ *
+ * - ECDH with P-384 curve
+ * - HMAC with SHA-384 (for HKDF)
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @group KEM Algorithms
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistCurveConfig {
+  const id = 0x0014
+  const name = 'DHKEM(CP-384, HKDF-SHA384)'
+  const kdf = KDF_HKDF_SHA384()
+  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
+  kdf.name = name
+  return {
+    id,
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
+    type: 'KEM',
+    name,
+    kdf,
+    ...P384,
+    Nsecret: 48,
+    Nenc: 48,
+    Npk: 48,
+    Ndh: 48,
+    DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
+    canonicalizePrivateKey: true,
+    ...DHKEM_SHARED(),
+    SerializePublicKey: SerializePublicKeyNistCompact,
+    DeserializePublicKey: DeserializePublicKeyNistCompact,
+  }
+}
+
 const P521: NistCurveConfig = {
   Npk: 133,
   Nsk: 66,
@@ -3272,6 +3436,7 @@ const P521: NistCurveConfig = {
   bitmask: 0x01,
   prime:
     0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  b: 0x0051953eb9618e1c9a1f929a21a0b68540eea2da725b99b315f3b8b489918ef109e156193951ec7e937b1652c0bd3bb1bf073573df883d2c34f1ef451fd46b503f00n,
   Gx: 0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66n,
   Gy: 0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650n,
 }
@@ -3315,6 +3480,53 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistC
     DeriveKeyPair: DeriveKeyPairNist,
     DeserializePrivateKey: DeserializePrivateKeyNist,
     ...DHKEM_SHARED(),
+  }
+}
+
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-521 representation and
+ * HKDF-SHA512.
+ *
+ * This KEM is cryptographically identical to {@link KEM_DHKEM_P521_HKDF_SHA512}, but serializes
+ * public keys and encapsulated secrets as the x-coordinate only.
+ *
+ * Depends on the following Web Cryptography algorithms being supported in the runtime:
+ *
+ * - ECDH with P-521 curve
+ * - HMAC with SHA-512 (for HKDF)
+ *
+ * This is a factory function that must be passed to the {@link CipherSuite} constructor.
+ *
+ * > [!TIP]\
+ * > An implementation of this algorithm not reliant on Web Cryptography is also exported by
+ * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @group KEM Algorithms
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistCurveConfig {
+  const id = 0x0015
+  const name = 'DHKEM(CP-521, HKDF-SHA512)'
+  const kdf = KDF_HKDF_SHA512()
+  // @ts-expect-error: so that NotSupportedError messages from kdf's subtle() are accurate
+  kdf.name = name
+  return {
+    id,
+    suite_id: concat(L_KEM, I2OSP(id, 2)),
+    type: 'KEM',
+    name,
+    kdf,
+    ...P521,
+    Nsecret: 64,
+    Nenc: 66,
+    Npk: 66,
+    Ndh: 66,
+    DeriveKeyPair: DeriveKeyPairNist,
+    DeserializePrivateKey: DeserializePrivateKeyNist,
+    canonicalizePrivateKey: true,
+    ...DHKEM_SHARED(),
+    SerializePublicKey: SerializePublicKeyNistCompact,
+    DeserializePublicKey: DeserializePublicKeyNistCompact,
   }
 }
 

@@ -1,6 +1,7 @@
 import it, * as test from 'node:test'
 
 import * as HPKE from '../index.ts'
+import * as noble from '../examples/noble-suite/index.ts'
 import { KEMS, NOBLE_KEMS, AEADS } from './support.ts'
 
 const empty = new Uint8Array()
@@ -59,6 +60,70 @@ async function getKeyPair(suite: HPKE.CipherSuite) {
   }
   return kp
 }
+
+function sameKeyAlgorithm(a: HPKE.Key, b: HPKE.Key) {
+  return (
+    a.algorithm.name === b.algorithm.name &&
+    // @ts-expect-error
+    a.algorithm.namedCurve === b.algorithm.namedCurve
+  )
+}
+
+function i2osp(value: bigint, byteLength: number): Uint8Array {
+  const result = new Uint8Array(byteLength)
+  let n = value
+
+  for (let i = byteLength - 1; i >= 0; i--) {
+    result[i] = Number(n & 0xffn)
+    n >>= 8n
+  }
+
+  return result
+}
+
+async function skipNotSupported(t: test.TestContext, fn: () => Promise<void>) {
+  try {
+    await fn()
+  } catch (cause) {
+    if ((cause as Error).name === 'NotSupportedError') {
+      t.skip('KEM is not supported')
+      return
+    }
+    throw cause
+  }
+}
+
+const compactNistKems = [
+  {
+    name: 'CP-256',
+    order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
+    kdf: HPKE.KDF_HKDF_SHA256,
+    implementations: [
+      { name: 'Web Cryptography', kem: HPKE.KEM_DHKEM_CP256_HKDF_SHA256 },
+      { name: 'Noble Cryptography', kem: noble.KEM_DHKEM_CP256_HKDF_SHA256 },
+    ],
+  },
+  {
+    name: 'CP-384',
+    order:
+      0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
+    kdf: HPKE.KDF_HKDF_SHA384,
+    implementations: [
+      { name: 'Web Cryptography', kem: HPKE.KEM_DHKEM_CP384_HKDF_SHA384 },
+      { name: 'Noble Cryptography', kem: noble.KEM_DHKEM_CP384_HKDF_SHA384 },
+    ],
+  },
+  {
+    name: 'CP-521',
+    order:
+      0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
+    kdf: HPKE.KDF_HKDF_SHA512,
+    implementations: [
+      { name: 'Web Cryptography', kem: HPKE.KEM_DHKEM_CP521_HKDF_SHA512 },
+      { name: 'Noble Cryptography', kem: noble.KEM_DHKEM_CP521_HKDF_SHA512 },
+    ],
+  },
+]
 
 test.describe('Validations', () => {
   test.describe('CipherSuite constructor', () => {
@@ -370,6 +435,44 @@ test.describe('Validations', () => {
     })
   }
 
+  test.describe('DHKEM compact private key scalar validation', () => {
+    for (const { name, order, kdf, implementations } of compactNistKems) {
+      for (const { name: implementation, kem } of implementations) {
+        const suite = new HPKE.CipherSuite(kem, kdf, HPKE.AEAD_EXPORT_ONLY)
+
+        it(`${implementation}: ${name} rejects private keys equivalent to 0 mod order`, async (t: test.TestContext) => {
+          await skipNotSupported(t, async () => {
+            for (const scalar of [0n, order]) {
+              await t.assert.rejects(
+                suite.DeserializePrivateKey(i2osp(scalar, suite.KEM.Nsk), true),
+                (err: Error) => {
+                  t.assert.strictEqual(err.name, 'DeserializeError')
+                  t.assert.ok(err.cause instanceof Error)
+                  t.assert.strictEqual(err.cause.message, 'Invalid scalar')
+                  return true
+                },
+              )
+            }
+          })
+        })
+
+        it(`${implementation}: ${name} reduces out-of-range private keys modulo order`, async (t: test.TestContext) => {
+          await skipNotSupported(t, async () => {
+            const privateKey = await suite.DeserializePrivateKey(
+              i2osp(order + 1n, suite.KEM.Nsk),
+              true,
+            )
+
+            t.assert.deepStrictEqual(
+              await suite.SerializePrivateKey(privateKey),
+              i2osp(1n, suite.KEM.Nsk),
+            )
+          })
+        })
+      }
+    }
+  })
+
   for (const KEM of KEMS.values()) {
     if (!KEM.supported) continue
     const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
@@ -380,10 +483,13 @@ test.describe('Validations', () => {
           suite.KEM.name.includes('P-384') ||
           suite.KEM.name.includes('P-521'))
       ) {
-        it(`${suite.KEM.name} rejects all-zero public key`, async (t: test.TestContext) => {
-          const zeroKey = new Uint8Array(suite.KEM.Npk) // All zeros
+        it(`${suite.KEM.name} rejects invalid public key value`, async (t: test.TestContext) => {
+          const invalidKey = new Uint8Array(suite.KEM.Npk)
+          if (suite.KEM.name.includes('CP-')) {
+            invalidKey.fill(0xff)
+          }
 
-          await t.assert.rejects(suite.DeserializePublicKey(zeroKey), {
+          await t.assert.rejects(suite.DeserializePublicKey(invalidKey), {
             name: 'DeserializeError',
             message: 'Public key deserialization failed',
           })
@@ -423,27 +529,94 @@ test.describe('Validations', () => {
     }
   })
 
+  test.describe('KEM same-curve key compatibility', () => {
+    const compatibleKems = [
+      { full: HPKE.KEM_DHKEM_P256_HKDF_SHA256, compact: HPKE.KEM_DHKEM_CP256_HKDF_SHA256 },
+      { full: HPKE.KEM_DHKEM_P384_HKDF_SHA384, compact: HPKE.KEM_DHKEM_CP384_HKDF_SHA384 },
+      { full: HPKE.KEM_DHKEM_P521_HKDF_SHA512, compact: HPKE.KEM_DHKEM_CP521_HKDF_SHA512 },
+    ]
+
+    for (const { full, compact } of compatibleKems) {
+      const fullSuite = new HPKE.CipherSuite(full, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
+      const compactSuite = new HPKE.CipherSuite(
+        compact,
+        HPKE.KDF_HKDF_SHA256,
+        HPKE.AEAD_EXPORT_ONLY,
+      )
+
+      it(`${fullSuite.KEM.name} keys can be used with ${compactSuite.KEM.name}`, async (t: test.TestContext) => {
+        let kp: HPKE.KeyPair
+        try {
+          kp = await fullSuite.GenerateKeyPair()
+        } catch (cause) {
+          if ((cause as Error).name === 'NotSupportedError') {
+            t.skip('KEM is not supported')
+            return
+          }
+          throw cause
+        }
+
+        const { encapsulatedSecret, exportedSecret } = await compactSuite.SendExport(
+          kp.publicKey,
+          empty,
+          32,
+        )
+        t.assert.deepStrictEqual(
+          await compactSuite.ReceiveExport(kp, encapsulatedSecret, empty, 32),
+          exportedSecret,
+        )
+      })
+
+      it(`${compactSuite.KEM.name} keys can be used with ${fullSuite.KEM.name}`, async (t: test.TestContext) => {
+        let kp: HPKE.KeyPair
+        try {
+          kp = await compactSuite.GenerateKeyPair()
+        } catch (cause) {
+          if ((cause as Error).name === 'NotSupportedError') {
+            t.skip('KEM is not supported')
+            return
+          }
+          throw cause
+        }
+
+        const { encapsulatedSecret, exportedSecret } = await fullSuite.SendExport(
+          kp.publicKey,
+          empty,
+          32,
+        )
+        t.assert.deepStrictEqual(
+          await fullSuite.ReceiveExport(kp, encapsulatedSecret, empty, 32),
+          exportedSecret,
+        )
+      })
+    }
+  })
+
   test.describe('KEM Encap algorithm validation', () => {
     for (const KEM of KEMS.values()) {
       if (!KEM.supported) continue
       it(`${KEM.name} Encap rejects key with wrong algorithm`, async (t: test.TestContext) => {
         const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
-        // Get a key from a different KEM
-        let differentKEM: typeof KEM | undefined
+        const kp = await getKeyPair(suite)
+
+        // Get a key from a KEM with a different WebCrypto algorithm or curve.
+        let wrongKp: HPKE.KeyPair | undefined
         for (const otherKEM of KEMS.values()) {
           if (otherKEM !== KEM) {
-            differentKEM = otherKEM
-            break
+            const candidateKp = await getKeyPair(
+              new HPKE.CipherSuite(otherKEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY),
+            )
+            if (!sameKeyAlgorithm(kp.publicKey, candidateKp.publicKey)) {
+              wrongKp = candidateKp
+              break
+            }
           }
         }
-        if (!differentKEM) {
+        if (!wrongKp) {
           t.skip('No other KEM available for testing')
           return
         }
 
-        const wrongKp = await getKeyPair(
-          new HPKE.CipherSuite(differentKEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY),
-        )
         await t.assert.rejects(suite.SendExport(wrongKp.publicKey, empty, 32), (err: Error) => {
           t.assert.strictEqual(err.name, 'EncapError')
           t.assert.ok(err.cause instanceof Error)
@@ -459,24 +632,27 @@ test.describe('Validations', () => {
       if (!KEM.supported) continue
       it(`${KEM.name} Decap rejects key with wrong algorithm`, async (t: test.TestContext) => {
         const suite = new HPKE.CipherSuite(KEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
-        // Get a key from a different KEM
-        let differentKEM: typeof KEM | undefined
+        const kp = await getKeyPair(suite)
+        const { encapsulatedSecret: enc } = await suite.SendExport(kp.publicKey, empty, 32)
+
+        // Get a key from a KEM with a different WebCrypto algorithm or curve.
+        let wrongKp: HPKE.KeyPair | undefined
         for (const otherKEM of KEMS.values()) {
           if (otherKEM !== KEM) {
-            differentKEM = otherKEM
-            break
+            const candidateKp = await getKeyPair(
+              new HPKE.CipherSuite(otherKEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY),
+            )
+            if (!sameKeyAlgorithm(kp.privateKey, candidateKp.privateKey)) {
+              wrongKp = candidateKp
+              break
+            }
           }
         }
-        if (!differentKEM) {
+        if (!wrongKp) {
           t.skip('No other KEM available for testing')
           return
         }
 
-        const kp = await getKeyPair(suite)
-        const { encapsulatedSecret: enc } = await suite.SendExport(kp.publicKey, empty, 32)
-        const wrongKp = await getKeyPair(
-          new HPKE.CipherSuite(differentKEM.factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY),
-        )
         await t.assert.rejects(
           suite.ReceiveExport(wrongKp.privateKey, enc, empty, 32),
           (err: Error) => {

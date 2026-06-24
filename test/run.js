@@ -10,6 +10,9 @@ export const ALGORITHM_IDS = {
   KEM_DHKEM_P256_HKDF_SHA256: 0x0010,
   KEM_DHKEM_P384_HKDF_SHA384: 0x0011,
   KEM_DHKEM_P521_HKDF_SHA512: 0x0012,
+  KEM_DHKEM_CP256_HKDF_SHA256: 0x0013,
+  KEM_DHKEM_CP384_HKDF_SHA384: 0x0014,
+  KEM_DHKEM_CP521_HKDF_SHA512: 0x0015,
   KEM_DHKEM_X25519_HKDF_SHA256: 0x0020,
   KEM_DHKEM_X448_HKDF_SHA512: 0x0021,
   KEM_ML_KEM_512: 0x0040,
@@ -32,6 +35,8 @@ export const ALGORITHM_IDS = {
   AEAD_AES_128_GCM: 0x0001,
   AEAD_AES_256_GCM: 0x0002,
   AEAD_ChaCha20Poly1305: 0x0003,
+  AEAD_AES_256_SIV: 0x8000,
+  AEAD_AES_512_SIV: 0x8001,
   AEAD_EXPORT_ONLY: 0xffff,
 }
 
@@ -523,6 +528,7 @@ export async function runAlgorithmTests({
  * @param {object} options.HPKE - The HPKE library namespace
  * @param {Array} options.vectors - Test vectors array
  * @param {Array} options.vectorsPq - Post-quantum test vectors array
+ * @param {Array} options.vectorsDnhpke - Deterministic nonce-less HPKE test vectors array
  * @param {object} options.passingImplementations - Passing implementations from runAlgorithmTests
  * @param {function} [options.onProgress] - Called with { completedOps, passedOps, failedOps,
  *   totalOps }
@@ -535,11 +541,12 @@ export async function runVectorValidation({
   HPKE,
   vectors,
   vectorsPq,
+  vectorsDnhpke = [],
   passingImplementations,
   onProgress,
   yieldToEventLoop,
 }) {
-  const allVectors = [...vectors, ...vectorsPq].filter((v) => {
+  const allVectors = [...vectors, ...vectorsPq, ...vectorsDnhpke].filter((v) => {
     if (v.mode !== 0x00 && v.mode !== 0x01) return false
     return true
   })

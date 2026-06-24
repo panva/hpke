@@ -10,7 +10,7 @@ import {
 import type * as HPKE from '../../index.ts'
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js'
-import { gcm } from '@noble/ciphers/aes.js'
+import { aessiv, gcm } from '@noble/ciphers/aes.js'
 import { shake128, shake256 } from '@noble/hashes/sha3.js'
 import { turboshake128, turboshake256 } from '@noble/hashes/sha3-addons.js'
 import { extract, expand } from '@noble/hashes/hkdf.js'
@@ -61,6 +61,28 @@ export const AEAD_AES_256_GCM: HPKE.AEADFactory = () =>
 export const AEAD_ChaCha20Poly1305: HPKE.AEADFactory = () =>
   createAead(0x0003, 'ChaCha20Poly1305', 32, CHACHA20_POLY1305_P_MAX, chacha20poly1305)
 
+/**
+ * AES-256-SIV Deterministic Authenticated Encryption.
+ *
+ * Uses AES-SIV with a 256-bit double-wide key.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [DNHPKE DAE Identifiers](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
+export const AEAD_AES_256_SIV: HPKE.AEADFactory = () => createAesSiv(0x8000, 'AES-256-SIV', 32)
+
+/**
+ * AES-512-SIV Deterministic Authenticated Encryption.
+ *
+ * Uses AES-SIV with a 512-bit double-wide key.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [DNHPKE DAE Identifiers](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
+export const AEAD_AES_512_SIV: HPKE.AEADFactory = () => createAesSiv(0x8001, 'AES-512-SIV', 64)
+
 function createAead(
   id: number,
   name: string,
@@ -83,6 +105,28 @@ function createAead(
     },
     async Open(key, nonce, aad, ct) {
       return cipher(key, nonce, aad).decrypt(ct)
+    },
+  }
+}
+
+function createAesSiv(id: number, name: string, Nk: number): HPKE.AEAD {
+  return {
+    id,
+    type: 'AEAD',
+    name,
+    Nk,
+    Nn: 0,
+    Nt: 16,
+    async Seal(key, _nonce, aad, pt) {
+      const sealed = aessiv(key, aad).encrypt(pt)
+      return concat(slice(sealed, 16), slice(sealed, 0, 16))
+    },
+    async Open(key, _nonce, aad, ct) {
+      if (ct.byteLength < 16) {
+        throw new Error('Invalid ciphertext length')
+      }
+      const sealed = concat(slice(ct, ct.byteLength - 16), slice(ct, 0, ct.byteLength - 16))
+      return aessiv(key, aad).decrypt(sealed)
     },
   }
 }
@@ -250,6 +294,32 @@ export const KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEMFactory = () =>
   })
 
 /**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-256 representation and
+ * HKDF-SHA256.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP256_HKDF_SHA256: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0013,
+    name: 'DHKEM(CP-256, HKDF-SHA256)',
+    Nsecret: 32,
+    Nenc: 32,
+    Npk: 32,
+    Nsk: 32,
+    curve: p256,
+    kdf: KDF_HKDF_SHA256,
+    order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
+    bitmask: 0xff,
+    compact: {
+      prime: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+      b: 0x5ac635d8aa3a93e7b3ebbd55769886bc651d06b0cc53b0f63bce3c3e27d2604bn,
+    },
+  })
+
+/**
  * Diffie-Hellman Key Encapsulation Mechanism using NIST P-384 curve and HKDF-SHA384.
  *
  * A Diffie-Hellman based KEM using the NIST P-384 elliptic curve (also known as secp384r1) with
@@ -275,6 +345,34 @@ export const KEM_DHKEM_P384_HKDF_SHA384: HPKE.KEMFactory = () =>
   })
 
 /**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-384 representation and
+ * HKDF-SHA384.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP384_HKDF_SHA384: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0014,
+    name: 'DHKEM(CP-384, HKDF-SHA384)',
+    Nsecret: 48,
+    Nenc: 48,
+    Npk: 48,
+    Nsk: 48,
+    curve: p384,
+    kdf: KDF_HKDF_SHA384,
+    order:
+      0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
+    bitmask: 0xff,
+    compact: {
+      prime:
+        0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffffn,
+      b: 0xb3312fa7e23ee7e4988e056be3f82d19181d9c6efe8141120314088f5013875ac656398d8a2ed19d2a85c8edd3ec2aefn,
+    },
+  })
+
+/**
  * Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA512.
  *
  * A Diffie-Hellman based KEM using the NIST P-521 elliptic curve (also known as secp521r1) with
@@ -297,6 +395,34 @@ export const KEM_DHKEM_P521_HKDF_SHA512: HPKE.KEMFactory = () =>
     order:
       0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
     bitmask: 0x01,
+  })
+
+/**
+ * Diffie-Hellman Key Encapsulation Mechanism using compact NIST P-521 representation and
+ * HKDF-SHA512.
+ *
+ * This is a factory function that must be passed to the {@link HPKE.CipherSuite} constructor.
+ *
+ * @see [DNHPKE Compact Representation](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.1)
+ */
+export const KEM_DHKEM_CP521_HKDF_SHA512: HPKE.KEMFactory = () =>
+  createDhKemNist({
+    id: 0x0015,
+    name: 'DHKEM(CP-521, HKDF-SHA512)',
+    Nsecret: 64,
+    Nenc: 66,
+    Npk: 66,
+    Nsk: 66,
+    curve: p521,
+    kdf: KDF_HKDF_SHA512,
+    order:
+      0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
+    bitmask: 0x01,
+    compact: {
+      prime:
+        0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+      b: 0x0051953eb9618e1c9a1f929a21a0b68540eea2da725b99b315f3b8b489918ef109e156193951ec7e937b1652c0bd3bb1bf073573df883d2c34f1ef451fd46b503f00n,
+    },
   })
 
 /**
@@ -555,8 +681,21 @@ function createDhKemNist(config: {
   kdf: HPKE.KDFFactory
   order: bigint
   bitmask: number
+  compact?: { prime: bigint; b: bigint }
 }): HPKE.KEM {
-  const { id, name, Nsecret, Nenc, Npk, Nsk, curve, kdf: kdfFactory, order, bitmask } = config
+  const {
+    id,
+    name,
+    Nsecret,
+    Nenc,
+    Npk,
+    Nsk,
+    curve,
+    kdf: kdfFactory,
+    order,
+    bitmask,
+    compact,
+  } = config
   const kdf = kdfFactory()
   const suite_id = concat(encode('KEM'), I2OSP(id, 2))
   const algorithm = { name }
@@ -609,6 +748,10 @@ function createDhKemNist(config: {
     }
   }
 
+  function serializePublicKeyBytes(key: Uint8Array) {
+    return compact ? slice(key, 1, 1 + Nsk) : key
+  }
+
   Object.freeze(NobleKey.prototype)
   return {
     id,
@@ -627,18 +770,20 @@ function createDhKemNist(config: {
     },
     async SerializePublicKey(key) {
       NobleKey.validate(key, algorithm, true)
-      return key.value(priv)
+      return serializePublicKeyBytes(key.value(priv))
     },
     async DeserializePublicKey(key) {
-      curve.Point.fromBytes(key).assertValidity()
-      return new NobleKey(priv, 'public', slice(key), true, algorithm)
+      const publicKey = compact ? recoverPublicKeyNist(compact, Nsk, key) : key
+      curve.Point.fromBytes(publicKey).assertValidity()
+      return new NobleKey(priv, 'public', slice(publicKey), true, algorithm)
     },
     async SerializePrivateKey(key) {
       NobleKey.validate(key, algorithm, true)
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
-      return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
+      const privateKey = compact ? normalizePrivateKeyNist(key, order, Nsk) : slice(key)
+      return new NobleKey(priv, 'private', privateKey, extractable, algorithm)
     },
     async Encap(pkR) {
       NobleKey.validate(pkR, algorithm)
@@ -648,38 +793,95 @@ function createDhKemNist(config: {
 
       const ekp = await this.GenerateKeyPair(false)
       const skE = (ekp.privateKey as NobleKey).value(priv)
-      const enc = (ekp.publicKey as NobleKey).value(priv)
+      const enc = await this.SerializePublicKey(ekp.publicKey)
+      const pkRm = await this.SerializePublicKey(pkR)
 
       const dh = slice(curve.getSharedSecret(skE, pkRValue), 1)
       checkNotAllZeros(dh)
 
-      return {
-        shared_secret: await deriveSharedSecret(kdf, suite_id, Nsecret, dh, enc, pkRValue),
-        enc,
-      }
+      return { shared_secret: await deriveSharedSecret(kdf, suite_id, Nsecret, dh, enc, pkRm), enc }
     },
     async Decap(enc, skR, pkR) {
       NobleKey.validate(skR, algorithm)
 
       const skRValue = (skR as NobleKey).value(priv)
-      pkR ??= (await this.DeserializePublicKey(curve.getPublicKey(skRValue, false))) as NobleKey
+      pkR ??= new NobleKey(priv, 'public', curve.getPublicKey(skRValue, false), true, algorithm)
       NobleKey.validate(pkR, algorithm)
 
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
       const pkEValue = pkE.value(priv)
       const dh = slice(curve.getSharedSecret(skRValue, pkEValue), 1)
       checkNotAllZeros(dh)
+      const pkRm = await this.SerializePublicKey(pkR)
 
-      return await deriveSharedSecret(
-        kdf,
-        suite_id,
-        Nsecret,
-        dh,
-        enc,
-        (pkR as NobleKey).value(priv),
-      )
+      return await deriveSharedSecret(kdf, suite_id, Nsecret, dh, enc, pkRm)
     },
   }
+}
+
+function mod(a: bigint, p: bigint): bigint {
+  const r = a % p
+  return r < 0n ? r + p : r
+}
+
+function modPow(base: bigint, exponent: bigint, prime: bigint): bigint {
+  let result = 1n
+  base = mod(base, prime)
+  while (exponent > 0n) {
+    if (exponent & 1n) {
+      result = mod(result * base, prime)
+    }
+    base = mod(base * base, prime)
+    exponent >>= 1n
+  }
+  return result
+}
+
+function os2ip(x: Uint8Array): bigint {
+  let result = 0n
+  for (let i = 0; i < x.byteLength; i++) {
+    result = result * 256n + BigInt(x[i]!)
+  }
+  return result
+}
+
+function i2osp(value: bigint, byteLength: number): Uint8Array {
+  const result = new Uint8Array(byteLength)
+  let n = value
+
+  for (let i = byteLength - 1; i >= 0; i--) {
+    result[i] = Number(n & 0xffn)
+    n >>= 8n
+  }
+
+  return result
+}
+
+function normalizePrivateKeyNist(key: Uint8Array, order: bigint, Nsk: number): Uint8Array {
+  const d = os2ip(key) % order
+  if (d === 0n) {
+    throw new Error('Invalid scalar')
+  }
+  return i2osp(d, Nsk)
+}
+
+function recoverPublicKeyNist(
+  { prime, b }: { prime: bigint; b: bigint },
+  coordinateSize: number,
+  key: Uint8Array,
+) {
+  const x = os2ip(key)
+  if (x >= prime) {
+    throw new Error('Invalid public key')
+  }
+
+  const rhs = mod(x * x * x + (prime - 3n) * x + b, prime)
+  const y = modPow(rhs, (prime + 1n) >> 2n, prime)
+  if (mod(y * y, prime) !== rhs) {
+    throw new Error('Invalid public key')
+  }
+
+  return concat(Uint8Array.of(0x04), key, i2osp(y, coordinateSize))
 }
 
 function createDhKemX(config: {

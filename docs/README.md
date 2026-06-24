@@ -45,6 +45,9 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 
 ## KEM Algorithms
 
+- [KEM\_DHKEM\_CP256\_HKDF\_SHA256](variables/KEM_DHKEM_CP256_HKDF_SHA256.md)
+- [KEM\_DHKEM\_CP384\_HKDF\_SHA384](variables/KEM_DHKEM_CP384_HKDF_SHA384.md)
+- [KEM\_DHKEM\_CP521\_HKDF\_SHA512](variables/KEM_DHKEM_CP521_HKDF_SHA512.md)
 - [KEM\_DHKEM\_P256\_HKDF\_SHA256](variables/KEM_DHKEM_P256_HKDF_SHA256.md)
 - [KEM\_DHKEM\_P384\_HKDF\_SHA384](variables/KEM_DHKEM_P384_HKDF_SHA384.md)
 - [KEM\_DHKEM\_P521\_HKDF\_SHA512](variables/KEM_DHKEM_P521_HKDF_SHA512.md)

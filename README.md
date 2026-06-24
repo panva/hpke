@@ -94,6 +94,9 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(CP-256, HKDF-SHA256) <sub>`0x0013`</sub> |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(CP-384, HKDF-SHA384) <sub>`0x0014`</sub> |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
+| DHKEM(CP-521, HKDF-SHA512) <sub>`0x0015`</sub> |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓    |  ✓   |     |            |              |         ✓         |
 | ML-KEM-512 <sub>`0x0040`</sub>                 |    ✓    |  ✓   |     |            |              |         ✓         |
@@ -122,11 +125,20 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | AES-128-GCM <sub>`0x0001`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | AES-256-GCM <sub>`0x0002`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |  ✓   |     |            |              |         ✓         |
+| AES-256-SIV <sub>`0x8000`</sub>      |         |      |     |            |              |         ✓         |
+| AES-512-SIV <sub>`0x8001`</sub>      |         |      |     |            |              |         ✓         |
+
+> [!NOTE]\
+> AES-SIV is deterministic and nonce-less. Encrypting the same plaintext with the same AAD under the
+> same key produces the same ciphertext. Include a unique counter or nonce in the AAD when
+> randomized AEAD behavior is needed, or use SIV where the plaintext is already random, such as key
+> wrapping.
 
 ## Specifications
 
 - [Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03)
 - [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04)
+- [Deterministic Nonce-less Hybrid Public Key Encryption](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08)
 
 The algorithm implementations are being tested using test vectors from their respective
 specifications.

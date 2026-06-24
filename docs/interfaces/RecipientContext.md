@@ -72,8 +72,8 @@ const exported: Uint8Array = await ctx.Export(exporterContext, 32)
 
 Decrypts ciphertext with additional authenticated data.
 
-Applications must ensure that ciphertexts are presented to `Open` in the exact order they were
-produced by the sender.
+For AEADs with `Nn > 0`, applications must ensure that ciphertexts are presented to `Open` in
+the exact order they were produced by the sender.
 
 #### Parameters
 
@@ -138,7 +138,6 @@ The mode (0x00 = Base, 0x01 = PSK) for this context.
 
 `number`
 
-The sequence number for this context's next [Open](#open), initially zero, increments
-automatically with each successful [Open](#open). The sequence number provides AEAD nonce
-uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-and `2^53-1`.
+The sequence number for this context's next [Open](#open), initially zero. For AEADs
+with `Nn > 0`, it increments automatically with each successful [Open](#open). For DNHPKE DAE
+ciphers with `Nn = 0`, it remains zero.

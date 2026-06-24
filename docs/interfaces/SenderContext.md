@@ -4,8 +4,8 @@ Context for encrypting multiple messages and exporting secrets on the sender sid
 
 `SenderContext` instance is obtained from [CipherSuite.SetupSender](../classes/CipherSuite.md#setupsender).
 
-This context maintains an internal sequence number that increments with each [Seal](#seal)
-operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
+For AEADs with `Nn > 0`, this context maintains an internal sequence number that increments with
+each [Seal](#seal) operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
 
 ## Contents
 
@@ -71,8 +71,8 @@ const exportedSecret: Uint8Array = await ctx.Export(exporterContext, 32)
 
 > **Seal**(`plaintext`, `aad?`): `Promise`<`Uint8Array`>
 
-Encrypts plaintext with additional authenticated data. Each successful call automatically
-increments the sequence number to ensure nonce uniqueness.
+Encrypts plaintext with additional authenticated data. For AEADs with `Nn > 0`, each successful
+call automatically increments the sequence number to ensure nonce uniqueness.
 
 #### Parameters
 
@@ -153,7 +153,6 @@ context.
 
 `number`
 
-The sequence number for this context's next [Seal](#seal), initially zero, increments
-automatically with each successful [Seal](#seal). The sequence number provides AEAD nonce
-uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-and `2^53-1`.
+The sequence number for this context's next [Seal](#seal), initially zero. For AEADs
+with `Nn > 0`, it increments automatically with each successful [Seal](#seal). For DNHPKE DAE
+ciphers with `Nn = 0`, it remains zero.
