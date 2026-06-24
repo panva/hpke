@@ -42,7 +42,10 @@
 // HPKE Context Classes - Sender and Recipient Contexts
 // ============================================================================
 
-/** @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
+/**
+ * @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+ * @see [DNHPKE DAE Nn=0 behavior](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
 function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
   // Equivalent to xor(base_nonce, I2OSP(seq, Nn)) but avoids allocating the
   // intermediate seq_bytes array and fuses the two byte-wise passes into one.
@@ -60,11 +63,26 @@ function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Arr
 function MaxSeq(Nn: number): number {
   // HPKE limits seq to the largest integer encodable in Nn bytes. This
   // implementation stores seq as a JS number, so it uses the stricter limit.
+  if (Nn === 0) {
+    // DNHPKE DAE ciphers set Nn to 0 and do not use sequence-derived nonces,
+    // so there is no nonce-space message limit for the context to enforce.
+    // See draft-irtf-cfrg-dnhpke-08, Section 4.2.
+    return 0
+  }
   return Math.min(2 ** (8 * Nn) - 1, Number.MAX_SAFE_INTEGER)
 }
 
-/** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2) */
-function IncrementSeq(seq: number, maxSeq: number): number {
+/**
+ * @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+ * @see [DNHPKE DAE Nn=0 behavior](https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-dnhpke-08#section-4.2)
+ */
+function IncrementSeq(seq: number, maxSeq: number, Nn: number): number {
+  if (Nn === 0) {
+    // DNHPKE says DAE Seal/Open do not call IncrementSeq. The shared call
+    // sites invoke this helper unconditionally after successful Seal/Open, so
+    // keep Nn=0 as a no-op to preserve that behavior.
+    return seq
+  }
   if (seq >= maxSeq) {
     throw new MessageLimitReachedError('Sequence number overflow')
   }
@@ -110,8 +128,10 @@ class Mutex {
  *
  * `SenderContext` instance is obtained from {@link CipherSuite.SetupSender}.
  *
- * This context maintains an internal sequence number that increments with each {@link Seal}
- * operation, ensuring nonce uniqueness for the underlying AEAD algorithm.
+ * For AEADs with `Nn > 0`, this context maintains an internal sequence number that increments with
+ * each {@link Seal} operation, ensuring nonce uniqueness for the underlying AEAD algorithm. DNHPKE
+ * DAE ciphers are nonce-less (`Nn = 0`), so this context passes an empty nonce and leaves its
+ * sequence number unchanged for those ciphers.
  *
  * @example
  *
@@ -159,18 +179,21 @@ class SenderContext {
   }
 
   /**
-   * @returns The sequence number for this context's next {@link Seal}, initially zero, increments
-   *   automatically with each successful {@link Seal}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-   *   and `2^53-1`.
+   * @returns The sequence number for this context's next {@link Seal}, initially zero. For AEADs
+   *   with `Nn > 0`, it increments automatically with each successful {@link Seal}, provides AEAD
+   *   nonce uniqueness, and is capped at the lower of the AEAD nonce-size limit and `2^53-1`. For
+   *   DNHPKE DAE ciphers with `Nn = 0`, it remains zero because Seal does not use a
+   *   sequence-derived nonce.
    */
   get seq(): number {
     return this.#seq
   }
 
   /**
-   * Encrypts plaintext with additional authenticated data. Each successful call automatically
-   * increments the sequence number to ensure nonce uniqueness.
+   * Encrypts plaintext with additional authenticated data. For AEADs with `Nn > 0`, each successful
+   * call automatically increments the sequence number to ensure nonce uniqueness. For DNHPKE DAE
+   * ciphers with `Nn = 0`, `Seal` is deterministic for the same plaintext and AAD; include
+   * application-managed unique data in `aad` when per-invocation uniqueness is required.
    *
    * @example
    *
@@ -212,7 +235,7 @@ class SenderContext {
         aad,
         plaintext,
       )
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq, this.#suite.AEAD.Nn)
       return ct
     } finally {
       release()
@@ -310,10 +333,11 @@ class RecipientContext {
   }
 
   /**
-   * @returns The sequence number for this context's next {@link Open}, initially zero, increments
-   *   automatically with each successful {@link Open}. The sequence number provides AEAD nonce
-   *   uniqueness. The maximum supported sequence number is the lower of the AEAD nonce-size limit
-   *   and `2^53-1`.
+   * @returns The sequence number for this context's next {@link Open}, initially zero. For AEADs
+   *   with `Nn > 0`, it increments automatically with each successful {@link Open}, provides AEAD
+   *   nonce uniqueness, and is capped at the lower of the AEAD nonce-size limit and `2^53-1`. For
+   *   DNHPKE DAE ciphers with `Nn = 0`, it remains zero because Open does not use a
+   *   sequence-derived nonce.
    */
   get seq(): number {
     return this.#seq
@@ -322,8 +346,9 @@ class RecipientContext {
   /**
    * Decrypts ciphertext with additional authenticated data.
    *
-   * Applications must ensure that ciphertexts are presented to `Open` in the exact order they were
-   * produced by the sender.
+   * For AEADs with `Nn > 0`, applications must ensure that ciphertexts are presented to `Open` in
+   * the exact order they were produced by the sender. DNHPKE DAE ciphers with `Nn = 0` are not tied
+   * to sequence state and may be opened independently as long as the same AAD is supplied.
    *
    * @example
    *
@@ -373,7 +398,7 @@ class RecipientContext {
 
         throw new OpenError('AEAD decryption failed', { cause })
       }
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      this.#seq = IncrementSeq(this.#seq, this.#max_seq, this.#suite.AEAD.Nn)
       return pt
     } finally {
       release()
@@ -2157,7 +2182,10 @@ export interface AEAD {
   /** Length in bytes of a key for this AEAD */
   readonly Nk: number
 
-  /** Length in bytes of a nonce for this AEAD */
+  /**
+   * Length in bytes of a nonce for this AEAD. DNHPKE nonce-less DAE ciphers use 0, causing HPKE
+   * contexts to pass an empty nonce and leave their sequence number unchanged.
+   */
   readonly Nn: number
 
   /** Length in bytes of the authentication tag for this AEAD */
@@ -2172,7 +2200,9 @@ export interface AEAD {
    * them as ordinary input range errors, such as `RangeError`.
    *
    * @param key - The encryption key of {@link Nk} bytes
-   * @param nonce - The nonce of {@link Nn} bytes
+   * @param nonce - The nonce of {@link Nn} bytes. When {@link Nn} is 0, contexts pass an empty
+   *   Uint8Array and nonce-less DAE implementations must not derive uniqueness from this
+   *   parameter.
    * @param aad - Additional authenticated data
    * @param pt - Plaintext to encrypt
    *
@@ -2185,7 +2215,9 @@ export interface AEAD {
    * Decrypts and verifies ciphertext with associated data.
    *
    * @param key - The decryption key of {@link Nk} bytes
-   * @param nonce - The nonce of {@link Nn} bytes
+   * @param nonce - The nonce of {@link Nn} bytes. When {@link Nn} is 0, contexts pass an empty
+   *   Uint8Array and nonce-less DAE implementations must not derive uniqueness from this
+   *   parameter.
    * @param aad - Additional authenticated data
    * @param ct - Ciphertext with authentication tag appended
    *
