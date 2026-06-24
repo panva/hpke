@@ -1,6 +1,6 @@
 import * as HPKE from '../index.ts'
 import * as noble from '../examples/noble-suite/index.ts'
-import { ALGORITHM_IDS, isAdvertised, isUsable } from './run.js'
+import { ALGORITHM_IDS, isUsable } from './run.js'
 
 export function label(suite: HPKE.CipherSuite, mode: number) {
   const modeStr =
@@ -96,7 +96,7 @@ function getUnsupportedAlgorithms<T extends HPKE.KDFFactory | HPKE.KEMFactory | 
   ) as T[]
 
   for (const algorithm of hpkeAlgorithms) {
-    const isSupported = isAdvertised(algorithm.name)
+    const isSupported = isUsable(algorithm.name)
     if (!isSupported) {
       unsupported.push({ factory: algorithm, name: algorithm.name })
     }

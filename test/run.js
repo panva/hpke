@@ -97,13 +97,8 @@ const WEBCRYPTO_USABLE_CHECKS = {
     return supports('digest', { name: 'TurboSHAKE256', outputLength: 512 })
   },
   KEM_DHKEM_X448_HKDF_SHA512() {
-    if (!supports('generateKey', 'X448')) {
-      // 22.x does not have SubtleCrypto.supports but supports X448
-      return globalThis.process?.release?.lts === 'Jod'
-    }
-
-    // Deno advertises X448, but its native scalar multiplication isn't correct.
-    return !('Deno' in globalThis)
+    // 22.x does not have SubtleCrypto.supports but supports X448
+    return supports('generateKey', 'X448') || globalThis.process?.release?.lts === 'Jod'
   },
   KEM_ML_KEM_512() {
     return supports('generateKey', 'ML-KEM-512')
@@ -128,25 +123,8 @@ const WEBCRYPTO_USABLE_CHECKS = {
   },
 }
 
-const WEBCRYPTO_ADVERTISED_CHECKS = {
-  KEM_DHKEM_X448_HKDF_SHA512() {
-    if (!supports('generateKey', 'X448')) {
-      // 22.x does not have SubtleCrypto.supports but supports X448
-      return globalThis.process?.release?.lts === 'Jod'
-    }
-
-    return true
-  },
-}
-
 export function isUsable(algorithm) {
   return WEBCRYPTO_USABLE_CHECKS[algorithm]?.() !== false
-}
-
-export function isAdvertised(algorithm) {
-  return (
-    (WEBCRYPTO_ADVERTISED_CHECKS[algorithm] ?? WEBCRYPTO_USABLE_CHECKS[algorithm])?.() !== false
-  )
 }
 
 export function getUnsupportedAlgorithms() {
@@ -214,11 +192,6 @@ function parseReadmeSupportMatrix(readme) {
   return matrix
 }
 
-function isKnownReadmeSupportException(runtime, algorithm) {
-  // Deno advertises X448, but its native scalar multiplication isn't correct.
-  return runtime === 'deno' && algorithm === 'KEM_DHKEM_X448_HKDF_SHA512'
-}
-
 export function findReadmeSupportMismatches({ results, readme, runtime }) {
   const matrix = parseReadmeSupportMatrix(readme)
   const mismatches = []
@@ -228,7 +201,6 @@ export function findReadmeSupportMismatches({ results, readme, runtime }) {
     if ((test.implementation ?? 'native') !== 'native') continue
 
     const algorithm = test.algorithm ?? test.name?.replace(/^\[[^\]]+\]\s+/, '')
-    if (isKnownReadmeSupportException(runtime, algorithm)) continue
 
     const id = ALGORITHM_IDS[algorithm]
     const row = matrix[test.component]?.get(id)
