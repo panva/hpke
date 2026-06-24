@@ -22,6 +22,9 @@ import { x25519 } from '@noble/curves/ed25519.js'
 import { x448 } from '@noble/curves/ed448.js'
 import { p256, p384, p521 } from '@noble/curves/nist.js'
 
+const AES_GCM_P_MAX = 2 ** 36 - 31
+const CHACHA20_POLY1305_P_MAX = 2 ** 38 - 64
+
 /**
  * AES-128-GCM Authenticated Encryption with Associated Data (AEAD).
  *
@@ -31,7 +34,8 @@ import { p256, p384, p521 } from '@noble/curves/nist.js'
  *
  * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
-export const AEAD_AES_128_GCM: HPKE.AEADFactory = () => createAead(0x0001, 'AES-128-GCM', 16, gcm)
+export const AEAD_AES_128_GCM: HPKE.AEADFactory = () =>
+  createAead(0x0001, 'AES-128-GCM', 16, AES_GCM_P_MAX, gcm)
 
 /**
  * AES-256-GCM Authenticated Encryption with Associated Data (AEAD).
@@ -42,7 +46,8 @@ export const AEAD_AES_128_GCM: HPKE.AEADFactory = () => createAead(0x0001, 'AES-
  *
  * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
-export const AEAD_AES_256_GCM: HPKE.AEADFactory = () => createAead(0x0002, 'AES-256-GCM', 32, gcm)
+export const AEAD_AES_256_GCM: HPKE.AEADFactory = () =>
+  createAead(0x0002, 'AES-256-GCM', 32, AES_GCM_P_MAX, gcm)
 
 /**
  * ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD).
@@ -54,12 +59,13 @@ export const AEAD_AES_256_GCM: HPKE.AEADFactory = () => createAead(0x0002, 'AES-
  * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
  */
 export const AEAD_ChaCha20Poly1305: HPKE.AEADFactory = () =>
-  createAead(0x0003, 'ChaCha20Poly1305', 32, chacha20poly1305)
+  createAead(0x0003, 'ChaCha20Poly1305', 32, CHACHA20_POLY1305_P_MAX, chacha20poly1305)
 
 function createAead(
   id: number,
   name: string,
   Nk: number,
+  P_MAX: number,
   cipher: typeof chacha20poly1305 | typeof gcm,
 ): HPKE.AEAD {
   return {
@@ -70,6 +76,9 @@ function createAead(
     Nn: 12,
     Nt: 16,
     async Seal(key, nonce, aad, pt) {
+      if (pt.byteLength > P_MAX) {
+        throw new RangeError('"pt" exceeds P_MAX')
+      }
       return cipher(key, nonce, aad).encrypt(pt)
     },
     async Open(key, nonce, aad, ct) {

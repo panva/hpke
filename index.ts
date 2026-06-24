@@ -2157,12 +2157,18 @@ export interface AEAD {
   /**
    * Encrypts and authenticates plaintext with associated data.
    *
+   * Implementations must enforce the AEAD algorithm's per-invocation plaintext length limit (P_MAX)
+   * before encryption. HPKE's explicit error list maps `MessageLimitReachedError` to context
+   * sequence number overflow; it does not prescribe a specific error for P_MAX violations. Report
+   * them as ordinary input range errors, such as `RangeError`.
+   *
    * @param key - The encryption key of {@link Nk} bytes
    * @param nonce - The nonce of {@link Nn} bytes
    * @param aad - Additional authenticated data
    * @param pt - Plaintext to encrypt
    *
    * @returns A promise resolving to the ciphertext with authentication tag appended
+   * @see [Context.Seal P_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
    */
   Seal(key: Uint8Array, nonce: Uint8Array, aad: Uint8Array, pt: Uint8Array): Promise<Uint8Array>
 
@@ -2266,6 +2272,8 @@ const NotApplicable = () => {
 }
 
 const EXPORT_ONLY = 0xffff
+const AES_GCM_P_MAX = 2 ** 36 - 31
+const CHACHA20_POLY1305_P_MAX = 2 ** 38 - 64
 /**
  * Export-only AEAD mode.
  *
@@ -3607,11 +3615,7 @@ interface WebCryptoAEAD extends AEAD {
 
 type AEAD_BASE = Pick<AEAD, 'Seal' | 'Open'>
 
-function AEAD_SHARED(): AEAD_BASE {
-  // Note: The per-invocation plaintext limits (P_MAX, e.g. 2^36 - 31 bytes for
-  // AES-GCM and 2^38 - 64 bytes for ChaCha20-Poly1305) are not explicitly
-  // enforced here as they exceed the maximum ArrayBuffer/Uint8Array sizes
-  // attainable in JavaScript runtimes.
+function AEAD_SHARED(P_MAX: number): AEAD_BASE {
   // Cache the WebCrypto CryptoKey derived from a given key-bytes Uint8Array.
   // Across the lifetime of a SenderContext/RecipientContext, `this.#key` is a
   // stable Uint8Array, so crypto.subtle.importKey() would otherwise be called
@@ -3630,6 +3634,9 @@ function AEAD_SHARED(): AEAD_BASE {
   }
   return {
     async Seal(this: WebCryptoAEAD, key, nonce, aad, pt) {
+      if (pt.byteLength > P_MAX) {
+        throw new RangeError('"pt" exceeds P_MAX')
+      }
       const cryptoKey =
         cache.get(key) ?? (await cacheValue(cache, key, () => importKey.call(this, key)))
       return new Uint8Array(
@@ -3702,7 +3709,7 @@ export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
     Nt: 16,
     algorithm: 'AES-GCM',
     keyFormat: 'raw',
-    ...AEAD_SHARED(),
+    ...AEAD_SHARED(AES_GCM_P_MAX),
   }
 }
 
@@ -3734,7 +3741,7 @@ export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
     Nt: 16,
     algorithm: 'AES-GCM',
     keyFormat: 'raw',
-    ...AEAD_SHARED(),
+    ...AEAD_SHARED(AES_GCM_P_MAX),
   }
 }
 
@@ -3767,7 +3774,7 @@ export const AEAD_ChaCha20Poly1305: AEADFactory = function AEAD_ChaCha20Poly1305
     algorithm: 'ChaCha20-Poly1305',
     // @ts-expect-error
     keyFormat: 'raw-secret',
-    ...AEAD_SHARED(),
+    ...AEAD_SHARED(CHACHA20_POLY1305_P_MAX),
   }
 }
 

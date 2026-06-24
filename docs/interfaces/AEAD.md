@@ -100,6 +100,11 @@ A promise resolving to the decrypted plaintext
 
 Encrypts and authenticates plaintext with associated data.
 
+Implementations must enforce the AEAD algorithm's per-invocation plaintext length limit (P\_MAX)
+before encryption. HPKE's explicit error list maps `MessageLimitReachedError` to context
+sequence number overflow; it does not prescribe a specific error for P\_MAX violations. Report
+them as ordinary input range errors, such as `RangeError`.
+
 #### Parameters
 
 | Parameter | Type | Description |
@@ -114,6 +119,10 @@ Encrypts and authenticates plaintext with associated data.
 `Promise`<`Uint8Array`>
 
 A promise resolving to the ciphertext with authentication tag appended
+
+#### See
+
+[Context.Seal P\_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
 
 ## Properties
 

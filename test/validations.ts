@@ -234,6 +234,52 @@ test.describe('Validations', () => {
     }
   })
 
+  test.describe('AEAD P_MAX validation', () => {
+    const AEAD_LIMIT_1: HPKE.AEADFactory = () => ({
+      id: 0xfffe,
+      type: 'AEAD',
+      name: 'AEAD-Limit-1',
+      Nk: 16,
+      Nn: 12,
+      Nt: 0,
+      async Seal(_key, _nonce, _aad, pt) {
+        if (pt.byteLength > 1) {
+          throw new RangeError('"pt" exceeds P_MAX')
+        }
+        return pt
+      },
+      async Open(_key, _nonce, _aad, ct) {
+        return ct
+      },
+    })
+
+    const suite = new HPKE.CipherSuite(
+      HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+      HPKE.KDF_HKDF_SHA256,
+      AEAD_LIMIT_1,
+    )
+
+    it('Single-shot Seal rejects plaintext larger than P_MAX', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+
+      await t.assert.rejects(suite.Seal(kp.publicKey, new Uint8Array(2)), {
+        name: 'RangeError',
+        message: '"pt" exceeds P_MAX',
+      })
+    })
+
+    it('Context Seal rejects plaintext larger than P_MAX', async (t: test.TestContext) => {
+      const kp = await getKeyPair(suite)
+      const { ctx } = await suite.SetupSender(kp.publicKey)
+
+      await t.assert.rejects(ctx.Seal(new Uint8Array(2)), {
+        name: 'RangeError',
+        message: '"pt" exceeds P_MAX',
+      })
+      t.assert.strictEqual(ctx.seq, 0)
+    })
+  })
+
   test.describe('Export-only AEAD validation', () => {
     const suite = new HPKE.CipherSuite(
       HPKE.KEM_DHKEM_P256_HKDF_SHA256,
