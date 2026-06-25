@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.3](https://github.com/panva/hpke/compare/v1.1.2...v1.1.3) (2026-06-25)
+
+
+### Refactor
+
+* **aead:** enforce plaintext size limits ([e9ebab5](https://github.com/panva/hpke/commit/e9ebab5283164482ec3e1cbe3bda65a9e1345601))
+* **context:** bound sequence counter by nonce size ([7d577c0](https://github.com/panva/hpke/commit/7d577c0ce8a157fbadff5c750638248575a4df04))
+* **dhkem:** centralize KDF stage handling ([26c50b0](https://github.com/panva/hpke/commit/26c50b0ca22a90dfc13ca1041179587d0784eda9))
+
 ## [1.1.2](https://github.com/panva/hpke/compare/v1.1.1...v1.1.2) (2026-06-11)
 
 
