@@ -20,4 +20,4 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 
 ## See
 
-[HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.1)
+[HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)

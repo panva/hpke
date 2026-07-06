@@ -6,7 +6,7 @@ Implements an authenticated encryption encapsulation format that combines a semi
 asymmetric key exchange with a symmetric cipher. This was originally defined in an Informational
 document on the IRTF stream as [RFC 9180](https://www.rfc-editor.org/rfc/rfc9180.html) and is now
 being republished as a Standards Track document of the IETF as
-[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03).
+[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04).
 
 HPKE provides a variant of public key encryption for arbitrary-sized plaintexts using a recipient
 public key.

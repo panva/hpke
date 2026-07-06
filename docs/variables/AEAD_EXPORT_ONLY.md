@@ -12,4 +12,4 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 
 ## See
 
-[HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.3)
+[HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.3)

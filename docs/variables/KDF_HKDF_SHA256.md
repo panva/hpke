@@ -19,4 +19,4 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 
 ## See
 
-[HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-7.2)
+[HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.2)

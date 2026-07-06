@@ -6,7 +6,7 @@ Implements an authenticated encryption encapsulation format that combines a semi
 asymmetric key exchange with a symmetric cipher. This was originally defined in an Informational
 document on the IRTF stream as [RFC 9180](https://www.rfc-editor.org/rfc/rfc9180.html) and is now
 being republished as a Standards Track document of the IETF as
-[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03).
+[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04).
 
 HPKE provides a variant of public key encryption for arbitrary-sized plaintexts using a recipient
 public key. It supports two modes:
@@ -172,7 +172,7 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 #### See
 
-[SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.1.1)
+[SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.1.1)
 
 ***
 
@@ -230,7 +230,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 #### See
 
-[SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.1.1)
+[SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.1.1)
 
 ## Key Management
 
@@ -462,7 +462,7 @@ const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, c
 
 #### See
 
-[Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.1)
+[Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.1)
 
 ***
 
@@ -514,7 +514,7 @@ const exported: Uint8Array = await suite.ReceiveExport(
 
 #### See
 
-[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.2)
+[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.2)
 
 ***
 
@@ -563,7 +563,7 @@ const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext
 
 #### See
 
-[Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.1)
+[Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.1)
 
 ***
 
@@ -613,7 +613,7 @@ const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
 
 #### See
 
-[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-6.2)
+[Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.2)
 
 ## Other
 

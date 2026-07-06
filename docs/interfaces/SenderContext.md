@@ -63,7 +63,7 @@ const exportedSecret: Uint8Array = await ctx.Export(exporterContext, 32)
 
 #### See
 
-[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.3)
+[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.3)
 
 ***
 
@@ -105,7 +105,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 #### See
 
-[Context.Seal](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+[Context.Seal](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.2)
 
 ## Accessors
 

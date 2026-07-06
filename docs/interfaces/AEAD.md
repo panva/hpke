@@ -67,7 +67,7 @@ const customSuite = new HPKE.CipherSuite(
 
 ## See
 
-[HPKE AEAD Encryption Algorithm](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-4.3)
+[HPKE AEAD Encryption Algorithm](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-4.3)
 
 ## Methods
 
@@ -122,7 +122,7 @@ A promise resolving to the ciphertext with authentication tag appended
 
 #### See
 
-[Context.Seal P\_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5.2)
+[Context.Seal P\_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.2)
 
 ## Properties
 

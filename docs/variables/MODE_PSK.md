@@ -10,4 +10,4 @@ authentication.
 
 ## See
 
-[HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03.html#section-5)
+[HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5)

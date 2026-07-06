@@ -22,7 +22,7 @@ If the maintainers reject a report through the project's documented channel, tha
 
 ## Threat Model
 
-This section documents the threat model for `hpke` and `@panva/hpke-noble`. `hpke` is a JavaScript implementation of the active standards-track drafts [Hybrid Public Key Encryption (draft-ietf-hpke-hpke-03)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03) and [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE (draft-ietf-hpke-pq-04)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
+This section documents the threat model for `hpke` and `@panva/hpke-noble`. `hpke` is a JavaScript implementation of the active standards-track drafts [Hybrid Public Key Encryption (draft-ietf-hpke-hpke-04)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04) and [Post-Quantum and Post-Quantum/Traditional Hybrid Algorithms for HPKE (draft-ietf-hpke-pq-05)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05). `@panva/hpke-noble` provides additional algorithm implementations using [@noble](https://paulmillr.com/noble/) cryptographic libraries.
 
 These drafts are works in progress and may change before publication. This project tracks the active standards-track drafts rather than the older HPKE RFC 9180 API surface. In particular, only Base mode and PSK mode are implemented. The RFC 9180 Auth and AuthPSK modes are not implemented because they were removed from the active standards-track HPKE draft.
 
@@ -60,7 +60,7 @@ This library delegates primitive cryptographic operations to the underlying Web 
 
 This library aims to provide the following security guarantees:
 
-- **Specification compliance**: Correct implementation of [draft-ietf-hpke-hpke-03](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03) and [draft-ietf-hpke-pq-04](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-04), validated against test vectors from the respective specifications.
+- **Specification compliance**: Correct implementation of [draft-ietf-hpke-hpke-04](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04) and [draft-ietf-hpke-pq-05](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05), validated against test vectors from the respective specifications.
 - **Base mode confidentiality**: Confidentiality and integrity for messages encrypted to a recipient public key, subject to the security of the chosen KEM, KDF, AEAD, runtime, and application embedding. Base mode does not authenticate the sender.
 - **PSK mode authentication**: Implicit authentication that the sender possessed the configured PSK, subject to the PSK being high entropy, uncompromised, and correctly bound to the application's peer and protocol context. This library rejects PSKs shorter than 32 bytes but cannot validate entropy.
 - **Nonce/sequence number handling**: Automatic per-context nonce derivation and sequence number management as required by the HPKE specification to prevent nonce reuse within a context. This implementation serializes concurrent context operations and supports sequence numbers up to `2^53-1`; applications should rotate contexts well before any AEAD-specific message or data-volume limit.
@@ -126,7 +126,7 @@ This library supports extensibility by allowing users to provide their own KEM, 
 
 ### Threat Actors and Security Properties
 
-This library aims to provide the security properties defined by the active HPKE drafts for Base and PSK modes. For a detailed analysis of threat models, security properties, and security considerations, refer to [Section 9 of draft-ietf-hpke-hpke-03](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03#section-9).
+This library aims to provide the security properties defined by the active HPKE drafts for Base and PSK modes. For a detailed analysis of threat models, security properties, and security considerations, refer to [Section 9 of draft-ietf-hpke-hpke-04](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04#section-9).
 
 ### What is NOT Considered a Vulnerability
 
