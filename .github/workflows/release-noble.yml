@@ -6,21 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  npm:
-    runs-on: ubuntu-latest
+  release:
     permissions:
+      actions: read
       contents: read
       id-token: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version: lts/*
-          registry-url: https://registry.npmjs.org
-      - run: npm clean-install
-      - run: node --run build
-      - run: npm install -g npm@latest
-      - run: npm stage publish
-        working-directory: './examples/noble-suite'
+    uses: panva/.github/.github/workflows/npm-release.yml@main
+    with:
+      github_release: false
+      maintenance_branch: false
+      manifest_directory: ./examples/noble-suite
+      package_directory: ./examples/noble-suite
+      prepare_command: npm clean-install && node --run build
+      tagged_release: false
