@@ -1,6 +1,6 @@
 # Variable: KEM\_ML\_KEM\_1024
 
-> `const` **KEM\_ML\_KEM\_1024**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM\_ML\_KEM\_1024**: [`KEMFactory`](../type-aliases/KEMFactory.md)<[`CryptoKey`](../type-aliases/CryptoKey.md)>
 
 Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-1024).
 

@@ -113,7 +113,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 #### Get Signature
 
-> **get** **mode**(): `number`
+> **get** **mode**(): [`Mode`](../type-aliases/Mode.md)
 
 ##### See
 
@@ -122,7 +122,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 ##### Returns
 
-`number`
+[`Mode`](../type-aliases/Mode.md)
 
 The mode (0x00 = Base, 0x01 = PSK) for this context.
 

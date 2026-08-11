@@ -85,8 +85,10 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 ## Type Aliases
 
 - [AEADFactory](type-aliases/AEADFactory.md)
+- [CryptoKey](type-aliases/CryptoKey.md)
 - [KDFFactory](type-aliases/KDFFactory.md)
 - [KEMFactory](type-aliases/KEMFactory.md)
+- [Mode](type-aliases/Mode.md)
 
 ## Utilities
 

@@ -1,6 +1,6 @@
 # Variable: KEM\_DHKEM\_P521\_HKDF\_SHA512
 
-> `const` **KEM\_DHKEM\_P521\_HKDF\_SHA512**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM\_DHKEM\_P521\_HKDF\_SHA512**: [`KEMFactory`](../type-aliases/KEMFactory.md)<[`CryptoKey`](../type-aliases/CryptoKey.md)>
 
 Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA512.
 

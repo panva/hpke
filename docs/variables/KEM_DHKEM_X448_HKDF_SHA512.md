@@ -1,6 +1,6 @@
 # Variable: KEM\_DHKEM\_X448\_HKDF\_SHA512
 
-> `const` **KEM\_DHKEM\_X448\_HKDF\_SHA512**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM\_DHKEM\_X448\_HKDF\_SHA512**: [`KEMFactory`](../type-aliases/KEMFactory.md)<[`CryptoKey`](../type-aliases/CryptoKey.md)>
 
 Diffie-Hellman Key Encapsulation Mechanism using Curve448 and HKDF-SHA512.
 

@@ -15,6 +15,7 @@
   "excludeExternals": true,
   "excludePrivate": true,
   "excludeProtected": true,
+  "intentionallyNotExported": ["CryptoKeyStructuralFallback"],
   "gitRevision": "main",
   "hideGenerator": true,
   "out": "docs",

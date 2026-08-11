@@ -129,14 +129,14 @@ class SenderContext {
   #key: Uint8Array
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
-  #mode: typeof MODE_BASE | typeof MODE_PSK
+  #mode: Mode
   #seq: number = 0
   #max_seq: number
   #mutex?: Mutex
 
   constructor(
     suite: Triple,
-    mode: typeof MODE_BASE | typeof MODE_PSK,
+    mode: Mode,
     key: Uint8Array,
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
@@ -154,7 +154,7 @@ class SenderContext {
    * @see {@link MODE_BASE}
    * @see {@link MODE_PSK}
    */
-  get mode(): number {
+  get mode(): Mode {
     return this.#mode
   }
 
@@ -280,14 +280,14 @@ class RecipientContext {
   #key: Uint8Array
   #base_nonce: Uint8Array
   #exporter_secret: Uint8Array
-  #mode: typeof MODE_BASE | typeof MODE_PSK
+  #mode: Mode
   #seq: number = 0
   #max_seq: number
   #mutex?: Mutex
 
   constructor(
     suite: Triple,
-    mode: typeof MODE_BASE | typeof MODE_PSK,
+    mode: Mode,
     key: Uint8Array,
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
@@ -305,7 +305,7 @@ class RecipientContext {
    * @see {@link MODE_BASE}
    * @see {@link MODE_PSK}
    */
-  get mode(): number {
+  get mode(): Mode {
     return this.#mode
   }
 
@@ -446,10 +446,11 @@ const validate = <T extends { type: string }>(factory: () => T, type: string): T
  * - KDF: Key Derivation Function for deriving symmetric keys
  * - AEAD: Authenticated Encryption with Additional Data for encryption
  *
+ * @typeParam K - Key representation produced and consumed by the suite's KEM
  * @group Core
  */
-export class CipherSuite {
-  #suite: Triple
+export class CipherSuite<K extends Key = Key> {
+  #suite: Triple<K>
 
   /**
    * Creates a new HPKE cipher suite by combining a Key Encapsulation Mechanism (KEM), Key
@@ -512,7 +513,7 @@ export class CipherSuite {
    * @see {@link KDFFactory Available KDFs}
    * @see {@link AEADFactory Available AEADs}
    */
-  constructor(KEM: KEMFactory, KDF: KDFFactory, AEAD: AEADFactory) {
+  constructor(KEM: KEMFactory<K>, KDF: KDFFactory, AEAD: AEADFactory) {
     const kem = validate(KEM, 'KEM')
     const kdf = validate(KDF, 'KDF')
     const aead = validate(AEAD, 'AEAD')
@@ -532,17 +533,17 @@ export class CipherSuite {
    */
   get KEM(): {
     /** The identifier of this suite's KEM */
-    id: number
+    readonly id: number
     /** The name of this suite's KEM */
-    name: string
+    readonly name: string
     /** The length in bytes of this suite's KEM produced shared secret */
-    Nsecret: number
+    readonly Nsecret: number
     /** The length in bytes of this suite's KEM produced encapsulated secret */
-    Nenc: number
+    readonly Nenc: number
     /** The length in bytes of this suite's KEM public key */
-    Npk: number
+    readonly Npk: number
     /** The length in bytes of this suite's KEM private key */
-    Nsk: number
+    readonly Nsk: number
   } {
     return {
       id: this.#suite.KEM.id,
@@ -561,21 +562,21 @@ export class CipherSuite {
    */
   get KDF(): {
     /** The identifier of this suite's KDF */
-    id: number
+    readonly id: number
     /** The name of this suite's KDF */
-    name: string
+    readonly name: string
     /**
      * When 1, this suite's KDF is a one-stage (Derive) KDF.
      *
      * When 2, this suite's KDF is a two-stage (Extract and Expand) KDF.
      */
-    stages: 1 | 2
+    readonly stages: 1 | 2
     /**
      * For one-stage KDF: The security strength of this suite's KDF, in bytes.
      *
      * For two-stage KDF: The output size of this suite's KDF Extract() function in bytes.
      */
-    Nh: number
+    readonly Nh: number
   } {
     return {
       id: this.#suite.KDF.id,
@@ -593,15 +594,15 @@ export class CipherSuite {
    */
   get AEAD(): {
     /** The identifier of this suite's AEAD */
-    id: number
+    readonly id: number
     /** The name of this suite's AEAD */
-    name: string
+    readonly name: string
     /** The length in bytes of a key for this suite's AEAD */
-    Nk: number
+    readonly Nk: number
     /** The length in bytes of a nonce for this suite's AEAD */
-    Nn: number
+    readonly Nn: number
     /** The length in bytes of an authentication tag for this suite's AEAD */
-    Nt: number
+    readonly Nt: number
   } {
     return {
       id: this.#suite.AEAD.id,
@@ -629,7 +630,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to a generated key pair.
    */
-  async GenerateKeyPair(extractable?: boolean): Promise<KeyPair> {
+  async GenerateKeyPair(extractable?: boolean): Promise<KeyPair<K>> {
     extractable ??= false
     checkExtractable(extractable)
     return await this.#suite.KEM.GenerateKeyPair(extractable)
@@ -662,7 +663,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to the derived key pair.
    */
-  async DeriveKeyPair(ikm: Uint8Array, extractable?: boolean): Promise<KeyPair> {
+  async DeriveKeyPair(ikm: Uint8Array, extractable?: boolean): Promise<KeyPair<K>> {
     extractable ??= false
     checkExtractable(extractable)
     checkUint8Array(ikm, 'ikm')
@@ -695,7 +696,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to the serialized private key.
    */
-  async SerializePrivateKey(privateKey: Key): Promise<Uint8Array> {
+  async SerializePrivateKey(privateKey: K): Promise<Uint8Array> {
     isKey(privateKey, 'private', true)
 
     return await this.#suite.KEM.SerializePrivateKey(privateKey)
@@ -717,7 +718,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to the serialized public key.
    */
-  async SerializePublicKey(publicKey: Key): Promise<Uint8Array> {
+  async SerializePublicKey(publicKey: K): Promise<Uint8Array> {
     isKey(publicKey, 'public', true)
 
     return await this.#suite.KEM.SerializePublicKey(publicKey)
@@ -742,7 +743,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to the deserialized private key.
    */
-  async DeserializePrivateKey(privateKey: Uint8Array, extractable?: boolean): Promise<Key> {
+  async DeserializePrivateKey(privateKey: Uint8Array, extractable?: boolean): Promise<K> {
     extractable ??= false
     checkExtractable(extractable)
     checkUint8Array(privateKey, 'privateKey')
@@ -777,7 +778,7 @@ export class CipherSuite {
    *
    * @returns A Promise that resolves to the deserialized public key.
    */
-  async DeserializePublicKey(publicKey: Uint8Array): Promise<Key> {
+  async DeserializePublicKey(publicKey: Uint8Array): Promise<K> {
     checkUint8Array(publicKey, 'publicKey')
 
     try {
@@ -828,7 +829,7 @@ export class CipherSuite {
    * @see [Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.1)
    */
   async Seal(
-    publicKey: Key,
+    publicKey: K,
     plaintext: Uint8Array,
     options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedSecret: Uint8Array; ciphertext: Uint8Array }> {
@@ -877,7 +878,7 @@ export class CipherSuite {
    * @see [Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.1)
    */
   async Open(
-    privateKey: Key | KeyPair,
+    privateKey: K | KeyPair<K>,
     encapsulatedSecret: Uint8Array,
     ciphertext: Uint8Array,
     options?: { aad?: Uint8Array; info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
@@ -925,7 +926,7 @@ export class CipherSuite {
    * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.2)
    */
   async SendExport(
-    publicKey: Key,
+    publicKey: K,
     exporterContext: Uint8Array,
     length: number,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
@@ -973,7 +974,7 @@ export class CipherSuite {
    * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-6.2)
    */
   async ReceiveExport(
-    privateKey: Key | KeyPair,
+    privateKey: K | KeyPair<K>,
     encapsulatedSecret: Uint8Array,
     exporterContext: Uint8Array,
     length: number,
@@ -1027,7 +1028,7 @@ export class CipherSuite {
    * @see [SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.1.1)
    */
   async SetupSender(
-    publicKey: Key,
+    publicKey: K,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<{ encapsulatedSecret: Uint8Array; ctx: SenderContext }> {
     isKey(publicKey, 'public')
@@ -1108,7 +1109,7 @@ export class CipherSuite {
    * @see [SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.1.1)
    */
   async SetupRecipient(
-    privateKey: Key | KeyPair,
+    privateKey: K | KeyPair<K>,
     encapsulatedSecret: Uint8Array,
     options?: { info?: Uint8Array; psk?: Uint8Array; pskId?: Uint8Array },
   ): Promise<RecipientContext> {
@@ -1141,7 +1142,7 @@ export class CipherSuite {
     return new RecipientContext(this.#suite, mode, key, base_nonce, exporter_secret)
   }
 
-  #extractRecipientKeys(skR: Key | KeyPair): { skR: Key; pkR: Key | undefined } {
+  #extractRecipientKeys(skR: K | KeyPair<K>): { skR: K; pkR: K | undefined } {
     if (isKeyPair(skR)) {
       return { skR: skR.privateKey, pkR: skR.publicKey }
     }
@@ -1279,9 +1280,9 @@ export class NotSupportedError extends Error {
 // Type Definitions and Interfaces
 // ============================================================================
 
-interface Triple {
+interface Triple<K extends Key = Key> {
   readonly id: Uint8Array
-  readonly KEM: Readonly<KEM>
+  readonly KEM: Readonly<KEM<K>>
   readonly KDF: Readonly<KDF>
   readonly AEAD: Readonly<AEAD>
 }
@@ -1306,6 +1307,9 @@ export const MODE_BASE = 0x00
  * @see [HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5)
  */
 export const MODE_PSK = 0x01
+
+/** Mode supported by this implementation. */
+export type Mode = typeof MODE_BASE | typeof MODE_PSK
 
 /**
  * Factory function that returns a KEM implementation.
@@ -1338,8 +1342,10 @@ export const MODE_PSK = 0x01
  * > returning an object conforming to the {@link KEM} interface can be used. Such implementations not
  * > reliant on Web Cryptography are exported by
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
+ *
+ * @typeParam K - Key representation produced and consumed by the KEM
  */
-export type KEMFactory = () => Readonly<KEM>
+export type KEMFactory<K extends Key = Key> = () => Readonly<KEM<K>>
 
 /**
  * Factory function that returns a KDF implementation.
@@ -1396,12 +1402,14 @@ export type AEADFactory = () => Readonly<AEAD>
  * - Private Key: Used by recipients for decryption operations (passed to
  *   {@link CipherSuite.SetupRecipient} or {@link CipherSuite.Open}). These are not distributed and
  *   kept private.
+ *
+ * @typeParam K - Key representation contained in the pair
  */
-export interface KeyPair {
+export interface KeyPair<K extends Key = Key> {
   /** The public key, used for encryption operations. */
-  readonly publicKey: Readonly<Key>
+  readonly publicKey: Readonly<K>
   /** The private key, used for decryption operations. */
-  readonly privateKey: Readonly<Key>
+  readonly privateKey: Readonly<K>
 }
 
 /**
@@ -1426,6 +1434,34 @@ export interface Key {
 
   /** The type of key: 'private' or 'public' */
   readonly type: 'private' | 'public' | (string & {})
+}
+
+/**
+ * A Web Cryptography key as declared by the host runtime.
+ *
+ * This aliases the key type returned by the host's `SubtleCrypto.generateKey()` API when it is
+ * exposed on `globalThis`. A structural fallback is used otherwise, keeping the package portable to
+ * runtimes and TypeScript projects that do not include DOM or Node.js ambient types.
+ */
+export type CryptoKey = typeof globalThis extends {
+  crypto: { subtle: { generateKey(...args: any[]): Promise<infer R> } }
+}
+  ? Extract<R, { type: string }>
+  : CryptoKeyStructuralFallback
+
+/**
+ * Used as {@link CryptoKey} when the host runtime's `crypto` global is not exposed on `typeof
+ * globalThis`, including when it is absent from ambient types or declared with `const` or `let`. It
+ * remains structurally compatible with host {@link !CryptoKey} declarations so values flow freely to
+ * and from {@link !SubtleCrypto} APIs.
+ *
+ * @internal
+ */
+interface CryptoKeyStructuralFallback {
+  readonly algorithm: { name: string }
+  readonly extractable: boolean
+  readonly type: string
+  readonly usages: string[]
 }
 
 // ============================================================================
@@ -1940,9 +1976,10 @@ export async function LabeledExpand(
  * )
  * ```
  *
+ * @typeParam K - Key representation produced and consumed by the KEM
  * @see [HPKE Key Encapsulation Mechanisms](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-4.1)
  */
-export interface KEM {
+export interface KEM<K extends Key = Key> {
   /** KEM algorithm identifier */
   readonly id: number
 
@@ -1972,7 +2009,7 @@ export interface KEM {
    *
    * @returns A promise resolving to a {@link KeyPair}
    */
-  DeriveKeyPair(ikm: Uint8Array, extractable: boolean): Promise<KeyPair>
+  DeriveKeyPair(ikm: Uint8Array, extractable: boolean): Promise<KeyPair<K>>
 
   /**
    * Generates a random key pair.
@@ -1981,7 +2018,7 @@ export interface KEM {
    *
    * @returns A promise resolving to a {@link KeyPair}
    */
-  GenerateKeyPair(extractable: boolean): Promise<KeyPair>
+  GenerateKeyPair(extractable: boolean): Promise<KeyPair<K>>
 
   /**
    * Serializes a public key to bytes.
@@ -1990,7 +2027,7 @@ export interface KEM {
    *
    * @returns A promise resolving to the serialized public key
    */
-  SerializePublicKey(key: Key): Promise<Uint8Array>
+  SerializePublicKey(key: K): Promise<Uint8Array>
 
   /**
    * Deserializes a public key from bytes.
@@ -1999,7 +2036,7 @@ export interface KEM {
    *
    * @returns A promise resolving to a {@link !Key} or a Key interface-conforming object
    */
-  DeserializePublicKey(key: Uint8Array): Promise<Key>
+  DeserializePublicKey(key: Uint8Array): Promise<K>
 
   /**
    * Serializes a private key to bytes.
@@ -2008,7 +2045,7 @@ export interface KEM {
    *
    * @returns A promise resolving to the serialized private key
    */
-  SerializePrivateKey(key: Key): Promise<Uint8Array>
+  SerializePrivateKey(key: K): Promise<Uint8Array>
 
   /**
    * Deserializes a private key from bytes.
@@ -2018,7 +2055,7 @@ export interface KEM {
    *
    * @returns A promise resolving to a {@link !Key} or a Key interface-conforming object
    */
-  DeserializePrivateKey(key: Uint8Array, extractable: boolean): Promise<Key>
+  DeserializePrivateKey(key: Uint8Array, extractable: boolean): Promise<K>
 
   /**
    * Encapsulates a shared secret to a recipient's public key.
@@ -2031,7 +2068,7 @@ export interface KEM {
    *
    * @returns A promise resolving to an object containing the shared secret and encapsulated secret
    */
-  Encap(pkR: Key): Promise<{ shared_secret: Uint8Array; enc: Uint8Array }>
+  Encap(pkR: K): Promise<{ shared_secret: Uint8Array; enc: Uint8Array }>
 
   /**
    * Decapsulates a shared secret using a recipient's private key.
@@ -2046,10 +2083,10 @@ export interface KEM {
    *
    * @returns A promise resolving to the shared secret
    */
-  Decap(enc: Uint8Array, skR: Key, pkR: Key | undefined): Promise<Uint8Array>
+  Decap(enc: Uint8Array, skR: K, pkR: K | undefined): Promise<Uint8Array>
 }
 
-function isKeyPair(skR: unknown): skR is KeyPair {
+function isKeyPair<K extends Key>(skR: K | KeyPair<K>): skR is KeyPair<K> {
   if (!skR || typeof skR !== 'object') return false
   if ('publicKey' in skR && 'privateKey' in skR) {
     const pkR = skR.publicKey
@@ -2658,8 +2695,8 @@ function checkNotAllZeros(buffer: Uint8Array): void {
   }
 }
 
-type KEM_BASE = Pick<
-  KEM,
+type KEM_BASE<K extends Key = Key> = Pick<
+  KEM<K>,
   | 'GenerateKeyPair'
   | 'DeriveKeyPair'
   | 'SerializePublicKey'
@@ -2670,7 +2707,7 @@ type KEM_BASE = Pick<
   | 'Decap'
 >
 
-interface DHKEM extends KEM {
+interface DHKEM extends KEM<CryptoKey> {
   readonly suite_id: Uint8Array
   readonly Ndh: number
   readonly kdf: KDF
@@ -2813,7 +2850,9 @@ async function ExtractAndExpand(
 // KEM (Key Encapsulation Mechanism) - DHKEM Shared Implementation
 // ============================================================================
 
-function DHKEM_SHARED(): Required<Omit<KEM_BASE, 'DeriveKeyPair' | 'DeserializePrivateKey'>> {
+function DHKEM_SHARED(): Required<
+  Omit<KEM_BASE<CryptoKey>, 'DeriveKeyPair' | 'DeserializePrivateKey'>
+> {
   return {
     async GenerateKeyPair(this: DHKEM, extractable) {
       return (await subtle(
@@ -3186,7 +3225,8 @@ const P256: NistCurveConfig = {
  * @group KEM Algorithms
  * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)
  */
-export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory = function (): DHKEM & NistCurveConfig {
+export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory<CryptoKey> = function (): DHKEM &
+  NistCurveConfig {
   const id = 0x0010
   const name = 'DHKEM(P-256, HKDF-SHA256)'
   const kdf = KDF_HKDF_SHA256()
@@ -3241,7 +3281,8 @@ const P384: NistCurveConfig = {
  * @group KEM Algorithms
  * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)
  */
-export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory = function (): DHKEM & NistCurveConfig {
+export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory<CryptoKey> = function (): DHKEM &
+  NistCurveConfig {
   const id = 0x0011
   const name = 'DHKEM(P-384, HKDF-SHA384)'
   const kdf = KDF_HKDF_SHA384()
@@ -3296,7 +3337,8 @@ const P521: NistCurveConfig = {
  * @group KEM Algorithms
  * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)
  */
-export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistCurveConfig {
+export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DHKEM &
+  NistCurveConfig {
   const id = 0x0012
   const name = 'DHKEM(P-521, HKDF-SHA512)'
   const kdf = KDF_HKDF_SHA512()
@@ -3342,7 +3384,9 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory = function (): DHKEM & NistC
  * @group KEM Algorithms
  * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)
  */
-export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { pkcs8: Uint8Array } {
+export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory<CryptoKey> = function (): DHKEM & {
+  pkcs8: Uint8Array
+} {
   const id = 0x0020
   const name = 'DHKEM(X25519, HKDF-SHA256)'
   const kdf = KDF_HKDF_SHA256()
@@ -3389,7 +3433,9 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory = function (): DHKEM & { p
  * @group KEM Algorithms
  * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1)
  */
-export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM & { pkcs8: Uint8Array } {
+export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DHKEM & {
+  pkcs8: Uint8Array
+} {
   const id = 0x0021
   const name = 'DHKEM(X448, HKDF-SHA512)'
   const kdf = KDF_HKDF_SHA512()
@@ -3420,13 +3466,13 @@ export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory = function (): DHKEM & { pkc
 // KEM (Key Encapsulation Mechanism) - ML-KEM Types and Implementation
 // ============================================================================
 
-interface MLKEM extends KEM {
+interface MLKEM extends KEM<CryptoKey> {
   readonly suite_id: Uint8Array
   readonly algorithm: Readonly<KeyAlgorithm>
   readonly kdf: KDF
 }
 
-function MLKEM_SHARED(): KEM_BASE {
+function MLKEM_SHARED(): KEM_BASE<CryptoKey> {
   return {
     async DeriveKeyPair(this: MLKEM, ikm, extractable) {
       const dk = await LabeledDerive(
@@ -3538,7 +3584,7 @@ function MLKEM_SHARED(): KEM_BASE {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
+export const KEM_ML_KEM_512: KEMFactory<CryptoKey> = function (): MLKEM {
   const id = 0x0040
   const name = 'ML-KEM-512'
   const kdf = KDF_SHAKE256()
@@ -3578,7 +3624,7 @@ export const KEM_ML_KEM_512: KEMFactory = function (): MLKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
+export const KEM_ML_KEM_768: KEMFactory<CryptoKey> = function (): MLKEM {
   const id = 0x0041
   const name = 'ML-KEM-768'
   const kdf = KDF_SHAKE256()
@@ -3618,7 +3664,7 @@ export const KEM_ML_KEM_768: KEMFactory = function (): MLKEM {
  * @group KEM Algorithms
  * @see [HPKE-PQ KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-3)
  */
-export const KEM_ML_KEM_1024: KEMFactory = function (): MLKEM {
+export const KEM_ML_KEM_1024: KEMFactory<CryptoKey> = function (): MLKEM {
   const id = 0x0042
   const name = 'ML-KEM-1024'
   const kdf = KDF_SHAKE256()
@@ -4030,7 +4076,7 @@ async function prepareDecapsG(
   return [ss_PQ, ss_T]
 }
 
-interface HybridKEM extends KEM {
+interface HybridKEM extends KEM<HybridKey> {
   readonly suite_id: Uint8Array
   readonly kdf: KDF
   readonly algorithm: KeyAlgorithm
@@ -4058,7 +4104,7 @@ interface HybridKEM extends KEM {
   }
 }
 
-function PQTKEM_SHARED(): KEM_BASE {
+function PQTKEM_SHARED(): KEM_BASE<HybridKey> {
   Object.freeze(HybridKey.prototype)
   return {
     async DeriveKeyPair(this: HybridKEM, ikm: Uint8Array, extractable) {

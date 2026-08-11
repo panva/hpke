@@ -1,4 +1,4 @@
-# Interface: KEM
+# Interface: KEM\<K>
 
 Key Encapsulation Mechanism (KEM) implementation interface.
 
@@ -13,6 +13,7 @@ Custom KEM implementations must conform to this interface to be compatible with
 
 ## Contents
 
+- [Type Parameters](#type-parameters)
 - [Methods](#methods)
   - [Decap()](#decap)
   - [DeriveKeyPair()](#derivekeypair)
@@ -114,6 +115,12 @@ const customSuite = new HPKE.CipherSuite(
 
 [HPKE Key Encapsulation Mechanisms](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-4.1)
 
+## Type Parameters
+
+| Type Parameter | Description |
+| :------ | :------ |
+| `K` *extends* [`Key`](Key.md) | Key representation produced and consumed by the KEM |
+
 ## Methods
 
 ### Decap()
@@ -130,8 +137,8 @@ from the encapsulated secret.
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
 | `enc` | `Uint8Array` | The encapsulated secret of [Nenc](#nenc) length |
-| `skR` | [`Key`](Key.md) | The recipient's private key |
-| `pkR` | [`Key`](Key.md) ∣ `undefined` | The recipient's public key (when user input to [CipherSuite.SetupRecipient](../classes/CipherSuite.md#setuprecipient) is a [KeyPair](KeyPair.md)) |
+| `skR` | `K` | The recipient's private key |
+| `pkR` | `K` ∣ `undefined` | The recipient's public key (when user input to [CipherSuite.SetupRecipient](../classes/CipherSuite.md#setuprecipient) is a [KeyPair](KeyPair.md)) |
 
 #### Returns
 
@@ -143,7 +150,7 @@ A promise resolving to the shared secret
 
 ### DeriveKeyPair()
 
-> **DeriveKeyPair**(`ikm`, `extractable`): `Promise`<[`KeyPair`](KeyPair.md)>
+> **DeriveKeyPair**(`ikm`, `extractable`): `Promise`<[`KeyPair`](KeyPair.md)<`K`>>
 
 Derives a key pair deterministically from input keying material.
 
@@ -156,7 +163,7 @@ Derives a key pair deterministically from input keying material.
 
 #### Returns
 
-`Promise`<[`KeyPair`](KeyPair.md)>
+`Promise`<[`KeyPair`](KeyPair.md)<`K`>>
 
 A promise resolving to a [KeyPair](KeyPair.md)
 
@@ -164,7 +171,7 @@ A promise resolving to a [KeyPair](KeyPair.md)
 
 ### DeserializePrivateKey()
 
-> **DeserializePrivateKey**(`key`, `extractable`): `Promise`<[`Key`](Key.md)>
+> **DeserializePrivateKey**(`key`, `extractable`): `Promise`<`K`>
 
 Deserializes a private key from bytes.
 
@@ -177,7 +184,7 @@ Deserializes a private key from bytes.
 
 #### Returns
 
-`Promise`<[`Key`](Key.md)>
+`Promise`<`K`>
 
 A promise resolving to a [!Key](Key.md) or a Key interface-conforming object
 
@@ -185,7 +192,7 @@ A promise resolving to a [!Key](Key.md) or a Key interface-conforming object
 
 ### DeserializePublicKey()
 
-> **DeserializePublicKey**(`key`): `Promise`<[`Key`](Key.md)>
+> **DeserializePublicKey**(`key`): `Promise`<`K`>
 
 Deserializes a public key from bytes.
 
@@ -197,7 +204,7 @@ Deserializes a public key from bytes.
 
 #### Returns
 
-`Promise`<[`Key`](Key.md)>
+`Promise`<`K`>
 
 A promise resolving to a [!Key](Key.md) or a Key interface-conforming object
 
@@ -217,7 +224,7 @@ recipient.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `pkR` | [`Key`](Key.md) | The recipient's public key |
+| `pkR` | `K` | The recipient's public key |
 
 #### Returns
 
@@ -229,7 +236,7 @@ A promise resolving to an object containing the shared secret and encapsulated s
 
 ### GenerateKeyPair()
 
-> **GenerateKeyPair**(`extractable`): `Promise`<[`KeyPair`](KeyPair.md)>
+> **GenerateKeyPair**(`extractable`): `Promise`<[`KeyPair`](KeyPair.md)<`K`>>
 
 Generates a random key pair.
 
@@ -241,7 +248,7 @@ Generates a random key pair.
 
 #### Returns
 
-`Promise`<[`KeyPair`](KeyPair.md)>
+`Promise`<[`KeyPair`](KeyPair.md)<`K`>>
 
 A promise resolving to a [KeyPair](KeyPair.md)
 
@@ -257,7 +264,7 @@ Serializes a private key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `key` | [`Key`](Key.md) | The private Key to serialize |
+| `key` | `K` | The private Key to serialize |
 
 #### Returns
 
@@ -277,7 +284,7 @@ Serializes a public key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `key` | [`Key`](Key.md) | The public Key to serialize |
+| `key` | `K` | The public Key to serialize |
 
 #### Returns
 

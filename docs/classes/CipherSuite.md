@@ -1,4 +1,4 @@
-# Class: CipherSuite
+# Class: CipherSuite\<K>
 
 Hybrid Public Key Encryption (HPKE) suite combining a KEM, KDF, and AEAD.
 
@@ -22,6 +22,7 @@ The cipher suite consists of:
 
 ## Contents
 
+- [Type Parameters](#type-parameters)
 - [Constructor](#constructor)
 - [Encryption Context](#encryption-context)
   - [SetupRecipient()](#setuprecipient)
@@ -43,9 +44,15 @@ The cipher suite consists of:
   - [KDF](#kdf)
   - [KEM](#kem)
 
+## Type Parameters
+
+| Type Parameter | Description |
+| :------ | :------ |
+| `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the suite's KEM |
+
 ## Constructor
 
-> **new CipherSuite**(`KEM`, `KDF`, `AEAD`): `CipherSuite`
+> **new CipherSuite**<`K`>(`KEM`, `KDF`, `AEAD`): `CipherSuite`<`K`>
 
 Creates a new HPKE cipher suite by combining a Key Encapsulation Mechanism (KEM), Key
 Derivation Function (KDF), and an Authenticated Encryption with Associated Data (AEAD)
@@ -59,13 +66,13 @@ platforms and runtimes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `KEM` | [`KEMFactory`](../type-aliases/KEMFactory.md) | KEM implementation factory. Must return an object conforming to the [KEM](#constructorciphersuite) interface. |
+| `KEM` | [`KEMFactory`](../type-aliases/KEMFactory.md)<`K`> | KEM implementation factory. Must return an object conforming to the [KEM](#constructorciphersuite) interface. |
 | `KDF` | [`KDFFactory`](../type-aliases/KDFFactory.md) | KDF implementation factory. Must return an object conforming to the [KDF](#constructorciphersuite) interface. |
 | `AEAD` | [`AEADFactory`](../type-aliases/AEADFactory.md) | AEAD implementation factory. Must return an object conforming to the [AEAD](#constructorciphersuite) interface. |
 
 ### Returns
 
-`CipherSuite`
+`CipherSuite`<`K`>
 
 ### Examples
 
@@ -130,7 +137,7 @@ Mode selection:
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `privateKey` | `K` ∣ [`KeyPair`](../interfaces/KeyPair.md)<`K`> | Recipient's private key or key pair |
 | `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
@@ -197,7 +204,7 @@ nonce uniqueness.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `publicKey` | `K` | Recipient's public key |
 | `options?` |  | Options |
 | `options.info?` | `Uint8Array` | Application-supplied information |
 | `options.psk?` | `Uint8Array` | Pre-shared key (for PSK modes) |
@@ -236,7 +243,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 ### DeriveKeyPair()
 
-> **DeriveKeyPair**(`ikm`, `extractable?`): `Promise`<[`KeyPair`](../interfaces/KeyPair.md)>
+> **DeriveKeyPair**(`ikm`, `extractable?`): `Promise`<[`KeyPair`](../interfaces/KeyPair.md)<`K`>>
 
 Deterministically derives a key pair for this CipherSuite's KEM from input keying material. By
 default, private keys are derived as non-extractable (their value cannot be exported).
@@ -258,7 +265,7 @@ default, private keys are derived as non-extractable (their value cannot be expo
 
 #### Returns
 
-`Promise`<[`KeyPair`](../interfaces/KeyPair.md)>
+`Promise`<[`KeyPair`](../interfaces/KeyPair.md)<`K`>>
 
 A Promise that resolves to the derived key pair.
 
@@ -274,7 +281,7 @@ const keyPair: HPKE.KeyPair = await suite.DeriveKeyPair(ikm)
 
 ### DeserializePrivateKey()
 
-> **DeserializePrivateKey**(`privateKey`, `extractable?`): `Promise`<[`Key`](../interfaces/Key.md)>
+> **DeserializePrivateKey**(`privateKey`, `extractable?`): `Promise`<`K`>
 
 Deserializes a private key from bytes. By default, private keys are deserialized as
 non-extractable (their value cannot be exported).
@@ -288,7 +295,7 @@ non-extractable (their value cannot be exported).
 
 #### Returns
 
-`Promise`<[`Key`](../interfaces/Key.md)>
+`Promise`<`K`>
 
 A Promise that resolves to the deserialized private key.
 
@@ -304,7 +311,7 @@ const privateKey: HPKE.Key = await suite.DeserializePrivateKey(serialized)
 
 ### DeserializePublicKey()
 
-> **DeserializePublicKey**(`publicKey`): `Promise`<[`Key`](../interfaces/Key.md)>
+> **DeserializePublicKey**(`publicKey`): `Promise`<`K`>
 
 Deserializes a public key from bytes. Public keys are always deserialized as extractable (their
 value can be exported, e.g. by [SerializePublicKey](#serializepublickey)).
@@ -317,7 +324,7 @@ value can be exported, e.g. by [SerializePublicKey](#serializepublickey)).
 
 #### Returns
 
-`Promise`<[`Key`](../interfaces/Key.md)>
+`Promise`<`K`>
 
 A Promise that resolves to the deserialized public key.
 
@@ -333,7 +340,7 @@ const publicKey: HPKE.Key = await suite.DeserializePublicKey(serialized)
 
 ### GenerateKeyPair()
 
-> **GenerateKeyPair**(`extractable?`): `Promise`<[`KeyPair`](../interfaces/KeyPair.md)>
+> **GenerateKeyPair**(`extractable?`): `Promise`<[`KeyPair`](../interfaces/KeyPair.md)<`K`>>
 
 Generates a random key pair for this CipherSuite. By default, private keys are generated as
 non-extractable (their value cannot be exported).
@@ -346,7 +353,7 @@ non-extractable (their value cannot be exported).
 
 #### Returns
 
-`Promise`<[`KeyPair`](../interfaces/KeyPair.md)>
+`Promise`<[`KeyPair`](../interfaces/KeyPair.md)<`K`>>
 
 A Promise that resolves to a generated key pair.
 
@@ -369,7 +376,7 @@ Serializes an extractable private key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `privateKey` | [`Key`](../interfaces/Key.md) | Private key to serialize |
+| `privateKey` | `K` | Private key to serialize |
 
 #### Returns
 
@@ -397,7 +404,7 @@ Serializes a public key to bytes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `publicKey` | [`Key`](../interfaces/Key.md) | Public key to serialize |
+| `publicKey` | `K` | Public key to serialize |
 
 #### Returns
 
@@ -432,7 +439,7 @@ Mode selection:
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `privateKey` | `K` ∣ [`KeyPair`](../interfaces/KeyPair.md)<`K`> | Recipient's private key or key pair |
 | `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `ciphertext` | `Uint8Array` | Ciphertext to decrypt |
 | `options?` |  | Options |
@@ -478,7 +485,7 @@ It combines context setup and secret export in one call.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `privateKey` | [`KeyPair`](../interfaces/KeyPair.md) ∣ [`Key`](../interfaces/Key.md) | Recipient's private key or key pair |
+| `privateKey` | `K` ∣ [`KeyPair`](../interfaces/KeyPair.md)<`K`> | Recipient's private key or key pair |
 | `encapsulatedSecret` | `Uint8Array` | Encapsulated secret from the sender |
 | `exporterContext` | `Uint8Array` | Context of the export operation |
 | `length` | `number` | Desired length of exported secret in bytes |
@@ -534,7 +541,7 @@ Mode selection:
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `publicKey` | `K` | Recipient's public key |
 | `plaintext` | `Uint8Array` | Plaintext to encrypt |
 | `options?` |  | Options |
 | `options.aad?` | `Uint8Array` | Additional authenticated data passed to the AEAD |
@@ -581,7 +588,7 @@ The exported secret is indistinguishable from a uniformly random bitstring of eq
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `publicKey` | [`Key`](../interfaces/Key.md) | Recipient's public key |
+| `publicKey` | `K` | Recipient's public key |
 | `exporterContext` | `Uint8Array` | Context of the export operation |
 | `length` | `number` | Desired length of exported secret in bytes |
 | `options?` |  | Options |
@@ -632,31 +639,31 @@ cipher properties.
 
 ###### id
 
-> **id**: `number`
+> `readonly` **id**: `number`
 
 The identifier of this suite's AEAD
 
 ###### name
 
-> **name**: `string`
+> `readonly` **name**: `string`
 
 The name of this suite's AEAD
 
 ###### Nk
 
-> **Nk**: `number`
+> `readonly` **Nk**: `number`
 
 The length in bytes of a key for this suite's AEAD
 
 ###### Nn
 
-> **Nn**: `number`
+> `readonly` **Nn**: `number`
 
 The length in bytes of a nonce for this suite's AEAD
 
 ###### Nt
 
-> **Nt**: `number`
+> `readonly` **Nt**: `number`
 
 The length in bytes of an authentication tag for this suite's AEAD
 
@@ -676,19 +683,19 @@ An object with this suite's Key Derivation Function (KDF) properties.
 
 ###### id
 
-> **id**: `number`
+> `readonly` **id**: `number`
 
 The identifier of this suite's KDF
 
 ###### name
 
-> **name**: `string`
+> `readonly` **name**: `string`
 
 The name of this suite's KDF
 
 ###### Nh
 
-> **Nh**: `number`
+> `readonly` **Nh**: `number`
 
 For one-stage KDF: The security strength of this suite's KDF, in bytes.
 
@@ -696,7 +703,7 @@ For two-stage KDF: The output size of this suite's KDF Extract() function in byt
 
 ###### stages
 
-> **stages**: `1` ∣ `2`
+> `readonly` **stages**: `1` ∣ `2`
 
 When 1, this suite's KDF is a one-stage (Derive) KDF.
 
@@ -718,36 +725,36 @@ An object with this suite's Key Encapsulation Mechanism (KEM) properties.
 
 ###### id
 
-> **id**: `number`
+> `readonly` **id**: `number`
 
 The identifier of this suite's KEM
 
 ###### name
 
-> **name**: `string`
+> `readonly` **name**: `string`
 
 The name of this suite's KEM
 
 ###### Nenc
 
-> **Nenc**: `number`
+> `readonly` **Nenc**: `number`
 
 The length in bytes of this suite's KEM produced encapsulated secret
 
 ###### Npk
 
-> **Npk**: `number`
+> `readonly` **Npk**: `number`
 
 The length in bytes of this suite's KEM public key
 
 ###### Nsecret
 
-> **Nsecret**: `number`
+> `readonly` **Nsecret**: `number`
 
 The length in bytes of this suite's KEM produced shared secret
 
 ###### Nsk
 
-> **Nsk**: `number`
+> `readonly` **Nsk**: `number`
 
 The length in bytes of this suite's KEM private key

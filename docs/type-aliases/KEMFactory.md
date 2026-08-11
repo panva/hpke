@@ -1,6 +1,6 @@
-# Type Alias: KEMFactory
+# Type Alias: KEMFactory\<K>
 
-> **KEMFactory** = () => `Readonly`<[`KEM`](../interfaces/KEM.md)>
+> **KEMFactory**<`K`> = () => `Readonly`<[`KEM`](../interfaces/KEM.md)<`K`>>
 
 Factory function that returns a KEM implementation.
 
@@ -33,6 +33,12 @@ Post-quantum (PQ):
 > reliant on Web Cryptography are exported by
 > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
 
+## Type Parameters
+
+| Type Parameter | Description |
+| :------ | :------ |
+| `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the KEM |
+
 ## Returns
 
-`Readonly`<[`KEM`](../interfaces/KEM.md)>
+`Readonly`<[`KEM`](../interfaces/KEM.md)<`K`>>

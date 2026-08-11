@@ -1,4 +1,4 @@
-# Interface: KeyPair
+# Interface: KeyPair\<K>
 
 Represents a cryptographic key pair consisting of a public key and private key.
 
@@ -16,15 +16,22 @@ Key Usage:
 
 ## Contents
 
+- [Type Parameters](#type-parameters)
 - [Properties](#properties)
   - [privateKey](#privatekey)
   - [publicKey](#publickey)
+
+## Type Parameters
+
+| Type Parameter | Description |
+| :------ | :------ |
+| `K` *extends* [`Key`](Key.md) | Key representation contained in the pair |
 
 ## Properties
 
 ### privateKey
 
-> `readonly` **privateKey**: `Readonly`<[`Key`](Key.md)>
+> `readonly` **privateKey**: `Readonly`<`K`>
 
 The private key, used for decryption operations.
 
@@ -32,6 +39,6 @@ The private key, used for decryption operations.
 
 ### publicKey
 
-> `readonly` **publicKey**: `Readonly`<[`Key`](Key.md)>
+> `readonly` **publicKey**: `Readonly`<`K`>
 
 The public key, used for encryption operations.

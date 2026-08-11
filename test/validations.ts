@@ -47,8 +47,10 @@ async function assertRejectsSharedArrayBuffer(
 
 // Generate shared key pairs for all KEMs to avoid regenerating in every test
 const keys = new Map<number, HPKE.KeyPair>()
-async function getKeyPair(suite: HPKE.CipherSuite) {
-  let kp = keys.get(suite.KEM.id)
+async function getKeyPair<K extends HPKE.Key>(
+  suite: HPKE.CipherSuite<K>,
+): Promise<HPKE.KeyPair<K>> {
+  let kp = keys.get(suite.KEM.id) as HPKE.KeyPair<K> | undefined
   if (!kp) {
     kp = await suite.DeriveKeyPair(
       new Uint8Array(suite.KEM.Nsk),
