@@ -34,6 +34,7 @@
   "categoryOrder": ["Encryption Context", "Key Management", "Single-Shot APIs"],
   "githubPages": false,
   "parametersFormat": "table",
+  "indexFormat": "table",
   "hidePageHeader": true,
   "expandObjects": false,
   "expandParameters": false,
