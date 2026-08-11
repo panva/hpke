@@ -1,9 +1,7 @@
 name: Deploy test page
 
 on:
-  push:
-    tags: ['v1.[0-9]+.[0-9]+']
-
+  workflow_call:
   workflow_dispatch:
 
 permissions:

@@ -17,3 +17,11 @@ jobs:
     with:
       artifact_check_command: node tools/test-dist.js "$PACKAGE_TARBALL" .
       cleanup_paths: '["index.js","index.d.ts","index.d.ts.map"]'
+
+  deploy:
+    needs: release
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/static.yml
