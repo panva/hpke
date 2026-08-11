@@ -30,6 +30,12 @@ jobs:
       - run: npm clean-install
       - run: node --run build
       - run: node --run build:other
+      - name: Type-level regression tests
+        run: node --run typecheck:types
+      - name: Packaging metadata and type resolution
+        run: node --run check:packaging
+      - name: Packed artifact contents and runtime
+        run: node --run test:dist
       - run: node --run format -- --write false --check --log-level warn
       - run: git diff --exit-code
 

@@ -15,4 +15,5 @@ jobs:
       id-token: write
     uses: panva/.github/.github/workflows/npm-release.yml@main
     with:
+      artifact_check_command: node tools/test-dist.js "$PACKAGE_TARBALL" .
       cleanup_paths: '["index.js","index.d.ts","index.d.ts.map"]'

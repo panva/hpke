@@ -42,16 +42,20 @@
   "scripts": {
     "build": "node build.cjs",
     "build:other": "npx tsc -p tsconfig.test.json && npx tsc -p tsconfig.examples.json",
+    "check:packaging": "publint run . --strict && node tools/attw-check.js . && publint run examples/noble-suite --strict && node tools/attw-check.js examples/noble-suite",
     "docs": "npx typedoc",
     "format": "prettier --log-level silent --cache --write '**/*.{ts,js,mjs,cjs,json,yml}' '**/README.md'",
     "test": "node --test --no-warnings test/*.ts",
     "test:browsers": "node test/browser.mjs",
     "test:bun": "bun test ./test/*.ts",
     "test:deno": "deno test --no-check --allow-read test/*.ts",
+    "test:dist": "node tools/test-dist.js",
     "test:docs": "./check-examples.sh",
-    "test:workerd": "./test/.workerd.sh"
+    "test:workerd": "./test/.workerd.sh",
+    "typecheck:types": "tsc -p test-d && tsc -p test-d/tsconfig.node.json && tsc -p test-d/tsconfig.fallback.json"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@noble/ciphers": "^2.2.0",
     "@noble/curves": "^2.2.0",
     "@noble/hashes": "^2.2.0",
@@ -62,6 +66,7 @@
     "playwright": "^1.62.1",
     "prettier": "^3.9.6",
     "prettier-plugin-jsdoc": "^1.8.1",
+    "publint": "0.3.23",
     "remark-behead": "^3.1.0",
     "remark-insert-headings": "^1.0.0",
     "remark-toc": "^9.0.0",

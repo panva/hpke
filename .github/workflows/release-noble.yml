@@ -17,5 +17,6 @@ jobs:
       maintenance_branch: false
       manifest_directory: ./examples/noble-suite
       package_directory: ./examples/noble-suite
+      artifact_check_command: node tools/test-dist.js "$PACKAGE_TARBALL" examples/noble-suite
       prepare_command: npm clean-install && node --run build
       tagged_release: false
