@@ -9,7 +9,8 @@ jobs:
   release:
     permissions:
       actions: read
-      contents: read
+      contents: write
+      discussions: write
       id-token: write
     uses: panva/.github/.github/workflows/npm-release.yml@main
     with:
