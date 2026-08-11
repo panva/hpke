@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.4](https://github.com/panva/hpke/compare/v1.1.3...v1.1.4) (2026-08-11)
+
+### Documentation
+
+* render API indexes as tables ([8c4c53e](https://github.com/panva/hpke/commit/8c4c53eae3e795ff115ca2f3ee7921799c9737b9))
+* update references ([3d4ba10](https://github.com/panva/hpke/commit/3d4ba1022751bc9309c7c75e91e47d788073c145))
+
+### Refactor
+
+* **types:** preserve concrete KEM key types ([218318f](https://github.com/panva/hpke/commit/218318f314d57a08056b9f8bc51d2f7c198d1c13))
 ## [1.1.3](https://github.com/panva/hpke/compare/v1.1.2...v1.1.3) (2026-06-25)
 
 
