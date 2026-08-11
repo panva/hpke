@@ -7,7 +7,42 @@ on:
     tags: ['v1.[0-9]+.[0-9]+']
 
 jobs:
+  noble-changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+      expected_result: ${{ steps.detect.outputs.expected_result }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 2
+      - id: detect
+        name: Detect noble package version change
+        run: |
+          root_version=$(jq -er '.version' package.json)
+          noble_version=$(jq -er '.version' examples/noble-suite/package.json)
+          previous_noble_version=$(git show HEAD^:examples/noble-suite/package.json | jq -er '.version')
+
+          if [ "$GITHUB_REF_NAME" != "v$root_version" ]; then
+            echo "release tag $GITHUB_REF_NAME does not match hpke@$root_version" >&2
+            exit 1
+          fi
+
+          if [ "$noble_version" = "$previous_noble_version" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "expected_result=skipped" >> "$GITHUB_OUTPUT"
+          elif [ "$noble_version" = "$root_version" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "expected_result=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "@panva/hpke-noble changed from $previous_noble_version to $noble_version, expected $root_version" >&2
+            exit 1
+          fi
+
   release:
+    needs: noble-changes
     permissions:
       actions: read
       contents: write
@@ -19,8 +54,47 @@ jobs:
       cleanup_paths: '["index.js","index.d.ts","index.d.ts.map"]'
       prepare_command: npm clean-install && node --run build && git diff --exit-code
 
+  release-noble:
+    needs:
+      - noble-changes
+      - release
+    if: ${{ needs.noble-changes.outputs.changed == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: write
+      checks: read
+    steps:
+      - name: Trigger and wait for @panva/hpke-noble release
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run_id=$(
+            gh api --method POST \
+              --header "X-GitHub-Api-Version: 2026-03-10" \
+              "repos/$GITHUB_REPOSITORY/actions/workflows/release-noble.yml/dispatches" \
+              --raw-field ref="$GITHUB_REF_NAME" \
+              --jq '.workflow_run_id'
+          )
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "workflow dispatch did not return a run ID" >&2
+            exit 1
+          fi
+          gh run watch "$run_id" --compact --exit-status
+
   deploy:
-    needs: release
+    needs:
+      - noble-changes
+      - release
+      - release-noble
+    if: >-
+      ${{
+        !cancelled() &&
+        needs.noble-changes.result == 'success' &&
+        needs.release.result == 'success' &&
+        needs.release-noble.result == needs.noble-changes.outputs.expected_result
+      }}
     permissions:
       contents: read
       pages: write
