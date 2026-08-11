@@ -10,6 +10,8 @@ import { tmpdir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { noblePackageDrift } from './sync-noble-version.js'
+
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 
@@ -62,12 +64,22 @@ function manifest(directory) {
 
 function checkPackageVersions() {
   const hpke = manifest(root)
-  const noble = manifest(join(root, 'examples/noble-suite'))
-  if (hpke.version !== noble.version) {
+  const nobleDirectory = join(root, 'examples/noble-suite')
+  const noble = manifest(nobleDirectory)
+  if (hpke.version === noble.version) return
+
+  const drift = noblePackageDrift({ directory: nobleDirectory })
+  if (drift.changed) {
     throw new Error(
-      `package versions differ: ${hpke.name}@${hpke.version} and ${noble.name}@${noble.version}`,
+      `package versions differ: ${hpke.name}@${hpke.version} and ${noble.name}@${noble.version}. ` +
+        `${noble.name} also differs from its published ${noble.version} artifact in ` +
+        drift.changes.join(', '),
     )
   }
+  console.log(
+    `validated ${hpke.name}@${hpke.version} as a core-only release; ` +
+      `${noble.name}@${noble.version} is unchanged`,
+  )
 }
 
 function createTarball(directory, destination) {
@@ -181,17 +193,15 @@ const [suppliedTarball, suppliedManifestDirectory, ...extraArguments] = process.
 if (extraArguments.length !== 0 || (suppliedManifestDirectory !== undefined && !suppliedTarball)) {
   throw new Error('expected a package tarball followed by its manifest directory')
 }
+const resolvedManifestDirectory = resolve(root, suppliedManifestDirectory ?? '.')
 
 const staging = mkdtempSync(join(tmpdir(), 'hpke-dist-'))
 try {
-  checkPackageVersions()
   if (suppliedTarball) {
-    validateTarball(
-      resolve(root, suppliedTarball),
-      resolve(root, suppliedManifestDirectory ?? '.'),
-      staging,
-      true,
-    )
+    // Pending noble changes are valid during development; enforce the version decision only for
+    // the root release artifact.
+    if (resolvedManifestDirectory === root) checkPackageVersions()
+    validateTarball(resolve(root, suppliedTarball), resolvedManifestDirectory, staging, true)
   } else {
     run(npm, ['run', 'build'])
     for (const configuration of configurations.values()) {
