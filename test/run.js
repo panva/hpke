@@ -101,13 +101,22 @@ const WEBCRYPTO_USABLE_CHECKS = {
     return supports('generateKey', 'X448') || globalThis.process?.release?.lts === 'Jod'
   },
   KEM_ML_KEM_512() {
-    return supports('generateKey', 'ML-KEM-512')
+    return supportsAll(
+      ['digest', { name: 'cSHAKE256', outputLength: 512 }],
+      ['generateKey', 'ML-KEM-512'],
+    )
   },
   KEM_ML_KEM_768() {
-    return supports('generateKey', 'ML-KEM-768')
+    return supportsAll(
+      ['digest', { name: 'cSHAKE256', outputLength: 512 }],
+      ['generateKey', 'ML-KEM-768'],
+    )
   },
   KEM_ML_KEM_1024() {
-    return supports('generateKey', 'ML-KEM-1024')
+    return supportsAll(
+      ['digest', { name: 'cSHAKE256', outputLength: 512 }],
+      ['generateKey', 'ML-KEM-1024'],
+    )
   },
   KEM_MLKEM768_X25519() {
     return supportsHybridKem('ML-KEM-768', 'X25519')
