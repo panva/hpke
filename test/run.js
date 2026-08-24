@@ -332,6 +332,7 @@ export async function runAlgorithmTests({
 
   // Baselines — well-supported algorithms paired with the component under test
   const baselineKEM = KEMS.find((k) => k.name === 'KEM_DHKEM_P256_HKDF_SHA256')
+  const fallbackKEM = NOBLE_KEMS.find((k) => k.name === 'KEM_DHKEM_P256_HKDF_SHA256')
   const baselineKDF = KDFS.find((k) => k.name === 'KDF_HKDF_SHA256')
   const baselineAEAD = AEADS.find((a) => a.name === 'AEAD_AES_128_GCM')
 
@@ -477,11 +478,37 @@ export async function runAlgorithmTests({
     )
   })
   const otherTests = tests.filter((t) => !priorityTests.includes(t))
+  const baselineKEMTest = priorityTests.find(
+    (t) => t.testingComponent === 'kem' && t.kem === baselineKEM,
+  )
+  const fallbackKEMTest = priorityTests.find(
+    (t) => t.testingComponent === 'kem' && t.kem === fallbackKEM,
+  )
+  const baselineKEMTests = [baselineKEMTest, fallbackKEMTest].filter(Boolean)
+  const remainingPriorityTests = priorityTests.filter((t) => !baselineKEMTests.includes(t))
 
-  for (const test of priorityTests) {
+  for (const test of baselineKEMTests) {
     await runTest(test)
     if (yieldToEventLoop) await new Promise((resolve) => setTimeout(resolve, 10))
   }
+
+  if (baselineKEMTest?.status === 'failed' && fallbackKEMTest?.status === 'passed') {
+    for (const pending of tests) {
+      if (
+        pending.status === 'pending' &&
+        (pending.testingComponent === 'kdf' || pending.testingComponent === 'aead') &&
+        pending.kem === baselineKEM
+      ) {
+        pending.kem = fallbackKEM
+      }
+    }
+  }
+
+  for (const test of remainingPriorityTests) {
+    await runTest(test)
+    if (yieldToEventLoop) await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+
   for (const test of otherTests) {
     await runTest(test)
     if (yieldToEventLoop) await new Promise((resolve) => setTimeout(resolve, 10))

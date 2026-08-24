@@ -51,6 +51,7 @@
     "test:deno": "deno test --no-check --allow-read test/*.ts",
     "test:dist": "node tools/test-dist.js",
     "test:docs": "./check-examples.sh",
+    "test:llrt": "./test/.llrt.sh",
     "test:workerd": "./test/.workerd.sh",
     "typecheck:types": "tsc -p test-d && tsc -p test-d/tsconfig.node.json && tsc -p test-d/tsconfig.fallback.json"
   },

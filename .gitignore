@@ -121,6 +121,7 @@ dist-browser-tests
 
 .npmrc
 test/.workerd.capnp
+test/run-llrt.bundle.js
 test/run-workerd.bundle.js
 *.bak
 index.js
