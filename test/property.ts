@@ -32,7 +32,7 @@ test('Seal and Open preserve arbitrary plaintext, AAD, and info', async () => {
       })
 
       assert.deepEqual(
-        await suite.Open(recipient.privateKey, encapsulatedSecret, ciphertext, { aad, info }),
+        await suite.Open(recipient, encapsulatedSecret, ciphertext, { aad, info }),
         plaintext,
       )
     }),
@@ -59,18 +59,18 @@ test('Open rejects modified ciphertext, AAD, and info', async () => {
         tampered[position % tampered.byteLength]! ^= 1 << (position % 8)
 
         await assert.rejects(
-          suite.Open(recipient.privateKey, encapsulatedSecret, tampered, { aad, info }),
+          suite.Open(recipient, encapsulatedSecret, tampered, { aad, info }),
           HPKE.OpenError,
         )
         await assert.rejects(
-          suite.Open(recipient.privateKey, encapsulatedSecret, ciphertext, {
+          suite.Open(recipient, encapsulatedSecret, ciphertext, {
             aad: different(aad),
             info,
           }),
           HPKE.OpenError,
         )
         await assert.rejects(
-          suite.Open(recipient.privateKey, encapsulatedSecret, ciphertext, {
+          suite.Open(recipient, encapsulatedSecret, ciphertext, {
             aad,
             info: different(info),
           }),
@@ -94,7 +94,7 @@ test('sender and recipient contexts agree on exported secrets', async () => {
         const { encapsulatedSecret, ctx: sender } = await suite.SetupSender(recipient.publicKey, {
           info,
         })
-        const receiver = await suite.SetupRecipient(recipient.privateKey, encapsulatedSecret, {
+        const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, {
           info,
         })
 
@@ -120,7 +120,7 @@ test('context sequence round-trips arbitrary message streams', async () => {
       const { encapsulatedSecret, ctx: sender } = await suite.SetupSender(recipient.publicKey, {
         info,
       })
-      const receiver = await suite.SetupRecipient(recipient.privateKey, encapsulatedSecret, {
+      const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, {
         info,
       })
 
