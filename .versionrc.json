@@ -3,7 +3,7 @@
   "scripts": {
     "prerelease": "node --run format && node --run docs && git diff --exit-code && node --run test && node --run build",
     "postbump": "node tools/sync-noble-version.js && git add examples/noble-suite/package.json index.js index.d.ts index.d.ts.map -f",
-    "postchangelog": "sed -i '' -e 's/### \\[/## [/g' CHANGELOG.md"
+    "postchangelog": "node ./tools/postchangelog.cjs"
   },
   "types": [
     { "type": "feat", "section": "Features", "hidden": false },

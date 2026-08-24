@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file. See [commit
 ### Refactor
 
 * **types:** preserve concrete KEM key types ([218318f](https://github.com/panva/hpke/commit/218318f314d57a08056b9f8bc51d2f7c198d1c13))
+
 ## [1.1.3](https://github.com/panva/hpke/compare/v1.1.2...v1.1.3) (2026-06-25)
 
 
