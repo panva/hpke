@@ -63,17 +63,11 @@ test('Open rejects modified ciphertext, AAD, and info', async () => {
           HPKE.OpenError,
         )
         await assert.rejects(
-          suite.Open(recipient, encapsulatedSecret, ciphertext, {
-            aad: different(aad),
-            info,
-          }),
+          suite.Open(recipient, encapsulatedSecret, ciphertext, { aad: different(aad), info }),
           HPKE.OpenError,
         )
         await assert.rejects(
-          suite.Open(recipient, encapsulatedSecret, ciphertext, {
-            aad,
-            info: different(info),
-          }),
+          suite.Open(recipient, encapsulatedSecret, ciphertext, { aad, info: different(info) }),
           HPKE.OpenError,
         )
       },
@@ -94,9 +88,7 @@ test('sender and recipient contexts agree on exported secrets', async () => {
         const { encapsulatedSecret, ctx: sender } = await suite.SetupSender(recipient.publicKey, {
           info,
         })
-        const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, {
-          info,
-        })
+        const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, { info })
 
         assert.deepEqual(
           await receiver.Export(exporterContext, length),
@@ -120,9 +112,7 @@ test('context sequence round-trips arbitrary message streams', async () => {
       const { encapsulatedSecret, ctx: sender } = await suite.SetupSender(recipient.publicKey, {
         info,
       })
-      const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, {
-        info,
-      })
+      const receiver = await suite.SetupRecipient(recipient, encapsulatedSecret, { info })
 
       for (const { plaintext, aad } of values) {
         assert.deepEqual(await receiver.Open(await sender.Seal(plaintext, aad), aad), plaintext)
