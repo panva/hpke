@@ -45,6 +45,8 @@ jobs:
     needs: noble-changes
     permissions:
       actions: read
+      attestations: write
+      artifact-metadata: write
       contents: write
       discussions: write
       id-token: write
