@@ -18,20 +18,41 @@ jobs:
     env:
       LLRT_VERSION: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Checkout LLRT source
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Setup node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+          cache: 'npm'
+      - run: npm clean-install
+      - name: Checkout LLRT
         if: env.LLRT_VERSION == 'main'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: awslabs/llrt
           ref: main
-          path: llrt-source
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+          path: .llrt
+      - name: Setup Rust
+        if: env.LLRT_VERSION == 'main'
+        uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1.17.0
         with:
-          node-version: lts/*
-          cache: 'npm'
-          check-latest: true
-      - run: npm clean-install
+          toolchain: nightly
+          target: x86_64-unknown-linux-musl
+          components: rust-src
+          rust-src-dir: .llrt
+          cache-bin: false
+          cache-on-failure: true
+          rustflags: ''
+      - name: Build LLRT
+        if: env.LLRT_VERSION == 'main'
+        working-directory: .llrt
+        run: |
+          corepack enable
+          yarn --frozen-lockfile
+          sudo snap install zig --classic --beta
+          make llrt-linux-x64.zip
+          cp llrt-linux-x64.zip "$RUNNER_TEMP"
       - name: Download LLRT
         if: env.LLRT_VERSION != 'main'
         env:
@@ -46,21 +67,12 @@ jobs:
               --pattern llrt-linux-x64.zip \
               --dir "$RUNNER_TEMP"
           fi
+      - name: Install LLRT
+        run: |
           mkdir "$RUNNER_TEMP/llrt"
           unzip -q "$RUNNER_TEMP/llrt-linux-x64.zip" -d "$RUNNER_TEMP/llrt"
           chmod +x "$RUNNER_TEMP/llrt/llrt"
-      - name: Build LLRT from source
-        if: env.LLRT_VERSION == 'main'
-        working-directory: llrt-source
-        run: |
-          corepack enable
-          yarn --frozen-lockfile
-          sudo snap install zig --classic --beta
-          make toolchain
-          make build
-          mkdir "$RUNNER_TEMP/llrt"
-          cp target/x86_64-unknown-linux-musl/release/llrt "$RUNNER_TEMP/llrt/llrt"
-          chmod +x "$RUNNER_TEMP/llrt/llrt"
-      - run: node --run test:llrt
+      - name: Test LLRT
+        run: node --run test:llrt
         env:
           LLRT_BIN: ${{ runner.temp }}/llrt/llrt
