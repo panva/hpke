@@ -108,10 +108,15 @@ jobs:
           node-version: lts/*
           cache: 'npm'
           check-latest: true
+          cache-dependency-path: |
+            package-lock.json
+            test/workerd/package-lock.json
       - run: npm clean-install
-      - run: npm install --global workerd
-      - run: npm link workerd
+      - run: npm clean-install --prefix test/workerd
       - run: node --run test:workerd
+        env:
+          WORKERD_BIN: ${{ github.workspace }}/test/workerd/node_modules/.bin/workerd
+          WORKERD_MODULE: ${{ github.workspace }}/test/workerd/node_modules/workerd
 
   browsers:
     needs: build
@@ -128,17 +133,16 @@ jobs:
           cache: 'npm'
           check-latest: true
       - run: npm clean-install
-      - run: npm upgrade playwright
       - name: get playwright version
         id: playwright-version
         run:
-          echo "version=$(npm list playwright --json | jq -r '.dependencies.playwright.version')" >>
-          $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./node_modules/playwright/package.json').version")" >>
+          "$GITHUB_OUTPUT"
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/Library/Caches/ms-playwright
           key: playwright-${{ runner.os }}-${{ steps.playwright-version.outputs.version }}
-      - run: npx playwright install --only-shell chromium firefox webkit
+      - run: ./node_modules/.bin/playwright install --only-shell chromium firefox webkit
       - run: node --run test:browsers
         env:
           BROWSER: ${{ matrix.browser }}
