@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: LLRT release tag or latest
+        description: LLRT release tag, latest, or main
         required: true
         default: latest
         type: string
@@ -19,6 +19,13 @@ jobs:
       LLRT_VERSION: ${{ inputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout LLRT source
+        if: env.LLRT_VERSION == 'main'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: awslabs/llrt
+          ref: main
+          path: llrt-source
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: lts/*
@@ -26,6 +33,7 @@ jobs:
           check-latest: true
       - run: npm clean-install
       - name: Download LLRT
+        if: env.LLRT_VERSION != 'main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -40,6 +48,18 @@ jobs:
           fi
           mkdir "$RUNNER_TEMP/llrt"
           unzip -q "$RUNNER_TEMP/llrt-linux-x64.zip" -d "$RUNNER_TEMP/llrt"
+          chmod +x "$RUNNER_TEMP/llrt/llrt"
+      - name: Build LLRT from source
+        if: env.LLRT_VERSION == 'main'
+        working-directory: llrt-source
+        run: |
+          corepack enable
+          yarn --frozen-lockfile
+          sudo snap install zig --classic --beta
+          make toolchain
+          make build
+          mkdir "$RUNNER_TEMP/llrt"
+          cp target/x86_64-unknown-linux-musl/release/llrt "$RUNNER_TEMP/llrt/llrt"
           chmod +x "$RUNNER_TEMP/llrt/llrt"
       - run: node --run test:llrt
         env:
