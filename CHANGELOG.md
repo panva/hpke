@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.5](https://github.com/panva/hpke/compare/v1.1.4...v1.1.5) (2026-09-03)
+
+### Refactor
+
+* detect and wire PQ/T Hybrids through the Hybrid KEM algorithms ([b8f7c2a](https://github.com/panva/hpke/commit/b8f7c2a2009a9ee36640aed2b955254b2038b090))
+
 ## [1.1.4](https://github.com/panva/hpke/compare/v1.1.3...v1.1.4) (2026-08-11)
 
 ### Documentation
