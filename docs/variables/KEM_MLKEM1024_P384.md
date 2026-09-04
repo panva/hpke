@@ -7,14 +7,15 @@ Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
 Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
 
 - MLKEM1024-P384 key encapsulation
-- SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+- SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation
 
 Or:
 
 - ML-KEM-1024 key encapsulation
 - ECDH with P-384 curve
 - SHA3-256 digest
-- SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
+- SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation and
+  composite-key seed expansion
 
 This is a factory function that must be passed to the [CipherSuite](../classes/CipherSuite.md) constructor.
 

@@ -4234,14 +4234,15 @@ function createCompositeHybridKEM(parameters: CompositeHybridKEMParams): Composi
  * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
  *
  * - MLKEM768-X25519 key encapsulation
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation
  *
  * Or:
  *
  * - ML-KEM-768 key encapsulation
  * - X25519 key agreement
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation and
+ *   composite-key seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
@@ -4293,14 +4294,15 @@ export const KEM_MLKEM768_X25519: KEMFactory = function (): CompositeHybridKEM |
  * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
  *
  * - MLKEM768-P256 key encapsulation
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation
  *
  * Or:
  *
  * - ML-KEM-768 key encapsulation
  * - ECDH with P-256 curve
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation and
+ *   composite-key seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
@@ -4351,14 +4353,15 @@ export const KEM_MLKEM768_P256: KEMFactory = function (): CompositeHybridKEM | D
  * Depends on one of the following Web Cryptography algorithm sets being supported in the runtime:
  *
  * - MLKEM1024-P384 key encapsulation
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient for key derivation
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation
  *
  * Or:
  *
  * - ML-KEM-1024 key encapsulation
  * - ECDH with P-384 curve
  * - SHA3-256 digest
- * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for seed expansion
+ * - SHAKE256 (cSHAKE256 without any parameters) digest on the recipient side for key derivation and
+ *   composite-key seed expansion
  *
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
