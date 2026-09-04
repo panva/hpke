@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.6](https://github.com/panva/hpke/compare/v1.1.5...v1.1.6) (2026-09-04)
+
+### Documentation
+
+* align hybrid KEM SHAKE256 requirements ([d102eb6](https://github.com/panva/hpke/commit/d102eb620345deff7446de0fd5979ef98bb9122e))
+
+### Refactor
+
+* delegate EC public key recovery to Web Crypto ([5df54f5](https://github.com/panva/hpke/commit/5df54f58a545231878274622e24f1e0b8e899dd8))
+
 ## [1.1.5](https://github.com/panva/hpke/compare/v1.1.4...v1.1.5) (2026-09-03)
 
 ### Refactor
