@@ -40,7 +40,7 @@ The threat model does not include attackers that control the local application, 
 
 #### Underlying Cryptographic Primitives
 
-This library trusts that the Web Cryptography implementations provided by the runtime are correct and secure. The library delegates cryptographic primitive operations (key generation, encryption, decryption, key agreement, KEM encapsulation and decapsulation, hashing, and key derivation) to the runtime's Web Cryptography implementation and does not attempt to validate or verify the correctness of these underlying primitives during runtime.
+This library trusts that the Web Cryptography implementations provided by the runtime are correct and secure. The library delegates cryptographic primitive operations (key generation, public-key recovery, signature generation and verification, encryption, decryption, key agreement, KEM encapsulation and decapsulation, hashing, and key derivation) to the runtime's Web Cryptography implementation and does not attempt to validate or verify the correctness of these underlying primitives during runtime.
 
 This library also trusts the runtime's cryptographically secure random number generator. Bad, predictable, repeated, or compromised ephemeral randomness can compromise HPKE confidentiality and can cause AEAD key/nonce reuse.
 

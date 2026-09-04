@@ -121,6 +121,15 @@ async function runBrowserTests({ type: browserType, name: browserName, channel, 
 
       const testResults = await waitForTestsToComplete(page, browserName)
 
+      if (testUrl.searchParams.has('native')) {
+        const checked = await page.evaluate(async () => {
+          const HPKE = await import('/index.js')
+          const { checkNistKeys } = await import('/test/nist-keys.js')
+          return await checkNistKeys(HPKE)
+        })
+        console.log(`    NIST private key recovery: ${checked} reference keys passed`)
+      }
+
       console.log(`    Total tests: ${testResults.total}`)
       console.log(`    Passed: ${testResults.passed}`)
       console.log(`    Failed: ${testResults.failed}`)

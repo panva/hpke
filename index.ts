@@ -1519,22 +1519,23 @@ export function encode(string: string): Uint8Array {
 // Each is a freshly-allocated Uint8Array held as a constant to avoid repeating
 // the per-call `encode()` validation+allocation loop. These are only ever read
 // (and copied into concat() outputs), never mutated.
-const L_HPKE_v1 = encode('HPKE-v1')
-const L_HPKE = encode('HPKE')
-const L_KEM = encode('KEM')
-const L_sec = encode('sec')
-const L_secret = encode('secret')
-const L_key = encode('key')
-const L_base_nonce = encode('base_nonce')
-const L_exp = encode('exp')
-const L_psk_id_hash = encode('psk_id_hash')
-const L_info_hash = encode('info_hash')
-const L_dkp_prk = encode('dkp_prk')
-const L_candidate = encode('candidate')
-const L_eae_prk = encode('eae_prk')
-const L_shared_secret = encode('shared_secret')
-const L_sk = encode('sk')
-const L_DeriveKeyPair = encode('DeriveKeyPair')
+const L_HPKE_v1 = /* @__PURE__ */ encode('HPKE-v1')
+const L_HPKE = /* @__PURE__ */ encode('HPKE')
+const L_KEM = /* @__PURE__ */ encode('KEM')
+const L_sec = /* @__PURE__ */ encode('sec')
+const L_secret = /* @__PURE__ */ encode('secret')
+const L_key = /* @__PURE__ */ encode('key')
+const L_base_nonce = /* @__PURE__ */ encode('base_nonce')
+const L_exp = /* @__PURE__ */ encode('exp')
+const L_psk_id_hash = /* @__PURE__ */ encode('psk_id_hash')
+const L_info_hash = /* @__PURE__ */ encode('info_hash')
+const L_dkp_prk = /* @__PURE__ */ encode('dkp_prk')
+const L_candidate = /* @__PURE__ */ encode('candidate')
+const L_eae_prk = /* @__PURE__ */ encode('eae_prk')
+const L_shared_secret = /* @__PURE__ */ encode('shared_secret')
+const L_sk = /* @__PURE__ */ encode('sk')
+const L_public_key_recovery = /* @__PURE__ */ encode('HPKE public key recovery')
+const L_DeriveKeyPair = /* @__PURE__ */ encode('DeriveKeyPair')
 
 function lengthPrefixed(x: Uint8Array): Uint8Array {
   return concat(I2OSP(x.byteLength, 2), x)
@@ -2976,148 +2977,116 @@ async function CurveKeyFromD(
 // KEM (Key Encapsulation Mechanism) - DHKEM NIST Curve Implementations
 // ============================================================================
 
-interface ECPoint {
-  x: bigint
-  y: bigint
-}
-
-// Jacobian projective coordinates: (X, Y, Z) represents affine (X/Z², Y/Z³)
-// Uses wNAF scalar multiplication - only one modular inverse at the very end.
-type JP = [bigint, bigint, bigint] // [X, Y, Z]
-
-// Non-negative modular reduction
-function mod(a: bigint, p: bigint): bigint {
-  const r = a % p
-  return r < 0n ? r + p : r
-}
-
-// Modular inverse using Extended Euclidean Algorithm
-function modInverse(a: bigint, m: bigint): bigint {
-  a = ((a % m) + m) % m
-  let [t, newT] = [0n, 1n]
-  let [r, newR] = [m, a]
-
-  while (newR !== 0n) {
-    const quotient = r / newR
-    ;[t, newT] = [newT, t - quotient * newT]
-    ;[r, newR] = [newR, r - quotient * newR]
-  }
-
-  if (r > 1n) throw new Error('a is not invertible')
-  if (t < 0n) t = t + m
-  return t
-}
-
-function jDouble(p: JP, P: bigint, a: bigint): JP {
-  const [X, Y, Z] = p
-  if (Y === 0n) return [1n, 1n, 0n]
-  const Y2 = mod(Y * Y, P)
-  const S = mod(4n * X * Y2, P)
-  const Z2 = mod(Z * Z, P)
-  const M = mod(3n * X * X + a * Z2 * Z2, P)
-  const X3 = mod(M * M - 2n * S, P)
-  return [X3, mod(M * (S - X3) - 8n * Y2 * Y2, P), mod(2n * Y * Z, P)]
-}
-
-function jAdd(p: JP, q: JP, P: bigint, a: bigint): JP {
-  if (p[2] === 0n) return q
-  if (q[2] === 0n) return p
-  const pZ2 = mod(p[2] * p[2], P)
-  const qZ2 = mod(q[2] * q[2], P)
-  const U1 = mod(p[0] * qZ2, P)
-  const U2 = mod(q[0] * pZ2, P)
-  const S1 = mod(p[1] * qZ2 * q[2], P)
-  const S2 = mod(q[1] * pZ2 * p[2], P)
-  if (U1 === U2) return S1 === S2 ? jDouble(p, P, a) : [1n, 1n, 0n]
-  const H = mod(U2 - U1, P)
-  const R = mod(S2 - S1, P)
-  const H2 = mod(H * H, P)
-  const H3 = mod(H * H2, P)
-  const U1H2 = mod(U1 * H2, P)
-  const X3 = mod(R * R - H3 - 2n * U1H2, P)
-  return [X3, mod(R * (U1H2 - X3) - S1 * H3, P), mod(H * p[2] * q[2], P)]
-}
-
-// Scalar multiplication using wNAF with Jacobian coordinates: k * G
-//
-// This is used to compute the public key from a private scalar for NIST curves so that
-// the private key can be imported via JWK. Importing via PKCS8 (which would avoid the need
-// for computing the public key) is not viable cross-browser:
-// - WebKit: https://bugs.webkit.org/show_bug.cgi?id=302707
-// - Firefox: https://bugzilla.mozilla.org/show_bug.cgi?id=2000795
-function scalarMult(k: bigint, G: ECPoint, prime: bigint, a: bigint, order: bigint): ECPoint {
-  if (k === 0n || k >= order) {
-    throw new Error('Invalid scalar')
-  }
-
-  // Precompute odd multiples: 1G, 3G, 5G, 7G, 9G, 11G, 13G, 15G
-  const precomp: JP[] = new Array(8)
-  const Gj: JP = [G.x, G.y, 1n]
-  const G2 = jDouble(Gj, prime, a)
-  precomp[0] = Gj
-  for (let i = 1; i < 8; i++) precomp[i] = jAdd(precomp[i - 1]!, G2, prime, a)
-
-  // wNAF encoding (w=4)
-  const naf: number[] = []
-  let s = k
-  while (s > 0n) {
-    if (s & 1n) {
-      let d = Number(s & 15n)
-      if (d >= 8) d -= 16
-      naf.push(d)
-      s -= BigInt(d)
-    } else {
-      naf.push(0)
-    }
-    s >>= 1n
-  }
-
-  let r: JP = [1n, 1n, 0n]
-  for (let i = naf.length - 1; i >= 0; i--) {
-    r = jDouble(r, prime, a)
-    const d = naf[i]!
-    if (d > 0) r = jAdd(r, precomp[(d - 1) >> 1]!, prime, a)
-    else if (d < 0) {
-      const t = precomp[(-d - 1) >> 1]!
-      r = jAdd(r, [t[0], mod(-t[1], prime), t[2]], prime, a)
-    }
-  }
-
-  const zI = modInverse(r[2], prime)
-  const zI2 = mod(zI * zI, prime)
-  return { x: mod(r[0] * zI2, prime), y: mod(r[1] * zI2 * zI, prime) }
-}
-
 interface NistCurveConfig {
   order: bigint
   bitmask: number
-  prime: bigint
   Gx: bigint
   Gy: bigint
+  pkcs8: Uint8Array
+  spki: Uint8Array
   algorithm: EcKeyAlgorithm
   Npk: number
   Nsk: number
 }
 
-// Helper function to compute public key and create JWK for NIST curves
-function getPrivateJwkNist(DHKEM: NistCurveConfig, d: bigint): JsonWebKey {
-  // Perform scalar multiplication: publicKey = d * G
-  const G: ECPoint = { x: DHKEM.Gx, y: DHKEM.Gy }
-  const publicPoint = scalarMult(d, G, DHKEM.prime, DHKEM.prime - 3n, DHKEM.order)
-
-  const coordSize = (DHKEM.Npk - 1) / 2
-  const xBytes = bigIntToUint8Array(publicPoint.x, coordSize)
-  const yBytes = bigIntToUint8Array(publicPoint.y, coordSize)
-  const dBytes = bigIntToUint8Array(d, DHKEM.Nsk)
-
-  // Create JWK for private key import (browsers need x, y, d for private key import)
-  return {
-    kty: 'EC',
-    crv: DHKEM.algorithm.namedCurve,
-    x: toB64u(xBytes),
-    y: toB64u(yBytes),
-    d: toB64u(dBytes),
+async function importKeyNist(
+  curve: NistCurveConfig,
+  key: Uint8Array,
+  name: string,
+  extractable: boolean,
+  includePublicKey: boolean,
+): Promise<{ privateKey: CryptoKey; publicKey?: CryptoKey }> {
+  const d = OS2IP(key)
+  if (d === 0n || d >= curve.order) {
+    throw new Error('Invalid scalar')
   }
+
+  // Copy before awaiting, including when key is a Node.js Buffer.
+  const pkcs8 = concat(curve.pkcs8, key)
+  return await subtle(async (c) => {
+    async function fromJwk(jwk: JsonWebKey, privateKey?: CryptoKey) {
+      privateKey ??= await c.importKey('jwk', jwk, curve.algorithm, extractable, ['deriveBits'])
+      delete jwk.d
+      return {
+        privateKey,
+        publicKey: includePublicKey
+          ? await c.importKey('jwk', jwk, curve.algorithm, true, [])
+          : undefined,
+      }
+    }
+
+    let privateKey: CryptoKey | undefined
+    // @ts-expect-error
+    const nativePublicKey = typeof c.getPublicKey === 'function'
+    try {
+      privateKey = await c.importKey(
+        'pkcs8',
+        pkcs8 as BufferSource,
+        curve.algorithm,
+        nativePublicKey ? extractable : true,
+        ['deriveBits'],
+      )
+      if (nativePublicKey) {
+        // Also establish that scalar-only import recovered a usable public point.
+        // @ts-expect-error
+        const recovered = await c.getPublicKey(privateKey, [])
+        return { privateKey, publicKey: includePublicKey ? recovered : undefined }
+      }
+      const { x, y, d } = await c.exportKey('jwk', privateKey)
+      return fromJwk(
+        { kty: 'EC', crv: curve.algorithm.namedCurve, x, y, d },
+        extractable ? privateKey : undefined,
+      )
+    } catch (cause) {
+      // WebKit requires public coordinates on import; Firefox cannot export them
+      // from a scalar-only PKCS8 key. Other errors must not trigger recovery.
+      // https://bugs.webkit.org/show_bug.cgi?id=302707
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=2000795
+      if (
+        !(cause instanceof DOMException) ||
+        (cause.name !== 'DataError' && cause.name !== 'OperationError')
+      ) {
+        throw cause
+      }
+    }
+
+    const generator: JsonWebKey = {
+      kty: 'EC',
+      crv: curve.algorithm.namedCurve,
+      x: toB64u(bigIntToUint8Array(curve.Gx, curve.Nsk)),
+      y: toB64u(bigIntToUint8Array(curve.Gy, curve.Nsk)),
+    }
+    const jwk = { ...generator, d: toB64u(slice(pkcs8, curve.pkcs8.length)) }
+    const signingAlgorithm = { name: 'ECDSA', namedCurve: curve.algorithm.namedCurve }
+    const signingKey = privateKey
+      ? await c.importKey('pkcs8', pkcs8 as BufferSource, signingAlgorithm, false, ['sign'])
+      : await c.importKey('jwk', jwk, signingAlgorithm, false, ['sign'])
+    privateKey ??= await c.importKey('jwk', jwk, curve.algorithm, false, ['deriveBits'])
+
+    // ECDH(d, G) gives x(dG). WebKit preserves the supplied generator coordinates
+    // on export, so the temporary private keys must never escape this function.
+    const generatorKey = await c.importKey('jwk', generator, curve.algorithm, true, [])
+    const x = new Uint8Array(
+      await c.deriveBits({ name: 'ECDH', public: generatorKey }, privateKey, curve.Nsk << 3),
+    )
+
+    // Compressed SPKI import recovers each possible y. An ECDSA signature selects
+    // the point corresponding to d, without performing EC arithmetic in JavaScript.
+    const message = L_public_key_recovery as BufferSource
+    const signatureAlgorithm = { name: 'ECDSA', hash: 'SHA-256' }
+    const signature = await c.sign(signatureAlgorithm, signingKey, message)
+    for (const prefix of [0x02, 0x03]) {
+      const spki = concat(curve.spki, Uint8Array.of(prefix), x)
+      const candidate = await c.importKey('spki', spki as BufferSource, signingAlgorithm, true, [
+        'verify',
+      ])
+      if (await c.verify(signatureAlgorithm, candidate, signature, message)) {
+        const { x, y } = await c.exportKey('jwk', candidate)
+        return fromJwk({ kty: 'EC', crv: generator.crv, d: jwk.d, x, y })
+      }
+    }
+    throw new Error('Public key recovery failed')
+  }, name)
 }
 
 async function DeserializePrivateKeyNist(
@@ -3125,15 +3094,7 @@ async function DeserializePrivateKeyNist(
   key: Uint8Array,
   extractable: boolean,
 ) {
-  const d = OS2IP(key)
-  const jwk = getPrivateJwkNist(this, d)
-
-  const privateKey = await subtle(
-    (c) => c.importKey('jwk', jwk, this.algorithm, extractable, ['deriveBits']),
-    this.name,
-  )
-
-  return privateKey
+  return (await importKeyNist(this, key, this.name, extractable, false)).privateKey
 }
 
 /** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-7.1.3) */
@@ -3164,20 +3125,7 @@ async function GetKeyPairNist(
   extractable: boolean,
   name: string,
 ) {
-  const jwk = getPrivateJwkNist(curveConfig, OS2IP(sk))
-
-  const privateKey = await subtle(
-    (c) => c.importKey('jwk', jwk, curveConfig.algorithm, extractable, ['deriveBits']),
-    name,
-  )
-
-  delete jwk.d
-  const publicKey = await subtle(
-    (c) => c.importKey('jwk', jwk, curveConfig.algorithm, true, []),
-    name,
-  )
-
-  return { privateKey, publicKey }
+  return (await importKeyNist(curveConfig, sk, name, extractable, true)) as CryptoKeyPair
 }
 
 // ============================================================================
@@ -3200,7 +3148,8 @@ const P256: NistCurveConfig = {
   Nsk: 32,
   order: 0xffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551n,
   bitmask: 0xff,
-  prime: 0xffffffff00000001000000000000000000000000ffffffffffffffffffffffffn,
+  pkcs8: /* @__PURE__ */ Uint8Array.of(0x30, 0x41, 0x02, 0x01, 0x00, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x04, 0x27, 0x30, 0x25, 0x02, 0x01, 0x01, 0x04, 0x20), // prettier-ignore
+  spki: /* @__PURE__ */ Uint8Array.of(0x30, 0x39, 0x30, 0x13, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x03, 0x01, 0x07, 0x03, 0x22, 0x00), // prettier-ignore
   Gx: 0x6b17d1f2e12c4247f8bce6e563a440f277037d812deb33a0f4a13945d898c296n,
   Gy: 0x4fe342e2fe1a7f9b8ee7eb4a7c0f9e162bce33576b315ececbb6406837bf51f5n,
 }
@@ -3255,8 +3204,8 @@ const P384: NistCurveConfig = {
   order:
     0xffffffffffffffffffffffffffffffffffffffffffffffffc7634d81f4372ddf581a0db248b0a77aecec196accc52973n,
   bitmask: 0xff,
-  prime:
-    0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffeffffffff0000000000000000ffffffffn,
+  pkcs8: /* @__PURE__ */ Uint8Array.of(0x30, 0x4e, 0x02, 0x01, 0x00, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22, 0x04, 0x37, 0x30, 0x35, 0x02, 0x01, 0x01, 0x04, 0x30), // prettier-ignore
+  spki: /* @__PURE__ */ Uint8Array.of(0x30, 0x46, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x22, 0x03, 0x32, 0x00), // prettier-ignore
   Gx: 0xaa87ca22be8b05378eb1c71ef320ad746e1d3b628ba79b9859f741e082542a385502f25dbf55296c3a545e3872760ab7n,
   Gy: 0x3617de4a96262c6f5d9e98bf9292dc29f8f41dbd289a147ce9da3113b5f0b8c00a60b1ce1d7e819d7a431d7c90ea0e5fn,
 }
@@ -3311,8 +3260,8 @@ const P521: NistCurveConfig = {
   order:
     0x01fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffa51868783bf2f966b7fcc0148f709a5d03bb5c9b8899c47aebb6fb71e91386409n,
   bitmask: 0x01,
-  prime:
-    0x01ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn,
+  pkcs8: /* @__PURE__ */ Uint8Array.of(0x30, 0x60, 0x02, 0x01, 0x00, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23, 0x04, 0x49, 0x30, 0x47, 0x02, 0x01, 0x01, 0x04, 0x42), // prettier-ignore
+  spki: /* @__PURE__ */ Uint8Array.of(0x30, 0x58, 0x30, 0x10, 0x06, 0x07, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x02, 0x01, 0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23, 0x03, 0x44, 0x00), // prettier-ignore
   Gx: 0x00c6858e06b70404e9cd9e3ecb662395b4429c648139053fb521f828af606b4d3dbaa14b5e77efe75928fe1dc127a2ffa8de3348b3c1856a429bf97e7e31c2e5bd66n,
   Gy: 0x011839296a789a3bc0045c8a5fb42c7d1bd998f54449579b446817afbd17273e662c97ee72995ef42640c550b9013fad0761353c7086a272c24088be94769fd16650n,
 }
@@ -3853,7 +3802,7 @@ const InvalidInvocation = (_: typeof priv) => {
     throw new Error('invalid invocation')
   }
 }
-const priv = Symbol()
+const priv = /* @__PURE__ */ Symbol()
 class HybridKey implements Key {
   #algorithm: KeyAlgorithm
   #type: 'public' | 'private'

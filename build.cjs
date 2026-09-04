@@ -15,12 +15,14 @@ execSync('npx tsc -p ./examples/noble-suite', { stdio: 'inherit' })
 // ============================================================================
 
 // Transform TypeScript to JavaScript, stripping type annotations only
-let js = amaro.transformSync(fs.readFileSync('./index.ts'), { mode: 'strip-only' }).code
+const source = fs.readFileSync('./index.ts', 'utf8')
+let js = amaro.transformSync(source, { mode: 'strip-only' }).code
 
 fs.writeFileSync('index.js', js)
 const indexJsBefore = getFileSizes('index.js')
 
 js = cleanJavaScript(js)
+checkPureAnnotations(source, js)
 
 fs.writeFileSync('index.js', js)
 
@@ -70,7 +72,8 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
 {
   const inFile = './examples/noble-suite/index.ts'
   const outFile = './examples/noble-suite/index.js'
-  let js = amaro.transformSync(fs.readFileSync(inFile), { mode: 'strip-only' }).code
+  const source = fs.readFileSync(inFile, 'utf8')
+  let js = amaro.transformSync(source, { mode: 'strip-only' }).code
 
   // Rewrite import paths from '../../index.ts' to 'hpke'
   js = js.replace(/(['"])\.\.\/\.\.\/index\.ts\1/g, "'hpke'")
@@ -79,6 +82,7 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
   const nobleBefore = getFileSizes(outFile)
 
   js = cleanJavaScript(js)
+  checkPureAnnotations(source, js)
 
   fs.writeFileSync(outFile, js)
 
@@ -99,6 +103,14 @@ printSizes('index.d.ts', indexDtsBefore, indexDtsAfter)
 // ============================================================================
 // Utils
 // ============================================================================
+
+function checkPureAnnotations(source, output) {
+  // Both type stripping and comment cleanup must preserve bundler annotations.
+  const annotation = /\/\*\s*[@#]__PURE__\s*\*\//g
+  if ((source.match(annotation)?.length ?? 0) !== (output.match(annotation)?.length ?? 0)) {
+    throw new Error('Build must preserve PURE annotations')
+  }
+}
 
 function cleanJavaScript(code) {
   // Replace multi-line JSDoc comment blocks with equivalent blank lines to preserve line numbers

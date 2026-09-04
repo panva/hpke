@@ -785,7 +785,7 @@ const InvalidInvocation = (_: typeof priv) => {
     throw new Error('invalid invocation')
   }
 }
-const priv = Symbol()
+const priv = /* @__PURE__ */ Symbol()
 class NobleKey implements HPKE.Key {
   #type: 'public' | 'private'
   #extractable: boolean
