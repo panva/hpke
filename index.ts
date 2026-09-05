@@ -2370,14 +2370,34 @@ interface HKDF extends KDF {
 
 type KDF_BASE = Pick<KDF, 'Expand' | 'Extract' | 'Derive' | 'stages'>
 
-async function cacheValue<K extends object, V>(
-  cache: WeakMap<K, V>,
-  key: K,
-  init: () => Promise<V>,
-): Promise<V> {
-  const result = await init()
-  cache.set(key, result)
-  return result
+interface CryptoKeyCacheEntry {
+  bytes: Uint8Array
+  key: Promise<CryptoKey>
+}
+
+async function getCachedCryptoKey(
+  cache: WeakMap<Uint8Array, CryptoKeyCacheEntry>,
+  keyBytes: Uint8Array,
+  init: (bytes: Uint8Array) => Promise<CryptoKey>,
+): Promise<CryptoKey> {
+  const cached = cache.get(keyBytes)
+  if (
+    cached &&
+    cached.bytes.byteLength === keyBytes.byteLength &&
+    cached.bytes.every((byte, index) => byte === keyBytes[index])
+  ) {
+    return cached.key
+  }
+
+  const bytes = slice(keyBytes)
+  const entry = { bytes, key: init(bytes) }
+  cache.set(keyBytes, entry)
+  try {
+    return await entry.key
+  } catch (cause) {
+    if (cache.get(keyBytes) === entry) cache.delete(keyBytes)
+    throw cause
+  }
 }
 
 function HKDF_SHARED(): KDF_BASE {
@@ -2388,12 +2408,7 @@ function HKDF_SHARED(): KDF_BASE {
       this.name,
     )
   }
-  const cache = new WeakMap<Uint8Array, Promise<CryptoKey>>()
-  function importPrk(this: HKDF, prk: Uint8Array): Promise<CryptoKey> {
-    const key = importKey.call(this, prk as BufferSource)
-    cache.set(prk, key)
-    return key
-  }
+  const cache = new WeakMap<Uint8Array, CryptoKeyCacheEntry>()
   return {
     stages: 2,
     Derive: NotApplicable,
@@ -2414,7 +2429,9 @@ function HKDF_SHARED(): KDF_BASE {
         throw new Error('L must be <= 255*Nh')
       }
       const N = Math.ceil(L / this.Nh)
-      const key = await (cache.get(prk) ?? importPrk.call(this, prk))
+      const key = await getCachedCryptoKey(cache, prk, (bytes) =>
+        importKey.call(this, bytes as BufferSource),
+      )
 
       const T = new Uint8Array(N * this.Nh)
       let T_prev = new Uint8Array()
@@ -3635,7 +3652,7 @@ function AEAD_SHARED(P_MAX: number): AEAD_BASE {
   // stable Uint8Array, so crypto.subtle.importKey() would otherwise be called
   // on every Seal/Open. The WeakMap ensures the cache entry is reclaimed once
   // the underlying Uint8Array is unreachable.
-  const cache = new WeakMap<Uint8Array, CryptoKey>()
+  const cache = new WeakMap<Uint8Array, CryptoKeyCacheEntry>()
   async function importKey(this: WebCryptoAEAD, key: Uint8Array): Promise<CryptoKey> {
     return await subtle(
       (c) =>
@@ -3651,8 +3668,7 @@ function AEAD_SHARED(P_MAX: number): AEAD_BASE {
       if (pt.byteLength > P_MAX) {
         throw new RangeError('"pt" exceeds P_MAX')
       }
-      const cryptoKey =
-        cache.get(key) ?? (await cacheValue(cache, key, () => importKey.call(this, key)))
+      const cryptoKey = await getCachedCryptoKey(cache, key, (bytes) => importKey.call(this, bytes))
       return new Uint8Array(
         await subtle(
           (c) =>
@@ -3670,8 +3686,7 @@ function AEAD_SHARED(P_MAX: number): AEAD_BASE {
       )
     },
     async Open(this: WebCryptoAEAD, key, nonce, aad, ct) {
-      const cryptoKey =
-        cache.get(key) ?? (await cacheValue(cache, key, () => importKey.call(this, key)))
+      const cryptoKey = await getCachedCryptoKey(cache, key, (bytes) => importKey.call(this, bytes))
       return new Uint8Array(
         await subtle(
           (c) =>
