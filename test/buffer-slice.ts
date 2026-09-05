@@ -14,6 +14,46 @@ import { strict as assert } from 'node:assert'
 import * as HPKE from '../index.ts'
 import { supported } from './support.ts'
 
+test.describe('pending hybrid private-key import', () => {
+  for (const name of ['KEM_MLKEM768_X25519', 'KEM_MLKEM768_P256', 'KEM_MLKEM1024_P384'] as const) {
+    for (const useBuffer of [false, true]) {
+      it(
+        `${name} snapshots ${useBuffer ? 'Buffer' : 'Uint8Array'} before awaiting import`,
+        { skip: supported[name]!() ? false : `${name} is unsupported in this runtime` },
+        async () => {
+          const suite = new HPKE.CipherSuite(
+            HPKE[name],
+            HPKE.KDF_HKDF_SHA256,
+            HPKE.AEAD_AES_128_GCM,
+          )
+          const recipient = await suite.GenerateKeyPair(true)
+          const seed = await suite.SerializePrivateKey(recipient.privateKey)
+          const input = useBuffer ? Buffer.from(seed) : new Uint8Array(seed)
+          const pending = suite.DeserializePrivateKey(input, true)
+          input.fill(0)
+
+          const imported = await pending
+          const serialized = await suite.SerializePrivateKey(imported)
+          assert.deepEqual(new Uint8Array(serialized), seed)
+
+          const restored = await suite.DeserializePrivateKey(serialized)
+          const plaintext = HPKE.encode('hybrid key backup')
+          const { encapsulatedSecret, ciphertext } = await suite.Seal(
+            recipient.publicKey,
+            plaintext,
+          )
+          for (const privateKey of [imported, restored]) {
+            assert.deepEqual(
+              await suite.Open(privateKey, encapsulatedSecret, ciphertext),
+              plaintext,
+            )
+          }
+        },
+      )
+    }
+  }
+})
+
 test.describe('Buffer.prototype.slice() compatibility', () => {
   const hybridKemOptions = {
     skip: supported.KEM_MLKEM768_X25519!()

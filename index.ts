@@ -4110,7 +4110,8 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
       return key.getSeed(priv)
     },
     async DeserializePrivateKey(this: CompositeHybridKEM, key, extractable) {
-      const { ek_PQ, ek_T, dk_PQ, dk_T } = await expandDecapsKeyG(this, key)
+      const seed = slice(key)
+      const { ek_PQ, ek_T, dk_PQ, dk_T } = await expandDecapsKeyG(this, seed)
       const publicKey = new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
       const privateKey = new HybridKey(
         priv,
@@ -4119,7 +4120,7 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
         extractable,
         dk_PQ,
         dk_T,
-        slice(key),
+        seed,
         publicKey,
       )
 
