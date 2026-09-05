@@ -2,6 +2,7 @@ const fs = require('node:fs')
 const amaro = require('amaro')
 const { gzipSync } = require('node:zlib')
 const { execSync } = require('node:child_process')
+const { cleanJavaScript } = require('./tools/clean-javascript.cjs')
 
 // ============================================================================
 // Compile TypeScript
@@ -110,34 +111,6 @@ function checkPureAnnotations(source, output) {
   if ((source.match(annotation)?.length ?? 0) !== (output.match(annotation)?.length ?? 0)) {
     throw new Error('Build must preserve PURE annotations')
   }
-}
-
-function cleanJavaScript(code) {
-  // Replace multi-line JSDoc comment blocks with equivalent blank lines to preserve line numbers
-  // NOTE: This must run before the inline // comment removal below, because single-line
-  // /** @see [Name](https://...) */ comments contain // in URLs. If the inline comment
-  // regex ran first, it would strip everything after the // (including the closing */),
-  // creating orphaned /** openings that cause the JSDoc regex to swallow subsequent code.
-  code = code.replace(/^[ \t]*\/\*\*[\s\S]*?\*\/[ \t]*$/gm, (match) => {
-    const lineCount = (match.match(/\n/g) || []).length
-    return '\n'.repeat(lineCount)
-  })
-
-  // Remove lines that are purely // comments (including those containing URLs with //)
-  code = code.replace(/^[ \t]*\/\/.*$/gm, '')
-
-  // Remove inline // comments on code lines while preserving the code
-  code = code.replace(/^(.+?)\/\/.*$/gm, (match, code) => {
-    return code.trimEnd()
-  })
-
-  // Remove coverage ignore directives by replacing them with blank lines
-  code = code.replace(/^.*\/\*\s*c8\s+ignore\s+next.*$/gm, '')
-
-  // Replace lines that only contain whitespace with empty lines
-  code = code.replace(/^[ \t]+$/gm, '')
-
-  return code
 }
 
 function getFileSizes(path) {
