@@ -630,6 +630,9 @@ function createDhKemNist(config: {
       return (key as NobleKey).value(priv)
     },
     async DeserializePrivateKey(key, extractable) {
+      if (!curve.utils.isValidSecretKey(key)) {
+        throw new Error('Invalid scalar')
+      }
       return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
     },
     async Encap(pkR) {

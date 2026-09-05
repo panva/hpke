@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { p256, p384, p521 } from '@noble/curves/nist.js'
 import * as HPKE from '../index.ts'
 import * as noble from '../examples/noble-suite/index.ts'
-import { supported } from './support.ts'
+import { hex, supported } from './support.ts'
 // @ts-expect-error: shared with the browser runner
 import { checkNistKeys } from './nist-keys.js'
 
@@ -86,6 +86,32 @@ for (const [factoryName, curve, kdfFactory] of [
   ['KEM_DHKEM_P384_HKDF_SHA384', p384, HPKE.KDF_HKDF_SHA384],
   ['KEM_DHKEM_P521_HKDF_SHA512', p521, HPKE.KDF_HKDF_SHA512],
 ] as const) {
+  it(`${factoryName} validates noble private scalars`, async () => {
+    const suite = new HPKE.CipherSuite(
+      noble[factoryName],
+      HPKE.KDF_HKDF_SHA256,
+      HPKE.AEAD_EXPORT_ONLY,
+    )
+    const order = curve.Point.Fn.ORDER
+    const encodeScalar = (scalar: bigint) =>
+      hex(scalar.toString(16).padStart(suite.KEM.Nsk * 2, '0'))
+
+    for (const scalar of [0n, order, order + 1n]) {
+      await assert.rejects(suite.DeserializePrivateKey(encodeScalar(scalar)), (error: unknown) => {
+        assert.ok(error instanceof HPKE.DeserializeError)
+        assert.ok(error.cause instanceof Error)
+        assert.equal(error.cause.message, 'Invalid scalar')
+        return true
+      })
+    }
+
+    for (const scalar of [1n, order - 1n]) {
+      const encoded = encodeScalar(scalar)
+      const key = await suite.DeserializePrivateKey(encoded, true)
+      assert.deepEqual(await suite.SerializePrivateKey(key), encoded)
+    }
+  })
+
   for (const [implementationName, implementation] of [
     ['WebCrypto', HPKE],
     ['noble', noble],
