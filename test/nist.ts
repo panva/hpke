@@ -1,5 +1,9 @@
 import it, * as test from 'node:test'
+import assert from 'node:assert/strict'
+import { p256, p384, p521 } from '@noble/curves/nist.js'
 import * as HPKE from '../index.ts'
+import * as noble from '../examples/noble-suite/index.ts'
+import { supported } from './support.ts'
 // @ts-expect-error: shared with the browser runner
 import { checkNistKeys } from './nist-keys.js'
 
@@ -76,3 +80,64 @@ it('NIST native public key extraction preserves the imported private key', async
     t.assert.equal(pair.publicKey.extractable, true)
   }
 })
+
+for (const [factoryName, curve, kdfFactory] of [
+  ['KEM_DHKEM_P256_HKDF_SHA256', p256, HPKE.KDF_HKDF_SHA256],
+  ['KEM_DHKEM_P384_HKDF_SHA384', p384, HPKE.KDF_HKDF_SHA384],
+  ['KEM_DHKEM_P521_HKDF_SHA512', p521, HPKE.KDF_HKDF_SHA512],
+] as const) {
+  for (const [implementationName, implementation] of [
+    ['WebCrypto', HPKE],
+    ['noble', noble],
+  ] as const) {
+    it(`${implementationName} ${factoryName} accepts a finite zero-x DH point`, async () => {
+      const kem: HPKE.KEM = implementation[factoryName]()
+      const scalar = new Uint8Array(kem.Nsk)
+      scalar[scalar.length - 1] = 1
+      const compressed = new Uint8Array(kem.Nsk + 1)
+      compressed[0] = 2
+      const encapsulatedSecret = curve.Point.fromBytes(compressed).toBytes(false)
+      const privateKey = await kem.DeserializePrivateKey(scalar, true)
+
+      const kdf = kdfFactory()
+      const suiteId = HPKE.concat(HPKE.encode('KEM'), HPKE.I2OSP(kem.id, 2))
+      const prk = await HPKE.LabeledExtract(
+        kdf,
+        suiteId,
+        new Uint8Array(),
+        HPKE.encode('eae_prk'),
+        new Uint8Array(kem.Nsk),
+      )
+      const expected = await HPKE.LabeledExpand(
+        kdf,
+        suiteId,
+        prk,
+        HPKE.encode('shared_secret'),
+        HPKE.concat(encapsulatedSecret, curve.getPublicKey(scalar, false)),
+        kem.Nsecret,
+      )
+      assert.deepEqual(await kem.Decap(encapsulatedSecret, privateKey, undefined), expected)
+    })
+  }
+}
+
+for (const factoryName of ['KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_DHKEM_X448_HKDF_SHA512'] as const) {
+  for (const [implementationName, implementation] of [
+    ['WebCrypto', HPKE],
+    ['noble', noble],
+  ] as const) {
+    it(
+      `${implementationName} ${factoryName} rejects low-order public keys`,
+      { skip: implementationName === 'WebCrypto' && !supported[factoryName]!() },
+      async () => {
+        const factory: HPKE.KEMFactory = implementation[factoryName]
+        const suite = new HPKE.CipherSuite(factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
+        const recipient = await suite.GenerateKeyPair(true)
+        const publicKey = await suite.DeserializePublicKey(new Uint8Array(suite.KEM.Npk))
+
+        await assert.rejects(suite.SetupSender(publicKey))
+        await assert.rejects(suite.SetupRecipient(recipient, new Uint8Array(suite.KEM.Nenc)))
+      },
+    )
+  }
+}

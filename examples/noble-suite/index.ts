@@ -1,12 +1,4 @@
-import {
-  LabeledDerive,
-  LabeledExtract,
-  LabeledExpand,
-  concat,
-  encode,
-  I2OSP,
-  ValidationError,
-} from '../../index.ts'
+import { LabeledDerive, LabeledExtract, LabeledExpand, concat, encode, I2OSP } from '../../index.ts'
 import type * as HPKE from '../../index.ts'
 
 import { chacha20poly1305 } from '@noble/ciphers/chacha.js'
@@ -651,7 +643,6 @@ function createDhKemNist(config: {
       const enc = (ekp.publicKey as NobleKey).value(priv)
 
       const dh = slice(curve.getSharedSecret(skE, pkRValue), 1)
-      checkNotAllZeros(dh)
 
       return {
         shared_secret: await deriveSharedSecret(kdf, suite_id, Nsecret, dh, enc, pkRValue),
@@ -668,7 +659,6 @@ function createDhKemNist(config: {
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
       const pkEValue = pkE.value(priv)
       const dh = slice(curve.getSharedSecret(skRValue, pkEValue), 1)
-      checkNotAllZeros(dh)
 
       return await deriveSharedSecret(
         kdf,
@@ -743,7 +733,6 @@ function createDhKemX(config: {
         (ekp.privateKey as NobleKey).value(priv),
         (pkR as NobleKey).value(priv),
       )
-      checkNotAllZeros(dh)
 
       return {
         shared_secret: await deriveSharedSecret(
@@ -766,7 +755,6 @@ function createDhKemX(config: {
 
       const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
       const dh = curve.getSharedSecret(skRValue, pkE.value(priv))
-      checkNotAllZeros(dh)
 
       return await deriveSharedSecret(
         kdf,
@@ -853,16 +841,6 @@ class NobleKey implements HPKE.Key {
   seed(_: typeof priv) {
     InvalidInvocation(_)
     return slice(this.#seed!)
-  }
-}
-
-function checkNotAllZeros(buffer: Uint8Array): void {
-  let or = 0
-  for (let i = 0; i < buffer.length; i++) {
-    or |= buffer[i]!
-  }
-  if (or === 0) {
-    throw new ValidationError('DH shared secret is an all-zero value')
   }
 }
 

@@ -2702,17 +2702,6 @@ async function getPublicKey(name: string, key: CryptoKey, usages: KeyUsage[]): P
   )
 }
 
-/** This is a last resort check, Web Cryptography implementers should already be checking it */
-function checkNotAllZeros(buffer: Uint8Array): void {
-  let or = 0
-  for (let i = 0; i < buffer.length; i++) {
-    or |= buffer[i]!
-  }
-  if (or === 0) {
-    throw new ValidationError('DH shared secret is an all-zero value')
-  }
-}
-
 type KEM_BASE<K extends Key = Key> = Pick<
   KEM<K>,
   | 'GenerateKeyPair'
@@ -2911,7 +2900,6 @@ function DHKEM_SHARED(): Required<
           this.name,
         ),
       )
-      checkNotAllZeros(dh)
 
       const enc = await this.SerializePublicKey(pkE)
       const pkRm = await this.SerializePublicKey(pkR)
@@ -2939,7 +2927,6 @@ function DHKEM_SHARED(): Required<
           this.name,
         ),
       )
-      checkNotAllZeros(dh)
 
       const pkRm = await this.SerializePublicKey(pkR)
       const kem_context = concat(enc, pkRm)
@@ -3991,7 +3978,6 @@ async function prepareEncapsG(
       kem.name,
     ),
   )
-  checkNotAllZeros(ss_T)
 
   return [ss_PQ, ss_T, ct_PQ, ct_T]
 }
@@ -4023,7 +4009,6 @@ async function prepareDecapsG(
       kem.name,
     ),
   )
-  checkNotAllZeros(ss_T)
 
   return [ss_PQ, ss_T]
 }
