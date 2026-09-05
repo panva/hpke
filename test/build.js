@@ -3,9 +3,7 @@ import { createRequire } from 'node:module'
 import { test } from 'node:test'
 import { runInNewContext } from 'node:vm'
 
-const { cleanJavaScript }: { cleanJavaScript(code: string): string } = createRequire(
-  import.meta.url,
-)('../tools/clean-javascript.cjs')
+const { cleanJavaScript } = createRequire(import.meta.url)('../tools/clean-javascript.cjs')
 
 const cases = [
   {

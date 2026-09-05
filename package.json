@@ -45,7 +45,7 @@
     "check:packaging": "publint run . --strict && node tools/attw-check.js . && publint run examples/noble-suite --strict && node tools/attw-check.js examples/noble-suite",
     "docs": "npx typedoc",
     "format": "prettier --log-level silent --cache --write '**/*.{ts,js,mjs,cjs,json,yml}' '**/README.md'",
-    "test": "node --test --no-warnings test/*.ts test/noble-version.js",
+    "test": "node --test --no-warnings test/*.ts test/build.js test/noble-version.js",
     "test:browsers": "node test/browser.mjs",
     "test:bun": "bun test ./test/*.ts",
     "test:deno": "deno test --no-check --allow-read test/*.ts",
