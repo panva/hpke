@@ -105,6 +105,36 @@ class Mutex {
   }
 }
 
+interface ContextState {
+  readonly suite: Triple
+  readonly mode: Mode
+  readonly key: Uint8Array
+  readonly base_nonce: Uint8Array
+  readonly exporter_secret: Uint8Array
+  readonly max_seq: number
+  seq: number
+  mutex?: Mutex
+}
+
+function createContextState(
+  suite: Triple,
+  mode: Mode,
+  key: Uint8Array,
+  base_nonce: Uint8Array,
+  exporter_secret: Uint8Array,
+): ContextState {
+  return {
+    suite,
+    mode,
+    key,
+    base_nonce,
+    exporter_secret,
+    max_seq: MaxSeq(suite.AEAD.Nn),
+    seq: 0,
+    mutex: undefined,
+  }
+}
+
 /**
  * Context for encrypting multiple messages and exporting secrets on the sender side.
  *
@@ -125,14 +155,7 @@ class Mutex {
  * @group Core
  */
 class SenderContext {
-  #suite: Triple
-  #key: Uint8Array
-  #base_nonce: Uint8Array
-  #exporter_secret: Uint8Array
-  #mode: Mode
-  #seq: number = 0
-  #max_seq: number
-  #mutex?: Mutex
+  #state: ContextState
 
   constructor(
     suite: Triple,
@@ -141,12 +164,7 @@ class SenderContext {
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
   ) {
-    this.#suite = suite
-    this.#mode = mode
-    this.#key = key
-    this.#base_nonce = base_nonce
-    this.#exporter_secret = exporter_secret
-    this.#max_seq = MaxSeq(suite.AEAD.Nn)
+    this.#state = createContextState(suite, mode, key, base_nonce, exporter_secret)
   }
 
   /**
@@ -155,7 +173,7 @@ class SenderContext {
    * @see {@link MODE_PSK}
    */
   get mode(): Mode {
-    return this.#mode
+    return this.#state.mode
   }
 
   /**
@@ -165,7 +183,7 @@ class SenderContext {
    *   and `2^53-1`.
    */
   get seq(): number {
-    return this.#seq
+    return this.#state.seq
   }
 
   /**
@@ -198,21 +216,22 @@ class SenderContext {
     checkUint8Array(plaintext, 'plaintext')
     aad ??= new Uint8Array()
     checkUint8Array(aad, 'aad')
-    if (this.#suite.AEAD.id === EXPORT_ONLY) {
+    const state = this.#state
+    if (state.suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Seal')
     }
 
-    this.#mutex ??= new Mutex()
-    const release = await this.#mutex.lock()
+    state.mutex ??= new Mutex()
+    const release = await state.mutex.lock()
     let ct: Uint8Array
     try {
-      ct = await this.#suite.AEAD.Seal(
-        this.#key,
-        ComputeNonce(this.#base_nonce, this.#seq, this.#suite.AEAD.Nn),
+      ct = await state.suite.AEAD.Seal(
+        state.key,
+        ComputeNonce(state.base_nonce, state.seq, state.suite.AEAD.Nn),
         aad,
         plaintext,
       )
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      state.seq = IncrementSeq(state.seq, state.max_seq)
       return ct
     } finally {
       release()
@@ -243,7 +262,12 @@ class SenderContext {
    * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.3)
    */
   async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, length)
+    return await ContextExport(
+      this.#state.suite,
+      this.#state.exporter_secret,
+      exporterContext,
+      length,
+    )
   }
 
   /**
@@ -251,7 +275,7 @@ class SenderContext {
    *   context.
    */
   get Nt(): number {
-    return this.#suite.AEAD.Nt
+    return this.#state.suite.AEAD.Nt
   }
 }
 export type { SenderContext }
@@ -276,14 +300,7 @@ export type { SenderContext }
  * @group Core
  */
 class RecipientContext {
-  #suite: Triple
-  #key: Uint8Array
-  #base_nonce: Uint8Array
-  #exporter_secret: Uint8Array
-  #mode: Mode
-  #seq: number = 0
-  #max_seq: number
-  #mutex?: Mutex
+  #state: ContextState
 
   constructor(
     suite: Triple,
@@ -292,12 +309,7 @@ class RecipientContext {
     base_nonce: Uint8Array,
     exporter_secret: Uint8Array,
   ) {
-    this.#suite = suite
-    this.#mode = mode
-    this.#key = key
-    this.#base_nonce = base_nonce
-    this.#exporter_secret = exporter_secret
-    this.#max_seq = MaxSeq(suite.AEAD.Nn)
+    this.#state = createContextState(suite, mode, key, base_nonce, exporter_secret)
   }
 
   /**
@@ -306,7 +318,7 @@ class RecipientContext {
    * @see {@link MODE_PSK}
    */
   get mode(): Mode {
-    return this.#mode
+    return this.#state.mode
   }
 
   /**
@@ -316,7 +328,7 @@ class RecipientContext {
    *   and `2^53-1`.
    */
   get seq(): number {
-    return this.#seq
+    return this.#state.seq
   }
 
   /**
@@ -351,18 +363,19 @@ class RecipientContext {
     aad ??= new Uint8Array()
     checkUint8Array(aad, 'aad')
 
-    if (this.#suite.AEAD.id === EXPORT_ONLY) {
+    const state = this.#state
+    if (state.suite.AEAD.id === EXPORT_ONLY) {
       throw new TypeError('Export-only AEAD cannot be used with Open')
     }
 
-    this.#mutex ??= new Mutex()
-    const release = await this.#mutex.lock()
+    state.mutex ??= new Mutex()
+    const release = await state.mutex.lock()
     try {
       let pt: Uint8Array
       try {
-        pt = await this.#suite.AEAD.Open(
-          this.#key,
-          ComputeNonce(this.#base_nonce, this.#seq, this.#suite.AEAD.Nn),
+        pt = await state.suite.AEAD.Open(
+          state.key,
+          ComputeNonce(state.base_nonce, state.seq, state.suite.AEAD.Nn),
           aad,
           ciphertext,
         )
@@ -373,7 +386,7 @@ class RecipientContext {
 
         throw new OpenError('AEAD decryption failed', { cause })
       }
-      this.#seq = IncrementSeq(this.#seq, this.#max_seq)
+      state.seq = IncrementSeq(state.seq, state.max_seq)
       return pt
     } finally {
       release()
@@ -404,7 +417,12 @@ class RecipientContext {
    * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-5.3)
    */
   async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
-    return await ContextExport(this.#suite, this.#exporter_secret, exporterContext, length)
+    return await ContextExport(
+      this.#state.suite,
+      this.#state.exporter_secret,
+      exporterContext,
+      length,
+    )
   }
 }
 export type { RecipientContext }
@@ -3635,7 +3653,7 @@ type AEAD_BASE = Pick<AEAD, 'Seal' | 'Open'>
 
 function AEAD_SHARED(P_MAX: number): AEAD_BASE {
   // Cache the WebCrypto CryptoKey derived from a given key-bytes Uint8Array.
-  // Across the lifetime of a SenderContext/RecipientContext, `this.#key` is a
+  // Across the lifetime of a SenderContext/RecipientContext, the key is a
   // stable Uint8Array, so crypto.subtle.importKey() would otherwise be called
   // on every Seal/Open. The WeakMap ensures the cache entry is reclaimed once
   // the underlying Uint8Array is unreachable.
