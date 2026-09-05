@@ -1,6 +1,6 @@
 {
   "name": "hpke",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "Hybrid Public Key Encryption (HPKE) for Node.js, Browser, Cloudflare Workers, Deno, Bun, and other Web-interoperable runtimes",
   "keywords": [
     "browser",

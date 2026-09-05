@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.7](https://github.com/panva/hpke/compare/v1.1.6...v1.1.7) (2026-09-05)
+
+### Fixes
+
+* invalidate cached keys when input bytes change ([9b35be4](https://github.com/panva/hpke/commit/9b35be41f5273e381d33ff4f239904e99a672464))
+* **noble:** validate NIST private scalars on import ([8b6eabf](https://github.com/panva/hpke/commit/8b6eabf55e7ffe0bf7896826761ee2c25839a766))
+* snapshot hybrid seeds before private key import ([8c740d0](https://github.com/panva/hpke/commit/8c740d082b472aa92176f8792618fd3eed7749c2))
+
+### Refactor
+
+* centralize private context state initialization ([a7e10ed](https://github.com/panva/hpke/commit/a7e10ed112d31512bb6ee8ab98a831f50b4a37b8))
+* delegate DH output validation to Web Cryptography ([4764938](https://github.com/panva/hpke/commit/4764938b14143682332963f47a89d2b7e136ca10))
+
 ## [1.1.6](https://github.com/panva/hpke/compare/v1.1.5...v1.1.6) (2026-09-04)
 
 ### Documentation
