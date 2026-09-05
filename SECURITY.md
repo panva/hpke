@@ -68,6 +68,10 @@ This library aims to provide the following security guarantees:
 
 ### Application Responsibilities and Non-Goals
 
+#### Input Buffer Lifetimes
+
+Applications must keep byte-array inputs unchanged until the operation's returned promise settles. This includes avoiding mutation through other views of the same backing buffer, as well as resizing or detaching that buffer. This library may read inputs across asynchronous steps and does not guarantee a snapshot when an operation starts. Concurrent input mutation by application code is outside this library's threat model.
+
 #### Key Management
 
 This library does not handle key storage. Users are responsible for securely storing, managing, and distributing cryptographic keys or input keying material.
