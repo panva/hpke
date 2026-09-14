@@ -66,9 +66,9 @@ platforms and runtimes.
 
 | Parameter | Type | Description |
 | :------ | :------ | :------ |
-| `KEM` | [`KEMFactory`](../type-aliases/KEMFactory.md)<`K`> | KEM implementation factory. Must return an object conforming to the [KEM](#constructorciphersuite) interface. |
-| `KDF` | [`KDFFactory`](../type-aliases/KDFFactory.md) | KDF implementation factory. Must return an object conforming to the [KDF](#constructorciphersuite) interface. |
-| `AEAD` | [`AEADFactory`](../type-aliases/AEADFactory.md) | AEAD implementation factory. Must return an object conforming to the [AEAD](#constructorciphersuite) interface. |
+| `KEM` | [`KEMFactory`](../type-aliases/KEMFactory.md)<`K`> | KEM implementation factory. Must return an object conforming to the [KEM](../interfaces/KEM.md) interface. |
+| `KDF` | [`KDFFactory`](../type-aliases/KDFFactory.md) | KDF implementation factory. Must return an object conforming to the [KDF](../interfaces/KDF.md) interface. |
+| `AEAD` | [`AEADFactory`](../type-aliases/AEADFactory.md) | AEAD implementation factory. Must return an object conforming to the [AEAD](../interfaces/AEAD.md) interface. |
 
 ### Returns
 

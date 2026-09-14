@@ -4,8 +4,9 @@ import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// commit-and-tag-version invokes this after its prerelease build and root version bump. Comparing
-// packed contents keeps source-only changes from forcing a noble package release.
+// commit-and-tag-version invokes this after its prerelease build and root version bump. Syncing
+// dependency ranges before comparing packed contents includes dependency updates while keeping
+// source-only changes from forcing a noble package release.
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const defaultNobleDirectory = join(root, 'examples/noble-suite')
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
@@ -66,27 +67,51 @@ export function syncNobleVersion({
 } = {}) {
   const hpke = manifest(rootManifest)
   const nobleManifest = join(directory, 'package.json')
-  const noble = manifest(nobleManifest)
-  const drift = noblePackageDrift({ baseline, directory, npmCommand, stderr })
-
-  if (!drift.changed) {
-    log(`${noble.name}@${noble.version} matches its published artifact; keeping its version`)
-    return { ...drift, previousVersion: noble.version, targetVersion: noble.version }
+  const original = readFileSync(nobleManifest, 'utf8')
+  const noble = JSON.parse(original)
+  let dependenciesChanged = false
+  for (const [name, currentRange] of Object.entries(noble.dependencies ?? {})) {
+    if (!name.startsWith('@noble/')) continue
+    const range = hpke.devDependencies?.[name]
+    if (!range) {
+      throw new Error(`missing root devDependency for ${name}`)
+    }
+    if (range !== currentRange) {
+      noble.dependencies[name] = range
+      dependenciesChanged = true
+    }
   }
-  if (noble.version === hpke.version) {
-    throw new Error(
-      `${noble.name}@${noble.version} has unpublished package drift but already uses the target version`,
+
+  try {
+    if (dependenciesChanged) {
+      writeFileSync(nobleManifest, `${JSON.stringify(noble, null, 2)}\n`)
+    }
+    const drift = noblePackageDrift({ baseline, directory, npmCommand, stderr })
+
+    if (!drift.changed) {
+      log(`${noble.name}@${noble.version} matches its published artifact; keeping its version`)
+      return { ...drift, previousVersion: noble.version, targetVersion: noble.version }
+    }
+    if (noble.version === hpke.version) {
+      throw new Error(
+        `${noble.name}@${noble.version} has unpublished package drift but already uses the target version`,
+      )
+    }
+
+    const previousVersion = noble.version
+    noble.version = hpke.version
+    writeFileSync(nobleManifest, `${JSON.stringify(noble, null, 2)}\n`)
+    log(
+      `${noble.name} package drift detected in ${drift.changes.join(', ')}; ` +
+        `bumped ${previousVersion} to ${noble.version}`,
     )
+    return { ...drift, previousVersion, targetVersion: noble.version }
+  } catch (cause) {
+    if (dependenciesChanged) {
+      writeFileSync(nobleManifest, original)
+    }
+    throw cause
   }
-
-  const previousVersion = noble.version
-  noble.version = hpke.version
-  writeFileSync(nobleManifest, `${JSON.stringify(noble, null, 2)}\n`)
-  log(
-    `${noble.name} package drift detected in ${drift.changes.join(', ')}; ` +
-      `bumped ${previousVersion} to ${noble.version}`,
-  )
-  return { ...drift, previousVersion, targetVersion: noble.version }
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

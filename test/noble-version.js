@@ -26,6 +26,13 @@ function fixture(t, rootVersion = '2.0.0', nobleVersion = '1.0.0') {
     main: 'index.js',
     types: 'index.d.ts',
     files: ['index.js', 'index.d.ts'],
+    dependencies: {
+      '@noble/ciphers': '^2.3.0',
+      '@noble/curves': '^2.3.0',
+      '@noble/hashes': '^2.3.0',
+      '@noble/post-quantum': '^0.7.1',
+    },
+    peerDependencies: { hpke: '^1.0.0' },
   }
   const files = {
     'LICENSE.md': 'MIT\n',
@@ -42,7 +49,11 @@ function fixture(t, rootVersion = '2.0.0', nobleVersion = '1.0.0') {
   }
 
   const rootManifest = join(temporary, 'package.json')
-  writeJson(rootManifest, { name: 'example-hpke', version: rootVersion })
+  writeJson(rootManifest, {
+    name: 'example-hpke',
+    version: rootVersion,
+    devDependencies: noble.dependencies,
+  })
   return { baseline, directory, rootManifest }
 }
 
@@ -63,6 +74,73 @@ test.describe('noble package version synchronization', () => {
     writeFileSync(join(current.directory, 'source.ts'), 'export const value = 2\n')
 
     assert.equal(sync(current).changed, false)
+    assert.equal(readFileSync(manifestPath, 'utf8'), before)
+  })
+
+  it('syncs noble dependency ranges and bumps the version for dependency-only changes', (t) => {
+    const current = fixture(t)
+    const manifestPath = join(current.directory, 'package.json')
+    const noble = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    noble.dependencies.unrelated = '^1.0.0'
+    for (const directory of [current.baseline, current.directory]) {
+      writeJson(join(directory, 'package.json'), noble)
+    }
+    const hpke = JSON.parse(readFileSync(current.rootManifest, 'utf8'))
+    Object.assign(hpke.devDependencies, {
+      '@noble/ciphers': '^2.4.0',
+      '@noble/curves': '^2.4.0',
+      '@noble/hashes': '^2.4.0',
+      '@noble/unused': '^1.0.0',
+      unrelated: '^2.0.0',
+      typescript: '^6.0.3',
+    })
+    writeJson(current.rootManifest, hpke)
+
+    const result = sync(current)
+
+    assert.equal(result.changed, true)
+    assert.deepEqual(result.changes, ['package.json'])
+    assert.equal(result.previousVersion, '1.0.0')
+    assert.equal(result.targetVersion, '2.0.0')
+    assert.deepEqual(JSON.parse(readFileSync(manifestPath, 'utf8')), {
+      ...noble,
+      version: '2.0.0',
+      dependencies: {
+        ...noble.dependencies,
+        '@noble/ciphers': '^2.4.0',
+        '@noble/curves': '^2.4.0',
+        '@noble/hashes': '^2.4.0',
+      },
+    })
+  })
+
+  it('keeps the version when synchronized dependencies match the published artifact', (t) => {
+    const current = fixture(t)
+    const manifestPath = join(current.directory, 'package.json')
+    const noble = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    noble.dependencies['@noble/ciphers'] = '^2.2.0'
+    writeJson(manifestPath, noble)
+
+    const result = sync(current)
+
+    assert.equal(result.changed, false)
+    assert.equal(result.targetVersion, '1.0.0')
+    assert.equal(
+      readFileSync(manifestPath, 'utf8'),
+      readFileSync(join(current.baseline, 'package.json'), 'utf8'),
+    )
+  })
+
+  it('rejects a noble dependency missing from the root without changing the manifest', (t) => {
+    const current = fixture(t)
+    const manifestPath = join(current.directory, 'package.json')
+    const before = readFileSync(manifestPath, 'utf8')
+    const hpke = JSON.parse(readFileSync(current.rootManifest, 'utf8'))
+    hpke.devDependencies['@noble/ciphers'] = '^2.4.0'
+    delete hpke.devDependencies['@noble/curves']
+    writeJson(current.rootManifest, hpke)
+
+    assert.throws(() => sync(current), /missing root devDependency for @noble\/curves/)
     assert.equal(readFileSync(manifestPath, 'utf8'), before)
   })
 
@@ -93,7 +171,7 @@ test.describe('noble package version synchronization', () => {
     const current = fixture(t)
     const manifestPath = join(current.directory, 'package.json')
     const noble = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    noble.dependencies = { dependency: '^2.0.0' }
+    noble.dependencies.dependency = '^2.0.0'
     writeJson(manifestPath, noble)
 
     assert.equal(sync(current).changed, true)
@@ -118,10 +196,25 @@ test.describe('noble package version synchronization', () => {
     )
   })
 
+  it('restores the manifest when dependency changes cannot use the target version', (t) => {
+    const current = fixture(t, '1.0.0')
+    const manifestPath = join(current.directory, 'package.json')
+    const before = readFileSync(manifestPath, 'utf8')
+    const hpke = JSON.parse(readFileSync(current.rootManifest, 'utf8'))
+    hpke.devDependencies['@noble/ciphers'] = '^2.4.0'
+    writeJson(current.rootManifest, hpke)
+
+    assert.throws(() => sync(current), /already uses the target version/)
+    assert.equal(readFileSync(manifestPath, 'utf8'), before)
+  })
+
   it('leaves the manifest unchanged when the published artifact cannot be read', (t) => {
     const current = fixture(t)
     const manifestPath = join(current.directory, 'package.json')
     const before = readFileSync(manifestPath, 'utf8')
+    const hpke = JSON.parse(readFileSync(current.rootManifest, 'utf8'))
+    hpke.devDependencies['@noble/ciphers'] = '^2.4.0'
+    writeJson(current.rootManifest, hpke)
     assert.throws(
       () =>
         syncNobleVersion({

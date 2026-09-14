@@ -521,12 +521,12 @@ export class CipherSuite<K extends Key = Key> {
    * )
    * ```
    *
-   * @param KEM - KEM implementation factory. Must return an object conforming to the {@link KEM}
-   *   interface.
-   * @param KDF - KDF implementation factory. Must return an object conforming to the {@link KDF}
-   *   interface.
-   * @param AEAD - AEAD implementation factory. Must return an object conforming to the {@link AEAD}
-   *   interface.
+   * @param KEM - KEM implementation factory. Must return an object conforming to the
+   *   {@link !KEM KEM} interface.
+   * @param KDF - KDF implementation factory. Must return an object conforming to the
+   *   {@link !KDF KDF} interface.
+   * @param AEAD - AEAD implementation factory. Must return an object conforming to the
+   *   {@link !AEAD AEAD} interface.
    * @see {@link KEMFactory Available KEMs}
    * @see {@link KDFFactory Available KDFs}
    * @see {@link AEADFactory Available AEADs}
