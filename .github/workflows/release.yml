@@ -17,6 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          persist-credentials: false
           fetch-depth: 2
       - id: detect
         name: Detect noble package version change
@@ -50,7 +51,7 @@ jobs:
       contents: write
       discussions: write
       id-token: write
-    uses: panva/.github/.github/workflows/npm-release.yml@bd045b0d7d15f7827910cdedd3e7f0570bc5bf58
+    uses: panva/.github/.github/workflows/npm-release.yml@3faba8af3880247be43547787aedd52780c9f946
     with:
       artifact_check_command: node tools/test-dist.js "$PACKAGE_TARBALL" .
       cleanup_paths: '["index.js","index.d.ts","index.d.ts.map"]'
@@ -101,4 +102,4 @@ jobs:
       contents: read
       pages: write
       id-token: write
-    uses: ./.github/workflows/static.yml
+    uses: $/.github/workflows/static.yml
