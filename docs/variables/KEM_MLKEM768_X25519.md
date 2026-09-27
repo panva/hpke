@@ -25,4 +25,4 @@ This is a factory function that must be passed to the [CipherSuite](../classes/C
 
 ## See
 
-[HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05.html#section-4)
+[HPKE-PQ Hybrid KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-4)

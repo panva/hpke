@@ -34,4 +34,4 @@ of the KDF in HPKE.
 
 ## See
 
-[LabeledExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-04.html#section-4.4)
+[LabeledExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.4)
