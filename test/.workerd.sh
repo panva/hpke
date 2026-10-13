@@ -36,6 +36,7 @@ const tapWorker :Workerd.Worker = (
     (name = "worker", esModule = embed "run-workerd.bundle.js")
   ],
   compatibilityDate = "$COMPATIBILITY_DATE",
+  compatibilityFlags = ["webcrypto_modern_algorithms"],
 );
 EOT
 

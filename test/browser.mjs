@@ -144,7 +144,7 @@ async function runBrowserTests({ type: browserType, name: browserName, channel, 
       }
 
       const readmeMismatches = testUrl.searchParams.has('native')
-        ? findReadmeSupportMismatches({ results: testResults, readme, runtime: 'browser' })
+        ? findReadmeSupportMismatches({ results: testResults, readme, runtime: browserType.name() })
         : []
 
       // Check for unexpected results
@@ -228,7 +228,6 @@ async function main() {
         name: 'Chrome Canary',
         aliases: ['chrome-canary'],
         channel: 'chrome-canary',
-        args: ['--enable-features=WebCryptoPQC'],
       },
     ]
 

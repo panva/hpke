@@ -1,4 +1,5 @@
-export type ReadmeSupportRuntime = 'node' | 'deno' | 'bun' | 'browser' | 'workerd'
+export type ReadmeSupportRuntime =
+  'node' | 'deno' | 'bun' | 'chromium' | 'firefox' | 'webkit' | 'workerd'
 export type ReadmeSupportComponent = 'kem' | 'kdf' | 'aead'
 
 export declare const ALGORITHM_IDS: Record<string, number>

@@ -97,10 +97,10 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓    |  ✓   |     |            |              |         ✓         |
 | ML-KEM-512 <sub>`0x0040`</sub>                 |    ✓    |  ✓   |     |            |              |         ✓         |
-| ML-KEM-768 <sub>`0x0041`</sub>                 |    ✓    |  ✓   |  ✓  |            |              |         ✓         |
-| ML-KEM-1024 <sub>`0x0042`</sub>                |    ✓    |  ✓   |  ✓  |            |              |         ✓         |
+| ML-KEM-768 <sub>`0x0041`</sub>                 |    ✓    |  ✓   |  ✓  | ✓[^cf-pqc] | ◐[^chromium] |         ✓         |
+| ML-KEM-1024 <sub>`0x0042`</sub>                |    ✓    |  ✓   |  ✓  | ✓[^cf-pqc] | ◐[^chromium] |         ✓         |
 | MLKEM768-P256 <sub>`0x0050`</sub>              |    ✓    |  ✓   |     |            |              |         ✓         |
-| MLKEM768-X25519 <sub>`0x647a`</sub>            |    ✓    |  ✓   |     |            |              |         ✓         |
+| MLKEM768-X25519 <sub>`0x647a`</sub>            |    ✓    |  ✓   |     |            | ◐[^chromium] |         ✓         |
 | MLKEM1024-P384 <sub>`0x0051`</sub>             |    ✓    |  ✓   |     |            |              |         ✓         |
 
 ### Key Derivation Functions (KDF)
@@ -121,7 +121,18 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | :----------------------------------- | :-----: | :--: | :-: | :--------: | :----------: | :---------------: |
 | AES-128-GCM <sub>`0x0001`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
 | AES-256-GCM <sub>`0x0002`</sub>      |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |  ✓   |  ✓  |            |              |         ✓         |
+| ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |  ✓   |  ✓  |            | ◐[^chromium] |         ✓         |
+
+[^chromium]: Chromium
+
+[^firefox]: Firefox
+
+[^webkit]: WebKit
+
+[^cf-pqc]:
+    Requires the
+    [`webcrypto_modern_algorithms`](https://developers.cloudflare.com/workers/configuration/compatibility-flags/#web-crypto-modern-algorithms)
+    compatibility flag.
 
 ## Specifications
 

@@ -39,9 +39,13 @@ const README_RUNTIME_COLUMNS = {
   node: 'Node.js',
   deno: 'Deno',
   bun: 'Bun',
-  browser: 'Browsers',
+  chromium: 'Browsers',
+  firefox: 'Browsers',
+  webkit: 'Browsers',
   workerd: 'CF Workers',
 }
+
+const README_BROWSER_NAMES = { chromium: 'Chromium', firefox: 'Firefox', webkit: 'WebKit' }
 
 const README_SECTION_COMPONENTS = {
   'Key Encapsulation Mechanisms (KEM)': 'kem',
@@ -193,7 +197,11 @@ function parseReadmeSupportMatrix(readme) {
 
     for (const [runtime, columnName] of Object.entries(README_RUNTIME_COLUMNS)) {
       const index = columns.indexOf(columnName)
-      row.support[runtime] = index !== -1 && cells[index]?.includes('✓')
+      const cell = cells[index] ?? ''
+      const browserName = README_BROWSER_NAMES[runtime]
+      row.support[runtime] = browserName
+        ? cell === '✓' || (cell.startsWith('◐') && cell.includes(`[^${browserName.toLowerCase()}]`))
+        : cell.includes('✓')
     }
 
     matrix[component].set(Number.parseInt(id[1], 16), row)
@@ -229,7 +237,8 @@ export function findReadmeSupportMismatches({ results, readme, runtime }) {
 }
 
 export function formatReadmeSupportMismatch(mismatch) {
-  return `${mismatch.name} (${mismatch.component}) passed but README.md does not mark ${README_RUNTIME_COLUMNS[mismatch.runtime]} support`
+  const runtime = README_BROWSER_NAMES[mismatch.runtime] ?? README_RUNTIME_COLUMNS[mismatch.runtime]
+  return `${mismatch.name} (${mismatch.component}) passed but README.md does not mark ${runtime} support`
 }
 
 /** Helper to verify two Uint8Arrays match */
