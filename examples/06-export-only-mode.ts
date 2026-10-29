@@ -22,6 +22,8 @@ const recipientCtx = await suite.SetupRecipient(recipientKeyPair, encapsulatedSe
 const exporterContext = encoder.encode('derived-key-material')
 
 // Both parties derive the same secret
+// Exported secrets do not provide replay protection. Deriving AEAD keys and nonces
+// requires fresh input for each derivation, such as a recipient-provided nonce.
 const senderSecret = await senderCtx.Export(exporterContext, 32)
 const recipientSecret = await recipientCtx.Export(exporterContext, 32)
 

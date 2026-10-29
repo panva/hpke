@@ -35,6 +35,11 @@ Exports a secret using a variable-length pseudorandom function (PRF).
 
 The exported secret is indistinguishable from a uniformly random bitstring of equal length.
 
+HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+exported secrets. Applications must only use these secrets where repeated values are safe.
+Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+recipient-provided nonce.
+
 #### Parameters
 
 | Parameter | Type | Description |
@@ -62,7 +67,7 @@ const exported: Uint8Array = await ctx.Export(exporterContext, 32)
 
 #### See
 
-[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.3)
+[Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3)
 
 ***
 
@@ -105,7 +110,7 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 #### See
 
-[Context.Open](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2)
+[Context.Open](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2)
 
 ## Accessors
 

@@ -34,4 +34,4 @@ ensures domain separation between different uses of the KDF in HPKE.
 
 ## See
 
-[LabeledDerive](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-5)
+[LabeledDerive](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.4)

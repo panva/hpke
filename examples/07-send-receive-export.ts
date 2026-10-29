@@ -13,6 +13,8 @@ const suite = new HPKE.CipherSuite(
 const recipientKeyPair = await suite.GenerateKeyPair()
 
 // Exporter context (agreed upon by both sender and recipient upfront)
+// Exported secrets do not provide replay protection. Deriving AEAD keys and nonces
+// requires fresh input for each derivation, such as a recipient-provided nonce.
 const exporterContext = encoder.encode('derived-key-material')
 
 // Sender: Single-shot secret export (setup sender context and export in one call)

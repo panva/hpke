@@ -5,7 +5,7 @@
  * asymmetric key exchange with a symmetric cipher. This was originally defined in an Informational
  * document on the IRTF stream as [RFC 9180](https://www.rfc-editor.org/rfc/rfc9180.html) and is now
  * being republished as a Standards Track document of the IETF as
- * [draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05).
+ * [draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06).
  *
  * HPKE provides a variant of public key encryption for arbitrary-sized plaintexts using a recipient
  * public key.
@@ -42,7 +42,7 @@
 // HPKE Context Classes - Sender and Recipient Contexts
 // ============================================================================
 
-/** @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2) */
+/** @see [ComputeNonce](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2) */
 function ComputeNonce(base_nonce: Uint8Array, seq: number, Nn: number): Uint8Array {
   // Equivalent to xor(base_nonce, I2OSP(seq, Nn)) but avoids allocating the
   // intermediate seq_bytes array and fuses the two byte-wise passes into one.
@@ -63,7 +63,7 @@ function MaxSeq(Nn: number): number {
   return Math.min(2 ** (8 * Nn) - 1, Number.MAX_SAFE_INTEGER)
 }
 
-/** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2) */
+/** @see [Context.IncrementSeq](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2) */
 function IncrementSeq(seq: number, maxSeq: number): number {
   if (seq >= maxSeq) {
     throw new MessageLimitReachedError('Sequence number overflow')
@@ -71,7 +71,31 @@ function IncrementSeq(seq: number, maxSeq: number): number {
   return ++seq
 }
 
-/** @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.3) */
+/** @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3) */
+async function Export_OneStage(
+  KDF: KDF,
+  suite_id: Uint8Array,
+  exporter_secret: Uint8Array,
+  exporter_context: Uint8Array,
+  L: number,
+) {
+  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_ONE_STAGE)
+  return await LabeledDerive(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
+}
+
+/** @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3) */
+async function Export_TwoStage(
+  KDF: KDF,
+  suite_id: Uint8Array,
+  exporter_secret: Uint8Array,
+  exporter_context: Uint8Array,
+  L: number,
+) {
+  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_TWO_STAGE)
+  return await LabeledExpand(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
+}
+
+/** @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3) */
 async function ContextExport(
   suite: Triple,
   exporterSecret: Uint8Array,
@@ -210,7 +234,7 @@ class SenderContext {
    *
    * @returns A Promise that resolves to the ciphertext. The ciphertext is {@link Nt} bytes longer
    *   than the plaintext.
-   * @see [Context.Seal](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2)
+   * @see [Context.Seal](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2)
    */
   async Seal(plaintext: Uint8Array, aad?: Uint8Array): Promise<Uint8Array> {
     checkUint8Array(plaintext, 'plaintext')
@@ -243,6 +267,11 @@ class SenderContext {
    *
    * The exported secret is indistinguishable from a uniformly random bitstring of equal length.
    *
+   * HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+   * exported secrets. Applications must only use these secrets where repeated values are safe.
+   * Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+   * recipient-provided nonce.
+   *
    * @example
    *
    * ```ts
@@ -259,7 +288,7 @@ class SenderContext {
    * @param length - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
-   * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.3)
+   * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3)
    */
   async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
     return await ContextExport(
@@ -356,7 +385,7 @@ class RecipientContext {
    * @param aad - Additional authenticated data
    *
    * @returns A Promise that resolves to the decrypted plaintext.
-   * @see [Context.Open](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2)
+   * @see [Context.Open](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2)
    */
   async Open(ciphertext: Uint8Array, aad?: Uint8Array): Promise<Uint8Array> {
     checkUint8Array(ciphertext, 'ciphertext')
@@ -398,6 +427,11 @@ class RecipientContext {
    *
    * The exported secret is indistinguishable from a uniformly random bitstring of equal length.
    *
+   * HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+   * exported secrets. Applications must only use these secrets where repeated values are safe.
+   * Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+   * recipient-provided nonce.
+   *
    * @example
    *
    * ```ts
@@ -414,7 +448,7 @@ class RecipientContext {
    * @param length - Desired length of exported secret in bytes
    *
    * @returns A Promise that resolves to the exported secret.
-   * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.3)
+   * @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.3)
    */
   async Export(exporterContext: Uint8Array, length: number): Promise<Uint8Array> {
     return await ContextExport(
@@ -450,7 +484,7 @@ const validate = <T extends { type: string }>(factory: () => T, type: string): T
  * asymmetric key exchange with a symmetric cipher. This was originally defined in an Informational
  * document on the IRTF stream as [RFC 9180](https://www.rfc-editor.org/rfc/rfc9180.html) and is now
  * being republished as a Standards Track document of the IETF as
- * [draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05).
+ * [draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06).
  *
  * HPKE provides a variant of public key encryption for arbitrary-sized plaintexts using a recipient
  * public key. It supports two modes:
@@ -847,8 +881,8 @@ export class CipherSuite<K extends Key = Key> {
    * @returns A Promise that resolves to an object containing the encapsulated secret and
    *   ciphertext. The ciphertext is {@link CipherSuite.AEAD Nt} bytes longer than the plaintext. The
    *   encapsulated secret is {@link CipherSuite.KEM Nenc} bytes.
-   * @see [Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.1)
-   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+   * @see [Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.1)
+   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
    */
   async Seal(
     publicKey: K,
@@ -900,8 +934,8 @@ export class CipherSuite<K extends Key = Key> {
    * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the decrypted plaintext.
-   * @see [Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.1)
-   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+   * @see [Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.1)
+   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
    */
   async Open(
     privateKey: K | KeyPair<K>,
@@ -925,6 +959,11 @@ export class CipherSuite<K extends Key = Key> {
    * whole context, reserving `exporterContext` for information specific to the exported secret.
    *
    * The exported secret is indistinguishable from a uniformly random bitstring of equal length.
+   *
+   * HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+   * exported secrets. Applications must only use these secrets where repeated values are safe.
+   * Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+   * recipient-provided nonce.
    *
    * @category Single-Shot APIs
    * @example
@@ -952,8 +991,8 @@ export class CipherSuite<K extends Key = Key> {
    *
    * @returns A Promise that resolves to an object containing the encapsulated secret and the
    *   exported secret.
-   * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.2)
-   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+   * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.2)
+   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
    */
   async SendExport(
     publicKey: K,
@@ -973,6 +1012,11 @@ export class CipherSuite<K extends Key = Key> {
    *
    * Applications should prefer `options.info` for authenticated information that applies to the
    * whole context, reserving `exporterContext` for information specific to the exported secret.
+   *
+   * HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+   * exported secrets. Applications must only use these secrets where repeated values are safe.
+   * Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+   * recipient-provided nonce.
    *
    * @category Single-Shot APIs
    * @example
@@ -1004,8 +1048,8 @@ export class CipherSuite<K extends Key = Key> {
    * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the exported secret.
-   * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.2)
-   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+   * @see [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.2)
+   * @see [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
    */
   async ReceiveExport(
     privateKey: K | KeyPair<K>,
@@ -1059,7 +1103,7 @@ export class CipherSuite<K extends Key = Key> {
    *
    * @returns A Promise that resolves to an object containing the encapsulated secret and the sender
    *   context (`ctx`). The encapsulated secret is {@link CipherSuite.KEM Nenc} bytes.
-   * @see [SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1.1)
+   * @see [SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1.1)
    */
   async SetupSender(
     publicKey: K,
@@ -1140,7 +1184,7 @@ export class CipherSuite<K extends Key = Key> {
    * @param options.pskId - Pre-shared key identifier (for PSK mode)
    *
    * @returns A Promise that resolves to the recipient context.
-   * @see [SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1.1)
+   * @see [SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1.1)
    */
   async SetupRecipient(
     privateKey: K | KeyPair<K>,
@@ -1327,7 +1371,7 @@ interface Triple<K extends Key = Key> {
  * Base mode provides encryption to a public key without sender authentication. The recipient cannot
  * verify who encrypted the message, only that someone with access to their public key did.
  *
- * @see [HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5)
+ * @see [HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5)
  */
 export const MODE_BASE = 0x00
 
@@ -1338,7 +1382,7 @@ export const MODE_BASE = 0x00
  * sender and recipient must possess the same PSK and PSK ID. This provides implicit sender
  * authentication.
  *
- * @see [HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5)
+ * @see [HPKE Modes](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5)
  */
 export const MODE_PSK = 0x01
 
@@ -1549,6 +1593,38 @@ export function encode(string: string): Uint8Array {
   return bytes
 }
 
+/**
+ * Integer to Octet String Primitive (I2OSP) as defined in RFC 8017. Converts a non-negative integer
+ * into a byte string of specified length. It's exported for use in custom KEM, KDF, or AEAD
+ * implementations.
+ *
+ * @param n - Non-negative safe integer to convert
+ * @param w - Desired length of output in bytes
+ *
+ * @returns A Uint8Array of length w containing the big-endian representation of n
+ * @group Utilities
+ * @see [I2OSP](https://www.rfc-editor.org/rfc/rfc8017#section-4.1)
+ */
+export function I2OSP(n: number, w: number): Uint8Array {
+  if (!Number.isSafeInteger(w) || w <= 0) {
+    throw new Error('w must be a positive safe integer')
+  }
+  if (!Number.isSafeInteger(n) || n < 0) {
+    throw new Error('n must be a non-negative safe integer')
+  }
+  const max = Math.pow(256, w)
+  if (n >= max) {
+    throw new Error('n too large to fit in w-length byte string')
+  }
+  const ret = new Uint8Array(w)
+  let num = n
+  for (let i = 0; i < w && num; i++) {
+    ret[w - (i + 1)] = num % 256
+    num = Math.floor(num / 256)
+  }
+  return ret
+}
+
 // Module-level cached encodings of static ASCII labels used on HPKE hot paths.
 // Each is a freshly-allocated Uint8Array held as a constant to avoid repeating
 // the per-call `encode()` validation+allocation loop. These are only ever read
@@ -1576,88 +1652,13 @@ function lengthPrefixed(x: Uint8Array): Uint8Array {
 }
 
 // ============================================================================
-// KDF (Key Derivation Function) - Helper Functions
+// Input Validation
 // ============================================================================
 
-/**
- * Performs labeled key derivation for one-stage KDFs.
- *
- * This function implements the LabeledDerive operation as specified in the HPKE specification for
- * use with one-stage KDFs. It constructs a labeled input by concatenating:
- *
- * - The input keying material (`ikm`)
- * - The version string "HPKE-v1"
- * - The suite identifier (`suite_id`)
- * - A length-prefixed label
- * - The desired output length as a 2-byte encoding
- * - Additional context
- *
- * The labeled input is then passed to the KDF's Derive function to produce L bytes of output. This
- * ensures domain separation between different uses of the KDF in HPKE.
- *
- * @group Utilities
- * @see [LabeledDerive](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-5)
- */
-export async function LabeledDerive(
-  KDF: Pick<KDF, 'Derive'>,
-  suite_id: Uint8Array,
-  ikm: Uint8Array,
-  label: Uint8Array,
-  context: Uint8Array,
-  L: number,
-): Promise<Uint8Array> {
-  const labeled_ikm = concat(ikm, L_HPKE_v1, suite_id, lengthPrefixed(label), I2OSP(L, 2), context)
-  return await KDF.Derive(labeled_ikm, L)
-}
-
-/** @see [Export_OneStage](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-5) */
-async function Export_OneStage(
-  KDF: KDF,
-  suite_id: Uint8Array,
-  exporter_secret: Uint8Array,
-  exporter_context: Uint8Array,
-  L: number,
-) {
-  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_ONE_STAGE)
-  return await LabeledDerive(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
-}
-
-/** @see [CombineSecrets_OneStage](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-pq-05#section-5) */
-async function CombineSecrets_OneStage(
-  suite: Triple,
-  mode: number,
-  shared_secret: Uint8Array,
-  info: Uint8Array,
-  psk: Uint8Array,
-  psk_id: Uint8Array,
-) {
-  checkLength(psk, 'PSK', MAX_LENGTH_ONE_STAGE)
-  checkLength(psk_id, 'PSK ID', MAX_LENGTH_ONE_STAGE)
-  checkLength(info, 'Info', MAX_LENGTH_ONE_STAGE)
-
-  const secrets = concat(lengthPrefixed(psk), lengthPrefixed(shared_secret))
-  const context = concat(I2OSP(mode, 1), lengthPrefixed(psk_id), lengthPrefixed(info))
-
-  const secret = await LabeledDerive(
-    suite.KDF,
-    suite.id,
-    secrets,
-    L_secret,
-    context,
-    suite.AEAD.Nk + suite.AEAD.Nn + suite.KDF.Nh,
-  )
-
-  const key = slice(secret, 0, suite.AEAD.Nk)
-  const base_nonce = slice(secret, suite.AEAD.Nk, suite.AEAD.Nk + suite.AEAD.Nn)
-  const exporter_secret = slice(secret, suite.AEAD.Nk + suite.AEAD.Nn)
-
-  return { key, base_nonce, exporter_secret }
-}
-
-// Two-stage KDF input length limits (0xffff = 65535 bytes)
-// this is an actual limit for One-Stage KDF
+// Apply a 65535-byte implementation limit to two-stage KDF inputs.
 const MAX_LENGTH_TWO_STAGE = 0xffff
-// that is also applied to Two-Stage KDF for consistency
+// One-stage length-prefixed PSK, PSK ID, and info inputs are limited to 65535 bytes.
+// Apply the same bound to one-stage exporter contexts as an implementation limit.
 const MAX_LENGTH_ONE_STAGE = 0xffff
 
 function checkLength(data: Uint8Array, name: string, maxLength: number) {
@@ -1679,60 +1680,9 @@ function checkExtractable(extractable: unknown): asserts extractable is boolean 
   }
 }
 
-/** @see [KeySchedule (CombineSecrets)](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1) */
-async function CombineSecrets_TwoStage(
-  suite: Triple,
-  mode: number,
-  shared_secret: Uint8Array,
-  info: Uint8Array,
-  psk: Uint8Array,
-  psk_id: Uint8Array,
-) {
-  checkLength(psk, 'PSK', MAX_LENGTH_TWO_STAGE)
-  checkLength(psk_id, 'PSK ID', MAX_LENGTH_TWO_STAGE)
-  checkLength(info, 'Info', MAX_LENGTH_TWO_STAGE)
-
-  const [psk_id_hash, info_hash] = await Promise.all([
-    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_psk_id_hash, psk_id),
-    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_info_hash, info),
-  ])
-
-  const key_schedule_context = concat(I2OSP(mode, 1), psk_id_hash, info_hash)
-  const secret = await LabeledExtract(suite.KDF, suite.id, shared_secret, L_secret, psk)
-
-  // For export-only AEAD, we only need the exporter_secret
-  if (suite.AEAD.id === EXPORT_ONLY) {
-    const exporter_secret = await LabeledExpand(
-      suite.KDF,
-      suite.id,
-      secret,
-      L_exp,
-      key_schedule_context,
-      suite.KDF.Nh,
-    )
-    return { key: new Uint8Array(), base_nonce: new Uint8Array(), exporter_secret }
-  }
-
-  const [key, base_nonce, exporter_secret] = await Promise.all([
-    LabeledExpand(suite.KDF, suite.id, secret, L_key, key_schedule_context, suite.AEAD.Nk),
-    LabeledExpand(suite.KDF, suite.id, secret, L_base_nonce, key_schedule_context, suite.AEAD.Nn),
-    LabeledExpand(suite.KDF, suite.id, secret, L_exp, key_schedule_context, suite.KDF.Nh),
-  ])
-
-  return { key, base_nonce, exporter_secret }
-}
-
-/** @see [Context.Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.3) */
-async function Export_TwoStage(
-  KDF: KDF,
-  suite_id: Uint8Array,
-  exporter_secret: Uint8Array,
-  exporter_context: Uint8Array,
-  L: number,
-) {
-  checkLength(exporter_context, 'Exporter context', MAX_LENGTH_TWO_STAGE)
-  return await LabeledExpand(KDF, suite_id, exporter_secret, L_sec, exporter_context, L)
-}
+// ============================================================================
+// KDF (Key Derivation Function) - Types and Interfaces
+// ============================================================================
 
 /**
  * Key Derivation Function (KDF) implementation interface.
@@ -1752,6 +1702,9 @@ async function Export_TwoStage(
  *   not be called and may be no-op implementations.
  * - Two-stage KDFs only implement {@link Extract} and {@link Expand}. The {@link Derive} method will not
  *   be called and may be a no-op implementation.
+ *
+ * Custom KDF implementations must also meet the [KDF security
+ * requirements](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-9.3).
  *
  * @example
  *
@@ -1799,7 +1752,7 @@ async function Export_TwoStage(
  * )
  * ```
  *
- * @see [HPKE Key Derivation Functions](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.2)
+ * @see [HPKE Key Derivation Functions](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.2)
  */
 export interface KDF {
   /** KDF algorithm identifier */
@@ -1854,8 +1807,39 @@ export interface KDF {
 }
 
 // ============================================================================
-// KDF (Key Derivation Function) - Labeled Extract/Expand Functions
+// KDF (Key Derivation Function) - Labeled Derivation Functions
 // ============================================================================
+
+/**
+ * Performs labeled key derivation for one-stage KDFs.
+ *
+ * This function implements the LabeledDerive operation as specified in the HPKE specification for
+ * use with one-stage KDFs. It constructs a labeled input by concatenating:
+ *
+ * - The input keying material (`ikm`)
+ * - The version string "HPKE-v1"
+ * - The suite identifier (`suite_id`)
+ * - A length-prefixed label
+ * - The desired output length as a 2-byte encoding
+ * - Additional context
+ *
+ * The labeled input is then passed to the KDF's Derive function to produce L bytes of output. This
+ * ensures domain separation between different uses of the KDF in HPKE.
+ *
+ * @group Utilities
+ * @see [LabeledDerive](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.4)
+ */
+export async function LabeledDerive(
+  KDF: Pick<KDF, 'Derive'>,
+  suite_id: Uint8Array,
+  ikm: Uint8Array,
+  label: Uint8Array,
+  context: Uint8Array,
+  L: number,
+): Promise<Uint8Array> {
+  const labeled_ikm = concat(ikm, L_HPKE_v1, suite_id, lengthPrefixed(label), I2OSP(L, 2), context)
+  return await KDF.Derive(labeled_ikm, L)
+}
 
 /**
  * Performs labeled extraction for two-stage KDFs.
@@ -1872,7 +1856,7 @@ export interface KDF {
  * pseudorandom key. This ensures domain separation between different uses of the KDF in HPKE.
  *
  * @group Utilities
- * @see [LabeledExtract](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.4)
+ * @see [LabeledExtract](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.4)
  */
 export async function LabeledExtract(
   KDF: Pick<KDF, 'Extract'>,
@@ -1902,7 +1886,7 @@ export async function LabeledExtract(
  * of the KDF in HPKE.
  *
  * @group Utilities
- * @see [LabeledExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.4)
+ * @see [LabeledExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.4)
  */
 export async function LabeledExpand(
   KDF: Pick<KDF, 'Expand'>,
@@ -2012,7 +1996,7 @@ export async function LabeledExpand(
  * ```
  *
  * @typeParam K - Key representation produced and consumed by the KEM
- * @see [HPKE Key Encapsulation Mechanisms](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.1)
+ * @see [HPKE Key Encapsulation Mechanisms](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.1)
  */
 export interface KEM<K extends Key = Key> {
   /** KEM algorithm identifier */
@@ -2214,7 +2198,7 @@ function isKey(key: unknown, type: string, extractable?: boolean): asserts key i
  * )
  * ```
  *
- * @see [HPKE AEAD Encryption Algorithm](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.3)
+ * @see [HPKE AEAD Encryption Algorithm](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.3)
  */
 export interface AEAD {
   /** AEAD algorithm identifier */
@@ -2249,7 +2233,7 @@ export interface AEAD {
    * @param pt - Plaintext to encrypt
    *
    * @returns A promise resolving to the ciphertext with authentication tag appended
-   * @see [Context.Seal P_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.2)
+   * @see [Context.Seal P_MAX handling](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.2)
    */
   Seal(key: Uint8Array, nonce: Uint8Array, aad: Uint8Array, pt: Uint8Array): Promise<Uint8Array>
 
@@ -2270,38 +2254,6 @@ export interface AEAD {
 // HPKE Core Functions - Key Schedule
 // ============================================================================
 
-/**
- * Integer to Octet String Primitive (I2OSP) as defined in RFC 8017. Converts a non-negative integer
- * into a byte string of specified length. It's exported for use in custom KEM, KDF, or AEAD
- * implementations.
- *
- * @param n - Non-negative safe integer to convert
- * @param w - Desired length of output in bytes
- *
- * @returns A Uint8Array of length w containing the big-endian representation of n
- * @group Utilities
- * @see [I2OSP](https://www.rfc-editor.org/rfc/rfc8017#section-4.1)
- */
-export function I2OSP(n: number, w: number): Uint8Array {
-  if (!Number.isSafeInteger(w) || w <= 0) {
-    throw new Error('w must be a positive safe integer')
-  }
-  if (!Number.isSafeInteger(n) || n < 0) {
-    throw new Error('n must be a non-negative safe integer')
-  }
-  const max = Math.pow(256, w)
-  if (n >= max) {
-    throw new Error('n too large to fit in w-length byte string')
-  }
-  const ret = new Uint8Array(w)
-  let num = n
-  for (let i = 0; i < w && num; i++) {
-    ret[w - (i + 1)] = num % 256
-    num = Math.floor(num / 256)
-  }
-  return ret
-}
-
 function KDFStages(KDF: KDF): 1 | 2 {
   if (KDF.stages === 1 || KDF.stages === 2) {
     return KDF.stages
@@ -2310,7 +2262,82 @@ function KDFStages(KDF: KDF): 1 | 2 {
   throw new Error('unreachable')
 }
 
-/** @see [KeySchedule](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1) */
+/** @see [CombineSecrets](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1) */
+async function CombineSecrets_OneStage(
+  suite: Triple,
+  mode: number,
+  shared_secret: Uint8Array,
+  info: Uint8Array,
+  psk: Uint8Array,
+  psk_id: Uint8Array,
+) {
+  checkLength(psk, 'PSK', MAX_LENGTH_ONE_STAGE)
+  checkLength(psk_id, 'PSK ID', MAX_LENGTH_ONE_STAGE)
+  checkLength(info, 'Info', MAX_LENGTH_ONE_STAGE)
+
+  const secrets = concat(lengthPrefixed(psk), lengthPrefixed(shared_secret))
+  const context = concat(I2OSP(mode, 1), lengthPrefixed(psk_id), lengthPrefixed(info))
+
+  const secret = await LabeledDerive(
+    suite.KDF,
+    suite.id,
+    secrets,
+    L_secret,
+    context,
+    suite.AEAD.Nk + suite.AEAD.Nn + suite.KDF.Nh,
+  )
+
+  const key = slice(secret, 0, suite.AEAD.Nk)
+  const base_nonce = slice(secret, suite.AEAD.Nk, suite.AEAD.Nk + suite.AEAD.Nn)
+  const exporter_secret = slice(secret, suite.AEAD.Nk + suite.AEAD.Nn)
+
+  return { key, base_nonce, exporter_secret }
+}
+
+/** @see [CombineSecrets](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1) */
+async function CombineSecrets_TwoStage(
+  suite: Triple,
+  mode: number,
+  shared_secret: Uint8Array,
+  info: Uint8Array,
+  psk: Uint8Array,
+  psk_id: Uint8Array,
+) {
+  checkLength(psk, 'PSK', MAX_LENGTH_TWO_STAGE)
+  checkLength(psk_id, 'PSK ID', MAX_LENGTH_TWO_STAGE)
+  checkLength(info, 'Info', MAX_LENGTH_TWO_STAGE)
+
+  const [psk_id_hash, info_hash] = await Promise.all([
+    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_psk_id_hash, psk_id),
+    LabeledExtract(suite.KDF, suite.id, new Uint8Array(), L_info_hash, info),
+  ])
+
+  const key_schedule_context = concat(I2OSP(mode, 1), psk_id_hash, info_hash)
+  const secret = await LabeledExtract(suite.KDF, suite.id, shared_secret, L_secret, psk)
+
+  // For export-only AEAD, we only need the exporter_secret
+  if (suite.AEAD.id === EXPORT_ONLY) {
+    const exporter_secret = await LabeledExpand(
+      suite.KDF,
+      suite.id,
+      secret,
+      L_exp,
+      key_schedule_context,
+      suite.KDF.Nh,
+    )
+    return { key: new Uint8Array(), base_nonce: new Uint8Array(), exporter_secret }
+  }
+
+  const [key, base_nonce, exporter_secret] = await Promise.all([
+    LabeledExpand(suite.KDF, suite.id, secret, L_key, key_schedule_context, suite.AEAD.Nk),
+    LabeledExpand(suite.KDF, suite.id, secret, L_base_nonce, key_schedule_context, suite.AEAD.Nn),
+    LabeledExpand(suite.KDF, suite.id, secret, L_exp, key_schedule_context, suite.KDF.Nh),
+  ])
+
+  return { key, base_nonce, exporter_secret }
+}
+
+/** @see [KeySchedule](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1) */
 async function KeySchedule(
   suite: Triple,
   mode: number,
@@ -2333,7 +2360,7 @@ async function KeySchedule(
   return await CombineSecrets(suite, mode, shared_secret, info, psk, pskId)
 }
 
-/** @see [VerifyPSKInputs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1) */
+/** @see [VerifyPSKInputs](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1) */
 function VerifyPSKInputs(psk: Uint8Array, psk_id: Uint8Array) {
   if (psk.byteLength && psk_id.byteLength) {
     if (psk.byteLength < 32) {
@@ -2365,7 +2392,7 @@ const CHACHA20_POLY1305_P_MAX = 2 ** 38 - 64
  * This is a factory function that must be passed to the {@link CipherSuite} constructor.
  *
  * @group AEAD Algorithms
- * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.3)
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.3)
  */
 export const AEAD_EXPORT_ONLY: AEADFactory = function (): AEAD {
   return {
@@ -2508,7 +2535,7 @@ function HKDF_SHARED(): KDF_BASE {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KDF Algorithms
- * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.2)
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.2)
  */
 export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
   return { id: 0x0001, type: 'KDF', name: 'HKDF-SHA256', Nh: 32, hash: 'SHA-256', ...HKDF_SHARED() }
@@ -2531,7 +2558,7 @@ export const KDF_HKDF_SHA256: KDFFactory = function (): HKDF {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KDF Algorithms
- * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.2)
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.2)
  */
 export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
   return { id: 0x0002, type: 'KDF', name: 'HKDF-SHA384', Nh: 48, hash: 'SHA-384', ...HKDF_SHARED() }
@@ -2554,7 +2581,7 @@ export const KDF_HKDF_SHA384: KDFFactory = function (): HKDF {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KDF Algorithms
- * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.2)
+ * @see [HPKE KDF Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.2)
  */
 export const KDF_HKDF_SHA512: KDFFactory = function (): HKDF {
   return { id: 0x0003, type: 'KDF', name: 'HKDF-SHA512', Nh: 64, hash: 'SHA-512', ...HKDF_SHARED() }
@@ -2787,7 +2814,7 @@ function b64u(input: string): Uint8Array {
 // KEM (Key Encapsulation Mechanism) - DHKEM Helper Functions
 // ============================================================================
 
-/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1.3) */
+/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1.3) */
 async function DeriveKeyPairBytes(
   DHKEM: DHKEM,
   ikm: Uint8Array,
@@ -2844,7 +2871,7 @@ function assertCryptoKey(key: Key): asserts key is CryptoKey {
   }
 }
 
-/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.5) */
+/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.5) */
 async function ExtractAndExpand_OneStage(
   DHKEM: DHKEM,
   dh: Uint8Array,
@@ -2860,7 +2887,7 @@ async function ExtractAndExpand_OneStage(
   )
 }
 
-/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.5) */
+/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.5) */
 async function ExtractAndExpand_TwoStage(
   DHKEM: DHKEM,
   dh: Uint8Array,
@@ -2877,7 +2904,7 @@ async function ExtractAndExpand_TwoStage(
   )
 }
 
-/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.5) */
+/** @see [ExtractAndExpand](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.5) */
 async function ExtractAndExpand(
   DHKEM: DHKEM,
   dh: Uint8Array,
@@ -3135,7 +3162,7 @@ async function DeserializePrivateKeyNist(
   return (await importKeyNist(this, key, this.name, extractable, false)).privateKey
 }
 
-/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1.3) */
+/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1.3) */
 async function DeriveKeyPairNist(
   this: DHKEM & NistCurveConfig,
   ikm: Uint8Array,
@@ -3170,7 +3197,7 @@ async function GetKeyPairNist(
 // KEM (Key Encapsulation Mechanism) - DHKEM X Curve Implementations
 // ============================================================================
 
-/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1.3) */
+/** @see [DeriveKeyPair](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1.3) */
 async function DeriveKeyPairX(this: DHKEM, ikm: Uint8Array, extractable: boolean) {
   const sk = await DeriveKeyPairBytes(this, ikm, L_sk, new Uint8Array())
   return await createKeyPairFromPrivateKey(this, sk, extractable)
@@ -3210,7 +3237,7 @@ const P256: NistCurveConfig = {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
- * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1)
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1)
  */
 export const KEM_DHKEM_P256_HKDF_SHA256: KEMFactory<CryptoKey> = function (): DHKEM &
   NistCurveConfig {
@@ -3266,7 +3293,7 @@ const P384: NistCurveConfig = {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
- * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1)
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1)
  */
 export const KEM_DHKEM_P384_HKDF_SHA384: KEMFactory<CryptoKey> = function (): DHKEM &
   NistCurveConfig {
@@ -3322,7 +3349,7 @@ const P521: NistCurveConfig = {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
- * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1)
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1)
  */
 export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DHKEM &
   NistCurveConfig {
@@ -3369,7 +3396,7 @@ export const KEM_DHKEM_P521_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DH
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
- * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1)
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1)
  */
 export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory<CryptoKey> = function (): DHKEM & {
   pkcs8: Uint8Array
@@ -3418,7 +3445,7 @@ export const KEM_DHKEM_X25519_HKDF_SHA256: KEMFactory<CryptoKey> = function (): 
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group KEM Algorithms
- * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.1)
+ * @see [HPKE KEM Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.1)
  */
 export const KEM_DHKEM_X448_HKDF_SHA512: KEMFactory<CryptoKey> = function (): DHKEM & {
   pkcs8: Uint8Array
@@ -3747,7 +3774,7 @@ function AEAD_SHARED(P_MAX: number): AEAD_BASE {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group AEAD Algorithms
- * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.3)
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.3)
  */
 export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
   return {
@@ -3779,7 +3806,7 @@ export const AEAD_AES_128_GCM: AEADFactory = function (): WebCryptoAEAD {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group AEAD Algorithms
- * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.3)
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.3)
  */
 export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
   return {
@@ -3811,7 +3838,7 @@ export const AEAD_AES_256_GCM: AEADFactory = function (): WebCryptoAEAD {
  * > [`@panva/hpke-noble`](https://www.npmjs.com/package/@panva/hpke-noble)
  *
  * @group AEAD Algorithms
- * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-7.3)
+ * @see [HPKE AEAD Identifiers](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-7.3)
  */
 export const AEAD_ChaCha20Poly1305: AEADFactory = function AEAD_ChaCha20Poly1305(): WebCryptoAEAD {
   return {

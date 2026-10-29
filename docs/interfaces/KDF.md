@@ -18,6 +18,9 @@ KDF implementations are either one-stage or two-stage:
 - Two-stage KDFs only implement [Extract](#extract) and [Expand](#expand). The [Derive](#derive) method will not
   be called and may be a no-op implementation.
 
+Custom KDF implementations must also meet the [KDF security
+requirements](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-9.3).
+
 ## Contents
 
 - [Methods](#methods)
@@ -79,7 +82,7 @@ const customSuite = new HPKE.CipherSuite(
 
 ## See
 
-[HPKE Key Derivation Functions](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-4.2)
+[HPKE Key Derivation Functions](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-4.2)
 
 ## Methods
 

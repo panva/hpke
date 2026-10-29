@@ -6,7 +6,7 @@ Implements an authenticated encryption encapsulation format that combines a semi
 asymmetric key exchange with a symmetric cipher. This was originally defined in an Informational
 document on the IRTF stream as [RFC 9180](https://www.rfc-editor.org/rfc/rfc9180.html) and is now
 being republished as a Standards Track document of the IETF as
-[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05).
+[draft-ietf-hpke-hpke](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06).
 
 HPKE provides a variant of public key encryption for arbitrary-sized plaintexts using a recipient
 public key. It supports two modes:
@@ -179,7 +179,7 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 #### See
 
-[SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1.1)
+[SetupBaseR / SetupPSKR](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1.1)
 
 ***
 
@@ -237,7 +237,7 @@ const ct2: Uint8Array = await ctx.Seal(pt2, aad2)
 
 #### See
 
-[SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-5.1.1)
+[SetupBaseS / SetupPSKS](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-5.1.1)
 
 ## Key Management
 
@@ -472,8 +472,8 @@ const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, c
 
 #### See
 
-- [Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.1)
-- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+- [Single-Shot Decryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.1)
+- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
 
 ***
 
@@ -487,6 +487,11 @@ It combines context setup and secret export in one call.
 
 Applications should prefer `options.info` for authenticated information that applies to the
 whole context, reserving `exporterContext` for information specific to the exported secret.
+
+HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+exported secrets. Applications must only use these secrets where repeated values are safe.
+Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+recipient-provided nonce.
 
 #### Parameters
 
@@ -528,8 +533,8 @@ const exported: Uint8Array = await suite.ReceiveExport(
 
 #### See
 
-- [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.2)
-- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+- [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.2)
+- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
 
 ***
 
@@ -581,8 +586,8 @@ const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext
 
 #### See
 
-- [Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.1)
-- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+- [Single-Shot Encryption](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.1)
+- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
 
 ***
 
@@ -598,6 +603,11 @@ Applications should prefer `options.info` for authenticated information that app
 whole context, reserving `exporterContext` for information specific to the exported secret.
 
 The exported secret is indistinguishable from a uniformly random bitstring of equal length.
+
+HPKE does not provide replay protection. A replayed encapsulated secret produces the same
+exported secrets. Applications must only use these secrets where repeated values are safe.
+Deriving AEAD keys and nonces requires a fresh value for each derivation, such as a
+recipient-provided nonce.
 
 #### Parameters
 
@@ -635,8 +645,8 @@ const { encapsulatedSecret, exportedSecret } = await suite.SendExport(
 
 #### See
 
-- [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-6.2)
-- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-05#section-8.1)
+- [Single-Shot Secret Export](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-6.2)
+- [Auxiliary Authenticated Application Information](https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-06#section-8.1)
 
 ## Other
 

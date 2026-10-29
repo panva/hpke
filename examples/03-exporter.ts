@@ -44,5 +44,7 @@ console.log(
 // - MAC keys
 // - Session identifiers
 // - Any application-specific cryptographic material
+// Exported secrets do not provide replay protection. Deriving AEAD keys and nonces
+// requires fresh input for each derivation, such as a recipient-provided nonce.
 console.log('Derived key 1 length:', senderDerivedKey1.length) // 32
 console.log('Derived key 2 length:', senderDerivedKey2.length) // 16
