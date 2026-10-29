@@ -1,6 +1,6 @@
-# Variable: KDF\_TurboSHAKE128
+# Variable: KDF_TurboSHAKE128
 
-> `const` **KDF\_TurboSHAKE128**: [`KDFFactory`](../type-aliases/KDFFactory.md)
+> `const` **KDF_TurboSHAKE128**: [`KDFFactory`](../type-aliases/KDFFactory.md)
 
 TurboSHAKE128 key derivation function.
 

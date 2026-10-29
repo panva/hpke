@@ -1,6 +1,6 @@
-# Variable: KEM\_MLKEM768\_X25519
+# Variable: KEM_MLKEM768_X25519
 
-> `const` **KEM\_MLKEM768\_X25519**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM_MLKEM768_X25519**: [`KEMFactory`](../type-aliases/KEMFactory.md)
 
 Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519).
 

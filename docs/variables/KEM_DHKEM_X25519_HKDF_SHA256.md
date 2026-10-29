@@ -1,6 +1,6 @@
-# Variable: KEM\_DHKEM\_X25519\_HKDF\_SHA256
+# Variable: KEM_DHKEM_X25519_HKDF_SHA256
 
-> `const` **KEM\_DHKEM\_X25519\_HKDF\_SHA256**: [`KEMFactory`](../type-aliases/KEMFactory.md)<[`CryptoKey`](../type-aliases/CryptoKey.md)>
+> `const` **KEM_DHKEM_X25519_HKDF_SHA256**: [`KEMFactory`](../type-aliases/KEMFactory.md)<[`CryptoKey`](../type-aliases/CryptoKey.md)>
 
 Diffie-Hellman Key Encapsulation Mechanism using Curve25519 and HKDF-SHA256.
 

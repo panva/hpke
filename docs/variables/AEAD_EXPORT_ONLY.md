@@ -1,6 +1,6 @@
-# Variable: AEAD\_EXPORT\_ONLY
+# Variable: AEAD_EXPORT_ONLY
 
-> `const` **AEAD\_EXPORT\_ONLY**: [`AEADFactory`](../type-aliases/AEADFactory.md)
+> `const` **AEAD_EXPORT_ONLY**: [`AEADFactory`](../type-aliases/AEADFactory.md)
 
 Export-only AEAD mode.
 

@@ -1,6 +1,6 @@
-# Variable: AEAD\_ChaCha20Poly1305
+# Variable: AEAD_ChaCha20Poly1305
 
-> `const` **AEAD\_ChaCha20Poly1305**: [`AEADFactory`](../type-aliases/AEADFactory.md)
+> `const` **AEAD_ChaCha20Poly1305**: [`AEADFactory`](../type-aliases/AEADFactory.md)
 
 ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD).
 

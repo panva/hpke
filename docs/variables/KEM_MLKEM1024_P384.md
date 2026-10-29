@@ -1,6 +1,6 @@
-# Variable: KEM\_MLKEM1024\_P384
+# Variable: KEM_MLKEM1024_P384
 
-> `const` **KEM\_MLKEM1024\_P384**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM_MLKEM1024_P384**: [`KEMFactory`](../type-aliases/KEMFactory.md)
 
 Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384).
 

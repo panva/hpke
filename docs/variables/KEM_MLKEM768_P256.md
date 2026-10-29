@@ -1,6 +1,6 @@
-# Variable: KEM\_MLKEM768\_P256
+# Variable: KEM_MLKEM768_P256
 
-> `const` **KEM\_MLKEM768\_P256**: [`KEMFactory`](../type-aliases/KEMFactory.md)
+> `const` **KEM_MLKEM768_P256**: [`KEMFactory`](../type-aliases/KEMFactory.md)
 
 Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256).
 

@@ -1,6 +1,6 @@
-# Variable: KDF\_SHAKE128
+# Variable: KDF_SHAKE128
 
-> `const` **KDF\_SHAKE128**: [`KDFFactory`](../type-aliases/KDFFactory.md)
+> `const` **KDF_SHAKE128**: [`KDFFactory`](../type-aliases/KDFFactory.md)
 
 SHAKE128 key derivation function.
 

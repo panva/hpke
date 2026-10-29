@@ -122,8 +122,8 @@ const pt2: Uint8Array = await ctx.Open(ct2, aad2)
 
 ##### See
 
-- [MODE\_BASE](../variables/MODE_BASE.md)
-- [MODE\_PSK](../variables/MODE_PSK.md)
+- [MODE_BASE](../variables/MODE_BASE.md)
+- [MODE_PSK](../variables/MODE_PSK.md)
 
 ##### Returns
 

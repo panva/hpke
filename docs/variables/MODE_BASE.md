@@ -1,6 +1,6 @@
-# Variable: MODE\_BASE
+# Variable: MODE_BASE
 
-> `const` **MODE\_BASE**: `0` = `0x00`
+> `const` **MODE_BASE**: `0` = `0x00`
 
 Mode identifier for Base mode (0x00).
 

@@ -1,6 +1,6 @@
-# Variable: MODE\_PSK
+# Variable: MODE_PSK
 
-> `const` **MODE\_PSK**: `1` = `0x01`
+> `const` **MODE_PSK**: `1` = `0x01`
 
 Mode identifier for PSK mode (0x01).
 

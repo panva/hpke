@@ -1,6 +1,6 @@
-# Variable: KDF\_SHAKE256
+# Variable: KDF_SHAKE256
 
-> `const` **KDF\_SHAKE256**: [`KDFFactory`](../type-aliases/KDFFactory.md)
+> `const` **KDF_SHAKE256**: [`KDFFactory`](../type-aliases/KDFFactory.md)
 
 SHAKE256 key derivation function.
 

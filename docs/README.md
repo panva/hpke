@@ -49,38 +49,38 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 
 | Variable | Description |
 | :------ | :------ |
-| [KEM\_DHKEM\_P256\_HKDF\_SHA256](variables/KEM_DHKEM_P256_HKDF_SHA256.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-256 curve and HKDF-SHA256. |
-| [KEM\_DHKEM\_P384\_HKDF\_SHA384](variables/KEM_DHKEM_P384_HKDF_SHA384.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-384 curve and HKDF-SHA384. |
-| [KEM\_DHKEM\_P521\_HKDF\_SHA512](variables/KEM_DHKEM_P521_HKDF_SHA512.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA512. |
-| [KEM\_DHKEM\_X25519\_HKDF\_SHA256](variables/KEM_DHKEM_X25519_HKDF_SHA256.md) | Diffie-Hellman Key Encapsulation Mechanism using Curve25519 and HKDF-SHA256. |
-| [KEM\_DHKEM\_X448\_HKDF\_SHA512](variables/KEM_DHKEM_X448_HKDF_SHA512.md) | Diffie-Hellman Key Encapsulation Mechanism using Curve448 and HKDF-SHA512. |
-| [KEM\_ML\_KEM\_1024](variables/KEM_ML_KEM_1024.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-1024). |
-| [KEM\_ML\_KEM\_512](variables/KEM_ML_KEM_512.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-512). |
-| [KEM\_ML\_KEM\_768](variables/KEM_ML_KEM_768.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-768). |
-| [KEM\_MLKEM1024\_P384](variables/KEM_MLKEM1024_P384.md) | Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384). |
-| [KEM\_MLKEM768\_P256](variables/KEM_MLKEM768_P256.md) | Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256). |
-| [KEM\_MLKEM768\_X25519](variables/KEM_MLKEM768_X25519.md) | Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519). |
+| [KEM_DHKEM_P256_HKDF_SHA256](variables/KEM_DHKEM_P256_HKDF_SHA256.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-256 curve and HKDF-SHA256. |
+| [KEM_DHKEM_P384_HKDF_SHA384](variables/KEM_DHKEM_P384_HKDF_SHA384.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-384 curve and HKDF-SHA384. |
+| [KEM_DHKEM_P521_HKDF_SHA512](variables/KEM_DHKEM_P521_HKDF_SHA512.md) | Diffie-Hellman Key Encapsulation Mechanism using NIST P-521 curve and HKDF-SHA512. |
+| [KEM_DHKEM_X25519_HKDF_SHA256](variables/KEM_DHKEM_X25519_HKDF_SHA256.md) | Diffie-Hellman Key Encapsulation Mechanism using Curve25519 and HKDF-SHA256. |
+| [KEM_DHKEM_X448_HKDF_SHA512](variables/KEM_DHKEM_X448_HKDF_SHA512.md) | Diffie-Hellman Key Encapsulation Mechanism using Curve448 and HKDF-SHA512. |
+| [KEM_ML_KEM_1024](variables/KEM_ML_KEM_1024.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-1024). |
+| [KEM_ML_KEM_512](variables/KEM_ML_KEM_512.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-512). |
+| [KEM_ML_KEM_768](variables/KEM_ML_KEM_768.md) | Module-Lattice-Based Key Encapsulation Mechanism (ML-KEM-768). |
+| [KEM_MLKEM1024_P384](variables/KEM_MLKEM1024_P384.md) | Hybrid KEM combining ML-KEM-1024 with P-384 (MLKEM1024-P384). |
+| [KEM_MLKEM768_P256](variables/KEM_MLKEM768_P256.md) | Hybrid KEM combining ML-KEM-768 with P-256 (MLKEM768-P256). |
+| [KEM_MLKEM768_X25519](variables/KEM_MLKEM768_X25519.md) | Hybrid KEM combining ML-KEM-768 with X25519 (MLKEM768-X25519). |
 
 ## KDF Algorithms
 
 | Variable | Description |
 | :------ | :------ |
-| [KDF\_HKDF\_SHA256](variables/KDF_HKDF_SHA256.md) | HKDF-SHA256 key derivation function. |
-| [KDF\_HKDF\_SHA384](variables/KDF_HKDF_SHA384.md) | HKDF-SHA384 key derivation function. |
-| [KDF\_HKDF\_SHA512](variables/KDF_HKDF_SHA512.md) | HKDF-SHA512 key derivation function. |
-| [KDF\_SHAKE128](variables/KDF_SHAKE128.md) | SHAKE128 key derivation function. |
-| [KDF\_SHAKE256](variables/KDF_SHAKE256.md) | SHAKE256 key derivation function. |
-| [KDF\_TurboSHAKE128](variables/KDF_TurboSHAKE128.md) | TurboSHAKE128 key derivation function. |
-| [KDF\_TurboSHAKE256](variables/KDF_TurboSHAKE256.md) | TurboSHAKE256 key derivation function. |
+| [KDF_HKDF_SHA256](variables/KDF_HKDF_SHA256.md) | HKDF-SHA256 key derivation function. |
+| [KDF_HKDF_SHA384](variables/KDF_HKDF_SHA384.md) | HKDF-SHA384 key derivation function. |
+| [KDF_HKDF_SHA512](variables/KDF_HKDF_SHA512.md) | HKDF-SHA512 key derivation function. |
+| [KDF_SHAKE128](variables/KDF_SHAKE128.md) | SHAKE128 key derivation function. |
+| [KDF_SHAKE256](variables/KDF_SHAKE256.md) | SHAKE256 key derivation function. |
+| [KDF_TurboSHAKE128](variables/KDF_TurboSHAKE128.md) | TurboSHAKE128 key derivation function. |
+| [KDF_TurboSHAKE256](variables/KDF_TurboSHAKE256.md) | TurboSHAKE256 key derivation function. |
 
 ## AEAD Algorithms
 
 | Variable | Description |
 | :------ | :------ |
-| [AEAD\_AES\_128\_GCM](variables/AEAD_AES_128_GCM.md) | AES-128-GCM Authenticated Encryption with Associated Data (AEAD). |
-| [AEAD\_AES\_256\_GCM](variables/AEAD_AES_256_GCM.md) | AES-256-GCM Authenticated Encryption with Associated Data (AEAD). |
-| [AEAD\_ChaCha20Poly1305](variables/AEAD_ChaCha20Poly1305.md) | ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD). |
-| [AEAD\_EXPORT\_ONLY](variables/AEAD_EXPORT_ONLY.md) | Export-only AEAD mode. |
+| [AEAD_AES_128_GCM](variables/AEAD_AES_128_GCM.md) | AES-128-GCM Authenticated Encryption with Associated Data (AEAD). |
+| [AEAD_AES_256_GCM](variables/AEAD_AES_256_GCM.md) | AES-256-GCM Authenticated Encryption with Associated Data (AEAD). |
+| [AEAD_ChaCha20Poly1305](variables/AEAD_ChaCha20Poly1305.md) | ChaCha20-Poly1305 Authenticated Encryption with Associated Data (AEAD). |
+| [AEAD_EXPORT_ONLY](variables/AEAD_EXPORT_ONLY.md) | Export-only AEAD mode. |
 
 ## Interfaces
 
@@ -117,5 +117,5 @@ console.log(new TextDecoder().decode(decrypted)) // "Hello, World!"
 
 | Variable | Description |
 | :------ | :------ |
-| [MODE\_BASE](variables/MODE_BASE.md) | Mode identifier for Base mode (0x00). |
-| [MODE\_PSK](variables/MODE_PSK.md) | Mode identifier for PSK mode (0x01). |
+| [MODE_BASE](variables/MODE_BASE.md) | Mode identifier for Base mode (0x00). |
+| [MODE_PSK](variables/MODE_PSK.md) | Mode identifier for PSK mode (0x01). |

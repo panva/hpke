@@ -1,6 +1,6 @@
-# Variable: AEAD\_AES\_256\_GCM
+# Variable: AEAD_AES_256_GCM
 
-> `const` **AEAD\_AES\_256\_GCM**: [`AEADFactory`](../type-aliases/AEADFactory.md)
+> `const` **AEAD_AES_256_GCM**: [`AEADFactory`](../type-aliases/AEADFactory.md)
 
 AES-256-GCM Authenticated Encryption with Associated Data (AEAD).
 

@@ -1,6 +1,6 @@
-# Variable: KDF\_HKDF\_SHA512
+# Variable: KDF_HKDF_SHA512
 
-> `const` **KDF\_HKDF\_SHA512**: [`KDFFactory`](../type-aliases/KDFFactory.md)
+> `const` **KDF_HKDF_SHA512**: [`KDFFactory`](../type-aliases/KDFFactory.md)
 
 HKDF-SHA512 key derivation function.
 
