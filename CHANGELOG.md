@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.8](https://github.com/panva/hpke/compare/v1.1.7...v1.1.8) (2026-10-29)
+
+### Documentation
+
+* update to draft-ietf-hpke-hpke-05 ([abd278d](https://github.com/panva/hpke/commit/abd278d6c96ec2cd1f7b8915ea50fda4e83f4044))
+
+### Refactor
+
+* align helpers with draft-ietf-hpke-hpke-06 ([0b8a008](https://github.com/panva/hpke/commit/0b8a008df68a89022fbc23e9f1ca4e088bdce83d))
+
 ## [1.1.7](https://github.com/panva/hpke/compare/v1.1.6...v1.1.7) (2026-09-05)
 
 ### Fixes
