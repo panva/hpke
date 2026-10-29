@@ -37,7 +37,7 @@ Post-quantum (PQ):
 
 | Type Parameter | Description |
 | :------ | :------ |
-| `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the KEM |
+| <a id="type-parameter-k"></a> `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the KEM |
 
 ## Returns
 

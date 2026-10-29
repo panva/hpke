@@ -119,7 +119,7 @@ const customSuite = new HPKE.CipherSuite(
 
 | Type Parameter | Description |
 | :------ | :------ |
-| `K` *extends* [`Key`](Key.md) | Key representation produced and consumed by the KEM |
+| <a id="type-parameter-k"></a> `K` *extends* [`Key`](Key.md) | Key representation produced and consumed by the KEM |
 
 ## Methods
 

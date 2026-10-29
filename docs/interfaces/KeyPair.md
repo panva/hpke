@@ -25,7 +25,7 @@ Key Usage:
 
 | Type Parameter | Description |
 | :------ | :------ |
-| `K` *extends* [`Key`](Key.md) | Key representation contained in the pair |
+| <a id="type-parameter-k"></a> `K` *extends* [`Key`](Key.md) | Key representation contained in the pair |
 
 ## Properties
 

@@ -48,7 +48,7 @@ The cipher suite consists of:
 
 | Type Parameter | Description |
 | :------ | :------ |
-| `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the suite's KEM |
+| <a id="type-parameter-k"></a> `K` *extends* [`Key`](../interfaces/Key.md) | Key representation produced and consumed by the suite's KEM |
 
 ## Constructor
 
