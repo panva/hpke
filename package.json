@@ -61,7 +61,8 @@
     "@noble/curves": "^2.4.0",
     "@noble/hashes": "^2.4.0",
     "@noble/post-quantum": "^0.7.1",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "amaro": "^1.2.2",
     "esbuild": "^0.28.2",
     "fast-check": "4.9.0",
@@ -76,7 +77,7 @@
     "typedoc": "^0.28.20",
     "typedoc-plugin-markdown": "^4.14.1",
     "typedoc-plugin-remark": "^2.0.2",
-    "typescript": "^6.0.3"
+    "typescript": "npm:@typescript/typescript6@6.0.2"
   },
   "publishConfig": {
     "access": "public"
