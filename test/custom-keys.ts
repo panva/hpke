@@ -4,6 +4,13 @@ import * as assert from 'node:assert'
 import * as HPKE from '../index.ts'
 import { NOBLE_KEMS, supported } from './support.ts'
 
+function assertInternalMethodsHidden(key: HPKE.Key, names: string[]) {
+  for (const name of names) {
+    assert.strictEqual(name in key, false, `${name} is visible on the key`)
+    assert.strictEqual(name in key.constructor, false, `${name} is visible on the constructor`)
+  }
+}
+
 function supportsNativeHybridKem(algorithm: string) {
   // @ts-expect-error
   return SubtleCrypto.supports?.('generateKey', algorithm) ?? false
@@ -45,6 +52,18 @@ if (pqKEMFactory) {
 
     it('generates valid HybridKey instances', async () => {
       const kp = await getHybridKeyPair()
+      assert.ok(Object.isFrozen(kp.privateKey))
+      assert.ok(Object.isFrozen(kp.publicKey))
+      assert.ok(Object.isFrozen(kp.privateKey.constructor))
+      assertInternalMethodsHidden(kp.privateKey, [
+        'validate',
+        'getPublicKey',
+        'getSeed',
+        'getT',
+        'getPq',
+        'getTraditionalKey',
+        'getPostQuantumKey',
+      ])
       assert.strictEqual(kp.privateKey.type, 'private')
       assert.strictEqual(kp.publicKey.type, 'public')
       assert.strictEqual(kp.privateKey.extractable, true)
@@ -249,6 +268,10 @@ test.describe('NobleKey internal protection', () => {
 
   it('generates valid NobleKey instances', async () => {
     const kp = await getNobleKeyPair()
+    assert.ok(Object.isFrozen(kp.privateKey))
+    assert.ok(Object.isFrozen(kp.publicKey))
+    assert.ok(Object.isFrozen(kp.privateKey.constructor))
+    assertInternalMethodsHidden(kp.privateKey, ['validate', 'value', 'seed'])
     assert.strictEqual(kp.privateKey.type, 'private')
     assert.strictEqual(kp.publicKey.type, 'public')
     assert.strictEqual(kp.privateKey.extractable, true)
