@@ -3863,91 +3863,95 @@ export const AEAD_ChaCha20Poly1305: AEADFactory = function AEAD_ChaCha20Poly1305
 // KEM (Key Encapsulation Mechanism) - Composite Hybrid KEM Types and Implementation
 // ============================================================================
 
-/* c8 ignore next 5 */
-const InvalidInvocation = (_: typeof priv) => {
-  if (_ !== priv) {
-    throw new Error('invalid invocation')
-  }
-}
-const priv = /* @__PURE__ */ Symbol()
-class HybridKey implements Key {
-  #algorithm: KeyAlgorithm
-  #type: 'public' | 'private'
-  #extractable: boolean
-  #t: CryptoKey
-  #pq: CryptoKey
-  #seed?: Uint8Array | undefined
-  #publicKey?: HybridKey | undefined
+type HybridKey = ReturnType<typeof hybridKeys.create>
 
-  static #isValid(key: HybridKey): boolean {
-    return key.#algorithm !== undefined
-  }
+const hybridKeys = /* @__PURE__ */ (() => {
+  const priv = Symbol()
+  let validate!: (key: HybridKey, extractable?: boolean) => void
+  let getPublicKey!: (key: HybridKey) => HybridKey | undefined
+  let getSeed!: (key: HybridKey) => Uint8Array
+  let getTraditionalKey!: (key: HybridKey) => CryptoKey
+  let getPostQuantumKey!: (key: HybridKey) => CryptoKey
 
-  static validate(key: unknown, extractable?: boolean): asserts key is HybridKey {
-    try {
-      if (!HybridKey.#isValid(key as HybridKey)) {
-        throw new TypeError('unexpected key constructor')
+  class HybridKey implements Key {
+    #algorithm: KeyAlgorithm
+    #type: 'public' | 'private'
+    #extractable: boolean
+    #t: CryptoKey
+    #pq: CryptoKey
+    #seed?: Uint8Array | undefined
+    #publicKey?: HybridKey | undefined
+
+    static {
+      validate = (key, extractable) => {
+        if (typeof key !== 'object' || key === null || !(#extractable in key)) {
+          throw new TypeError('unexpected key constructor')
+        }
+        if (extractable && !key.#extractable) {
+          throw new TypeError('key must be extractable')
+        }
       }
-    } catch {
-      throw new TypeError('unexpected key constructor')
+      getPublicKey = (key) => key.#publicKey
+      getSeed = (key) => slice(key.#seed!)
+      getTraditionalKey = (key) => key.#t
+      getPostQuantumKey = (key) => key.#pq
     }
-    if (extractable && !(key as HybridKey).extractable) {
-      throw new TypeError('key must be extractable')
+
+    constructor(
+      _: typeof priv,
+      algorithm: KeyAlgorithm,
+      type: 'public' | 'private',
+      extractable: boolean,
+      pq: CryptoKey,
+      t: CryptoKey,
+      seed?: Uint8Array,
+      publicKey?: HybridKey,
+    ) {
+      if (_ !== priv) throw new Error('invalid invocation')
+      this.#algorithm = algorithm
+      this.#type = type
+      this.#extractable = extractable
+      this.#pq = pq
+      this.#t = t
+      this.#seed = seed
+      this.#publicKey = publicKey
+      Object.freeze(this)
+    }
+
+    get algorithm() {
+      return { name: this.#algorithm.name }
+    }
+
+    get extractable() {
+      return this.#extractable
+    }
+
+    get type() {
+      return this.#type
     }
   }
 
-  constructor(
-    _: typeof priv,
-    algorithm: KeyAlgorithm,
-    type: 'public' | 'private',
-    extractable: boolean,
-    pq: CryptoKey,
-    t: CryptoKey,
-    seed?: Uint8Array,
-    publicKey?: HybridKey,
-  ) {
-    InvalidInvocation(_)
-    this.#algorithm = algorithm
-    this.#type = type
-    this.#extractable = extractable
-    this.#pq = pq
-    this.#t = t
-    this.#seed = seed
-    this.#publicKey = publicKey
+  Object.freeze(HybridKey)
+  Object.freeze(HybridKey.prototype)
+  return {
+    create(
+      algorithm: KeyAlgorithm,
+      type: 'public' | 'private',
+      extractable: boolean,
+      pq: CryptoKey,
+      t: CryptoKey,
+      seed?: Uint8Array,
+      publicKey?: HybridKey,
+    ) {
+      return new HybridKey(priv, algorithm, type, extractable, pq, t, seed, publicKey)
+    },
+    validate,
+    getPublicKey,
+    getSeed,
+    getTraditionalKey,
+    getPostQuantumKey,
   }
-
-  get algorithm() {
-    return { name: this.#algorithm.name }
-  }
-
-  get extractable() {
-    return this.#extractable
-  }
-
-  get type() {
-    return this.#type
-  }
-
-  getPublicKey(_: typeof priv) {
-    InvalidInvocation(_)
-    return this.#publicKey
-  }
-
-  getSeed(_: typeof priv) {
-    InvalidInvocation(_)
-    return slice(this.#seed!)
-  }
-
-  getT(_: typeof priv) {
-    InvalidInvocation(_)
-    return this.#t
-  }
-
-  getPq(_: typeof priv) {
-    InvalidInvocation(_)
-    return this.#pq
-  }
-}
+})()
 
 function split(N1: number, N2: number, x: Uint8Array): [Uint8Array, Uint8Array] {
   if (x.byteLength !== N1 + N2) {
@@ -4109,7 +4113,6 @@ interface CompositeHybridKEM extends KEM<HybridKey> {
 type CompositeHybridKEMParams = KEMParams & Pick<CompositeHybridKEM, 'pq' | 't' | 'label'>
 
 function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
-  Object.freeze(HybridKey.prototype)
   return {
     async DeriveKeyPair(this: CompositeHybridKEM, ikm: Uint8Array, extractable) {
       const seed = await LabeledDerive(
@@ -4123,9 +4126,8 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
 
       const { ek_PQ, ek_T, dk_PQ, dk_T } = await expandDecapsKeyG(this, seed)
 
-      const publicKey = new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
-      const privateKey = new HybridKey(
-        priv,
+      const publicKey = hybridKeys.create(this.algorithm, 'public', true, ek_PQ, ek_T)
+      const privateKey = hybridKeys.create(
         this.algorithm,
         'private',
         extractable,
@@ -4142,14 +4144,14 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
     },
     async SerializePublicKey(this: CompositeHybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      HybridKey.validate(key, true)
+      hybridKeys.validate(key, true)
       // @ts-expect-error
       const format: Exclude<KeyFormat, 'jwk'> = 'raw-public'
       const ek_PQ = new Uint8Array(
-        await subtle((c) => c.exportKey(format, key.getPq(priv)), this.name),
+        await subtle((c) => c.exportKey(format, hybridKeys.getPostQuantumKey(key)), this.name),
       )
       const ek_T = new Uint8Array(
-        await subtle((c) => c.exportKey('raw', key.getT(priv)), this.name),
+        await subtle((c) => c.exportKey('raw', hybridKeys.getTraditionalKey(key)), this.name),
       )
 
       return concat(ek_PQ, ek_T)
@@ -4166,20 +4168,19 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
         subtle((c) => c.importKey('raw', pubT, this.t.algorithm, true, []), this.name),
       ])
 
-      return new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
+      return hybridKeys.create(this.algorithm, 'public', true, ek_PQ, ek_T)
     },
     async SerializePrivateKey(this: CompositeHybridKEM, key) {
       assertKeyAlgorithm(key, this.algorithm)
-      HybridKey.validate(key, true)
+      hybridKeys.validate(key, true)
 
-      return key.getSeed(priv)
+      return hybridKeys.getSeed(key)
     },
     async DeserializePrivateKey(this: CompositeHybridKEM, key, extractable) {
       const seed = slice(key)
       const { ek_PQ, ek_T, dk_PQ, dk_T } = await expandDecapsKeyG(this, seed)
-      const publicKey = new HybridKey(priv, this.algorithm, 'public', true, ek_PQ, ek_T)
-      const privateKey = new HybridKey(
-        priv,
+      const publicKey = hybridKeys.create(this.algorithm, 'public', true, ek_PQ, ek_T)
+      const privateKey = hybridKeys.create(
         this.algorithm,
         'private',
         extractable,
@@ -4193,10 +4194,10 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
     },
     async Encap(this: CompositeHybridKEM, pkR) {
       assertKeyAlgorithm(pkR, this.algorithm)
-      HybridKey.validate(pkR)
+      hybridKeys.validate(pkR)
 
-      const ek_PQ = pkR.getPq(priv)
-      const ek_T = pkR.getT(priv)
+      const ek_PQ = hybridKeys.getPostQuantumKey(pkR)
+      const ek_T = hybridKeys.getTraditionalKey(pkR)
       const [ss_PQ, ss_T, ct_PQ, ct_T] = await prepareEncapsG(this, ek_PQ, ek_T)
       const ss_H = await C2PRICombiner(this, ss_PQ, ss_T, ct_T, ek_T, this.label)
       const ct_H = concat(ct_PQ, ct_T)
@@ -4205,18 +4206,18 @@ function COMPOSITE_HYBRID_KEM_SHARED(): KEM_BASE<HybridKey> {
     },
     async Decap(this: CompositeHybridKEM, enc, skR, pkR) {
       assertKeyAlgorithm(skR, this.algorithm)
-      HybridKey.validate(skR)
+      hybridKeys.validate(skR)
 
       if (pkR) {
         assertKeyAlgorithm(pkR, this.algorithm)
-        HybridKey.validate(pkR)
+        hybridKeys.validate(pkR)
       }
 
       const [ct_PQ, ct_T] = split(this.pq.Nct, this.t.Nct, enc)
-      const ek = pkR ?? skR.getPublicKey(priv)!
-      const ek_T = ek.getT(priv)
-      const dk_PQ = skR.getPq(priv)
-      const dk_T = skR.getT(priv)
+      const ek = pkR ?? hybridKeys.getPublicKey(skR)!
+      const ek_T = hybridKeys.getTraditionalKey(ek)
+      const dk_PQ = hybridKeys.getPostQuantumKey(skR)
+      const dk_T = hybridKeys.getTraditionalKey(skR)
       const [ss_PQ, ss_T] = await prepareDecapsG(this, dk_PQ, dk_T, ct_PQ, ct_T)
       const ss_H = await C2PRICombiner(this, ss_PQ, ss_T, ct_T, ek_T, this.label)
 

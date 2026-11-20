@@ -461,7 +461,6 @@ function createPqKem(config: {
   const { id, name, Nsecret, Nenc, Npk, Nsk, kem: nobleKem } = config
   const suite_id = concat(encode('KEM'), I2OSP(id, 2))
 
-  Object.freeze(NobleKey.prototype)
   const algorithm = { name }
 
   return {
@@ -488,8 +487,8 @@ function createPqKem(config: {
       const { secretKey, publicKey } = nobleKem.keygen(seed)
 
       return {
-        privateKey: new NobleKey(priv, 'private', secretKey, extractable, algorithm, seed),
-        publicKey: new NobleKey(priv, 'public', publicKey, true, algorithm),
+        privateKey: nobleKeys.create('private', secretKey, extractable, algorithm, seed),
+        publicKey: nobleKeys.create('public', publicKey, true, algorithm),
       }
     },
     async GenerateKeyPair(extractable) {
@@ -497,28 +496,28 @@ function createPqKem(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return key.value(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.value(key, 'public')
     },
     async DeserializePublicKey(key) {
-      return new NobleKey(priv, 'public', slice(key), true, algorithm)
+      return nobleKeys.create('public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return (key as NobleKey).seed(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.seed(key)
     },
     async DeserializePrivateKey(key, extractable) {
       const { secretKey } = nobleKem.keygen(key)
-      return new NobleKey(priv, 'private', secretKey, extractable, algorithm, slice(key))
+      return nobleKeys.create('private', secretKey, extractable, algorithm, slice(key))
     },
     async Encap(pkR) {
-      NobleKey.validate(pkR, algorithm)
-      const { cipherText, sharedSecret } = nobleKem.encapsulate((pkR as NobleKey).value(priv))
+      nobleKeys.validate(pkR, algorithm)
+      const { cipherText, sharedSecret } = nobleKem.encapsulate(nobleKeys.value(pkR, 'public'))
       return { shared_secret: sharedSecret, enc: cipherText }
     },
     async Decap(enc, skR) {
-      NobleKey.validate(skR, algorithm)
-      return nobleKem.decapsulate(enc, (skR as NobleKey).value(priv))
+      nobleKeys.validate(skR, algorithm)
+      return nobleKem.decapsulate(enc, nobleKeys.value(skR, 'private'))
     },
   }
 }
@@ -596,12 +595,11 @@ function createDhKemNist(config: {
     curve.Point.fromBytes(publicKey).assertValidity()
 
     return {
-      privateKey: new NobleKey(priv, 'private', secretKey, extractable, { name }),
-      publicKey: new NobleKey(priv, 'public', publicKey, true, { name }),
+      privateKey: nobleKeys.create('private', secretKey, extractable, { name }),
+      publicKey: nobleKeys.create('public', publicKey, true, { name }),
     }
   }
 
-  Object.freeze(NobleKey.prototype)
   return {
     id,
     type: 'KEM',
@@ -618,32 +616,32 @@ function createDhKemNist(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return key.value(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.value(key, 'public')
     },
     async DeserializePublicKey(key) {
       curve.Point.fromBytes(key).assertValidity()
-      return new NobleKey(priv, 'public', slice(key), true, algorithm)
+      return nobleKeys.create('public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return (key as NobleKey).value(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.value(key, 'private')
     },
     async DeserializePrivateKey(key, extractable) {
       if (!curve.utils.isValidSecretKey(key)) {
         throw new Error('Invalid scalar')
       }
-      return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
+      return nobleKeys.create('private', slice(key), extractable, algorithm)
     },
     async Encap(pkR) {
-      NobleKey.validate(pkR, algorithm)
+      nobleKeys.validate(pkR, algorithm)
 
-      const pkRValue = (pkR as NobleKey).value(priv)
+      const pkRValue = nobleKeys.value(pkR, 'public')
       curve.Point.fromBytes(pkRValue).assertValidity()
 
       const ekp = await this.GenerateKeyPair(false)
-      const skE = (ekp.privateKey as NobleKey).value(priv)
-      const enc = (ekp.publicKey as NobleKey).value(priv)
+      const skE = nobleKeys.value(ekp.privateKey, 'private')
+      const enc = nobleKeys.value(ekp.publicKey, 'public')
 
       const dh = slice(curve.getSharedSecret(skE, pkRValue), 1)
 
@@ -653,14 +651,14 @@ function createDhKemNist(config: {
       }
     },
     async Decap(enc, skR, pkR) {
-      NobleKey.validate(skR, algorithm)
+      nobleKeys.validate(skR, algorithm)
 
-      const skRValue = (skR as NobleKey).value(priv)
-      pkR ??= (await this.DeserializePublicKey(curve.getPublicKey(skRValue, false))) as NobleKey
-      NobleKey.validate(pkR, algorithm)
+      const skRValue = nobleKeys.value(skR, 'private')
+      pkR ??= await this.DeserializePublicKey(curve.getPublicKey(skRValue, false))
+      nobleKeys.validate(pkR, algorithm)
 
-      const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
-      const pkEValue = pkE.value(priv)
+      const pkE = await this.DeserializePublicKey(enc)
+      const pkEValue = nobleKeys.value(pkE, 'public')
       const dh = slice(curve.getSharedSecret(skRValue, pkEValue), 1)
 
       return await deriveSharedSecret(
@@ -669,7 +667,7 @@ function createDhKemNist(config: {
         Nsecret,
         dh,
         enc,
-        (pkR as NobleKey).value(priv),
+        nobleKeys.value(pkR, 'public'),
       )
     },
   }
@@ -690,7 +688,6 @@ function createDhKemX(config: {
   const suite_id = concat(encode('KEM'), I2OSP(id, 2))
   const algorithm = { name }
 
-  Object.freeze(NobleKey.prototype)
   return {
     id,
     type: 'KEM',
@@ -705,8 +702,8 @@ function createDhKemX(config: {
       const pk = curve.getPublicKey(sk)
 
       return {
-        privateKey: new NobleKey(priv, 'private', sk, extractable, algorithm),
-        publicKey: new NobleKey(priv, 'public', pk, true, algorithm),
+        privateKey: nobleKeys.create('private', sk, extractable, algorithm),
+        publicKey: nobleKeys.create('public', pk, true, algorithm),
       }
     },
     async GenerateKeyPair(extractable) {
@@ -714,27 +711,27 @@ function createDhKemX(config: {
       return await this.DeriveKeyPair(ikm, extractable)
     },
     async SerializePublicKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return key.value(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.value(key, 'public')
     },
     async DeserializePublicKey(key) {
-      return new NobleKey(priv, 'public', slice(key), true, algorithm)
+      return nobleKeys.create('public', slice(key), true, algorithm)
     },
     async SerializePrivateKey(key) {
-      NobleKey.validate(key, algorithm, true)
-      return (key as NobleKey).value(priv)
+      nobleKeys.validate(key, algorithm, true)
+      return nobleKeys.value(key, 'private')
     },
     async DeserializePrivateKey(key, extractable) {
-      return new NobleKey(priv, 'private', slice(key), extractable, algorithm)
+      return nobleKeys.create('private', slice(key), extractable, algorithm)
     },
     async Encap(pkR) {
-      NobleKey.validate(pkR, algorithm)
+      nobleKeys.validate(pkR, algorithm)
 
       const ekp = await this.GenerateKeyPair(false)
-      const enc = (ekp.publicKey as NobleKey).value(priv)
+      const enc = nobleKeys.value(ekp.publicKey, 'public')
       const dh = curve.getSharedSecret(
-        (ekp.privateKey as NobleKey).value(priv),
-        (pkR as NobleKey).value(priv),
+        nobleKeys.value(ekp.privateKey, 'private'),
+        nobleKeys.value(pkR, 'public'),
       )
 
       return {
@@ -744,20 +741,20 @@ function createDhKemX(config: {
           Nsecret,
           dh,
           enc,
-          (pkR as NobleKey).value(priv),
+          nobleKeys.value(pkR, 'public'),
         ),
         enc,
       }
     },
     async Decap(enc, skR, pkR) {
-      NobleKey.validate(skR, algorithm)
+      nobleKeys.validate(skR, algorithm)
 
-      const skRValue = (skR as NobleKey).value(priv)
-      pkR ??= (await this.DeserializePublicKey(curve.getPublicKey(skRValue))) as NobleKey
-      NobleKey.validate(pkR, algorithm)
+      const skRValue = nobleKeys.value(skR, 'private')
+      pkR ??= await this.DeserializePublicKey(curve.getPublicKey(skRValue))
+      nobleKeys.validate(pkR, algorithm)
 
-      const pkE = (await this.DeserializePublicKey(enc)) as NobleKey
-      const dh = curve.getSharedSecret(skRValue, pkE.value(priv))
+      const pkE = await this.DeserializePublicKey(enc)
+      const dh = curve.getSharedSecret(skRValue, nobleKeys.value(pkE, 'public'))
 
       return await deriveSharedSecret(
         kdf,
@@ -765,87 +762,90 @@ function createDhKemX(config: {
         Nsecret,
         dh,
         enc,
-        (pkR as NobleKey).value(priv),
+        nobleKeys.value(pkR, 'public'),
       )
     },
   }
 }
 
-const InvalidInvocation = (_: typeof priv) => {
-  if (_ !== priv) {
-    throw new Error('invalid invocation')
-  }
-}
-const priv = /* @__PURE__ */ Symbol()
-class NobleKey implements HPKE.Key {
-  #type: 'public' | 'private'
-  #extractable: boolean
-  #algorithm: KeyAlgorithm
-  #value: Uint8Array
-  #seed?: Uint8Array | undefined
+const nobleKeys = /* @__PURE__ */ (() => {
+  const priv = Symbol()
+  let validate!: (key: HPKE.Key, algorithm: KeyAlgorithm, extractable?: boolean) => void
+  let value!: (key: HPKE.Key, type: 'public' | 'private') => Uint8Array
+  let seed!: (key: HPKE.Key) => Uint8Array
 
-  static #isValid(key: NobleKey): boolean {
-    return key.#algorithm !== undefined
-  }
+  class NobleKey implements HPKE.Key {
+    #type: 'public' | 'private'
+    #extractable: boolean
+    #algorithm: KeyAlgorithm
+    #value: Uint8Array
+    #seed?: Uint8Array | undefined
 
-  static validate(
-    key: unknown,
-    algorithm: KeyAlgorithm,
-    extractable?: boolean,
-  ): asserts key is NobleKey {
-    if ((key as NobleKey).algorithm?.name !== algorithm.name) {
-      throw new TypeError(`key algorithm must be ${algorithm.name}`)
-    }
-    try {
-      if (!NobleKey.#isValid(key as NobleKey)) {
-        throw new TypeError('unexpected key constructor')
+    static {
+      validate = (key, algorithm, extractable) => {
+        if (key.algorithm?.name !== algorithm.name) {
+          throw new TypeError(`key algorithm must be ${algorithm.name}`)
+        }
+        if (!(#algorithm in key)) throw new TypeError('unexpected key constructor')
+        if (extractable && !key.#extractable) throw new TypeError('key must be extractable')
       }
-    } catch {
-      throw new TypeError('unexpected key constructor')
+
+      value = (key, type) => {
+        const nobleKey = key as NobleKey
+        if (nobleKey.#type !== type) throw new TypeError(`key must be ${type}`)
+        return slice(nobleKey.#value)
+      }
+
+      seed = (key) => slice((key as NobleKey).#seed!)
     }
-    if (extractable && !(key as NobleKey).extractable) {
-      throw new TypeError('key must be extractable')
+
+    constructor(
+      _: typeof priv,
+      type: 'public' | 'private',
+      value: Uint8Array,
+      extractable: boolean,
+      algorithm: KeyAlgorithm,
+      seed?: Uint8Array,
+    ) {
+      if (_ !== priv) throw new Error('invalid invocation')
+      this.#type = type
+      this.#value = value
+      this.#extractable = extractable
+      this.#algorithm = algorithm
+      this.#seed = seed
+      Object.freeze(this)
+    }
+
+    get algorithm() {
+      return { name: this.#algorithm.name }
+    }
+
+    get extractable() {
+      return this.#extractable
+    }
+
+    get type() {
+      return this.#type
     }
   }
 
-  constructor(
-    _: typeof priv,
-    type: 'public' | 'private',
-    value: Uint8Array,
-    extractable: boolean,
-    algorithm: KeyAlgorithm,
-    seed?: Uint8Array,
-  ) {
-    InvalidInvocation(_)
-    this.#type = type
-    this.#value = value
-    this.#extractable = extractable
-    this.#algorithm = algorithm
-    this.#seed = seed
+  Object.freeze(NobleKey)
+  Object.freeze(NobleKey.prototype)
+  return {
+    create(
+      type: 'public' | 'private',
+      value: Uint8Array,
+      extractable: boolean,
+      algorithm: KeyAlgorithm,
+      seed?: Uint8Array,
+    ) {
+      return new NobleKey(priv, type, value, extractable, algorithm, seed)
+    },
+    validate,
+    value,
+    seed,
   }
-
-  get algorithm() {
-    return { name: this.#algorithm.name }
-  }
-
-  get extractable() {
-    return this.#extractable
-  }
-
-  get type() {
-    return this.#type
-  }
-
-  value(_: typeof priv) {
-    InvalidInvocation(_)
-    return slice(this.#value)
-  }
-
-  seed(_: typeof priv) {
-    InvalidInvocation(_)
-    return slice(this.#seed!)
-  }
-}
+})()
 
 function slice(buffer: Uint8Array, start?: number, end?: number) {
   return Uint8Array.prototype.slice.call(buffer, start, end)
