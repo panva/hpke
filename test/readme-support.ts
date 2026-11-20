@@ -100,3 +100,35 @@ test.describe('README support matrix', () => {
     t.assert.deepStrictEqual(mismatches.map(formatReadmeSupportMismatch), [])
   })
 })
+
+it('only substitutes generated keys for unsupported native PQ key derivation', async (t: test.TestContext) => {
+  const failDerivation = (error: Error) => () => ({
+    ...HPKE.KEM_DHKEM_P256_HKDF_SHA256(),
+    async DeriveKeyPair(): Promise<never> {
+      throw error
+    },
+  })
+  const unsupported = failDerivation(new HPKE.NotSupportedError())
+  const { results } = await runAlgorithmTests({
+    HPKE: {
+      CipherSuite: HPKE.CipherSuite,
+      NotSupportedError: HPKE.NotSupportedError,
+      KEM_DHKEM_P256_HKDF_SHA256: HPKE.KEM_DHKEM_P256_HKDF_SHA256,
+      KEM_DHKEM_P384_HKDF_SHA384: unsupported,
+      KEM_ML_KEM_768: unsupported,
+      KEM_MLKEM768_X25519: unsupported,
+      KEM_ML_KEM_1024: failDerivation(new Error('derivation failed')),
+      KDF_HKDF_SHA256: HPKE.KDF_HKDF_SHA256,
+      AEAD_AES_128_GCM: HPKE.AEAD_AES_128_GCM,
+    },
+    Noble: { KEM_ML_KEM_512: unsupported },
+    unsupported: { kem: [], kdf: [], aead: [] },
+  })
+  t.assert.deepStrictEqual(
+    results.tests
+      .filter((entry) => entry.status === 'failed')
+      .map((entry) => entry.algorithm)
+      .sort(),
+    ['KEM_DHKEM_P384_HKDF_SHA384', 'KEM_ML_KEM_1024', 'KEM_ML_KEM_512'],
+  )
+})

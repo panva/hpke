@@ -417,7 +417,11 @@ export async function runAlgorithmTests({
       try {
         keyPair = await suite.DeriveKeyPair(ikm, true)
       } catch (error) {
-        const canUseGeneratedPqKemKey = test.testingComponent === 'kem' && !test.kem.isNoble
+        const canUseGeneratedPqKemKey =
+          test.testingComponent === 'kem' &&
+          !test.kem.isNoble &&
+          (test.kem.name.startsWith('KEM_ML_KEM_') || test.kem.name.startsWith('KEM_MLKEM')) &&
+          error instanceof HPKE.NotSupportedError
 
         if (!canUseGeneratedPqKemKey) {
           throw error
