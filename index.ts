@@ -853,10 +853,9 @@ export class CipherSuite<K extends Key = Key> {
    * Applications should prefer `options.info` for authenticated information that applies to the
    * whole context, reserving `options.aad` for information specific to the message.
    *
-   * Mode selection:
-   *
-   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * @category Single-Shot APIs
    * @example
@@ -905,10 +904,9 @@ export class CipherSuite<K extends Key = Key> {
    * Applications should prefer `options.info` for authenticated information that applies to the
    * whole context, reserving `options.aad` for information specific to the message.
    *
-   * Mode selection:
-   *
-   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * @category Single-Shot APIs
    * @example
@@ -954,6 +952,10 @@ export class CipherSuite<K extends Key = Key> {
    * Single-shot API for deriving a secret known only to sender and recipient.
    *
    * It combines context setup and secret export in one call.
+   *
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * Applications should prefer `options.info` for authenticated information that applies to the
    * whole context, reserving `exporterContext` for information specific to the exported secret.
@@ -1009,6 +1011,10 @@ export class CipherSuite<K extends Key = Key> {
    * Single-shot API for receiving an exported secret.
    *
    * It combines context setup and secret export in one call.
+   *
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * Applications should prefer `options.info` for authenticated information that applies to the
    * whole context, reserving `exporterContext` for information specific to the exported secret.
@@ -1068,10 +1074,9 @@ export class CipherSuite<K extends Key = Key> {
    * Creates a context that can be used to encrypt multiple messages to the same recipient,
    * amortizing the cost of the public key operations.
    *
-   * Mode selection:
-   *
-   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * The returned context maintains a sequence number that increments with each encryption, ensuring
    * nonce uniqueness.
@@ -1143,10 +1148,9 @@ export class CipherSuite<K extends Key = Key> {
    *
    * Creates a context that can be used to decrypt multiple messages from the same sender.
    *
-   * Mode selection:
-   *
-   * - If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-   * - If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+   * Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+   * suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+   * nonempty `pskId`.
    *
    * @category Encryption Context
    * @example

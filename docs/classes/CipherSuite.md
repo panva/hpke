@@ -128,10 +128,9 @@ Establishes a recipient decryption context.
 
 Creates a context that can be used to decrypt multiple messages from the same sender.
 
-Mode selection:
-
-- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 #### Parameters
 
@@ -192,10 +191,9 @@ Establishes a sender encryption context.
 Creates a context that can be used to encrypt multiple messages to the same recipient,
 amortizing the cost of the public key operations.
 
-Mode selection:
-
-- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 The returned context maintains a sequence number that increments with each encryption, ensuring
 nonce uniqueness.
@@ -433,10 +431,9 @@ It combines context setup and decryption in one call.
 Applications should prefer `options.info` for authenticated information that applies to the
 whole context, reserving `options.aad` for information specific to the message.
 
-Mode selection:
-
-- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 #### Parameters
 
@@ -484,6 +481,10 @@ const plaintext: Uint8Array = await suite.Open(privateKey, encapsulatedSecret, c
 Single-shot API for receiving an exported secret.
 
 It combines context setup and secret export in one call.
+
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 Applications should prefer `options.info` for authenticated information that applies to the
 whole context, reserving `exporterContext` for information specific to the exported secret.
@@ -548,10 +549,9 @@ one call.
 Applications should prefer `options.info` for authenticated information that applies to the
 whole context, reserving `options.aad` for information specific to the message.
 
-Mode selection:
-
-- If the options `psk` and `pskId` are omitted: Base mode (unauthenticated)
-- If the options `psk` and `pskId` are provided: PSK mode (authenticated with pre-shared key)
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 #### Parameters
 
@@ -598,6 +598,10 @@ const { encapsulatedSecret, ciphertext } = await suite.Seal(publicKey, plaintext
 Single-shot API for deriving a secret known only to sender and recipient.
 
 It combines context setup and secret export in one call.
+
+Omitted PSK options default to empty byte arrays. When `psk` and `pskId` are both empty, the
+suite uses unauthenticated Base mode. PSK mode requires a `psk` of at least 32 bytes and a
+nonempty `pskId`.
 
 Applications should prefer `options.info` for authenticated information that applies to the
 whole context, reserving `exporterContext` for information specific to the exported secret.
