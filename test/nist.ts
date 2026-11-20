@@ -167,3 +167,74 @@ for (const factoryName of ['KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_DHKEM_X448_HKDF_
     )
   }
 }
+
+// xWhereYIsOne solves x^3 - 3x + b = 1 modulo p. Choosing x = 0 on one point and
+// y = 1 on another lets us add p to either coordinate without overflowing its encoding.
+for (const [factoryName, curve, xWhereYIsOne] of [
+  [
+    'KEM_DHKEM_P256_HKDF_SHA256',
+    p256,
+    0x09e78d4ef60d05f750f6636209092bc43cbdd6b47e11a9de20a9feb2a50bb96cn,
+  ],
+  [
+    'KEM_DHKEM_P384_HKDF_SHA384',
+    p384,
+    0x2261b2bf605c22f2f3aef6338719b2c486388ad5240719a5257315969ef01ba27f0a104c89704773a81fdabee6ab5c78n,
+  ],
+  [
+    'KEM_DHKEM_P521_HKDF_SHA512',
+    p521,
+    0x00d9cb7a32dab342f863edb340f3ea61ddf833e755ce66bb1a918a42714ba05bcdf4ff10994f616a9d80cd0b48b326e3a8a2a8f5634d824875b6e71fb7cddd7b5018n,
+  ],
+] as const) {
+  const { BASE: G, Fp } = curve.Point
+  const coordinate = (n: bigint) => hex(n.toString(16).padStart(Fp.BYTES * 2, '0'))
+  const encode = (x: bigint, y: bigint, prefix = 0x04) =>
+    HPKE.concat(Uint8Array.of(prefix), coordinate(x), coordinate(y))
+  const zeroX = curve.Point.fromBytes(HPKE.concat(Uint8Array.of(0x02), coordinate(0n)))
+  const valid = [
+    ['generator', G.toBytes(false)],
+    ['point with x = 0', zeroX.toBytes(false)],
+    ['point with y = 1', encode(xWhereYIsOne, 1n)],
+  ] as const
+  const invalid = [
+    ['all-zero bytes', new Uint8Array(1 + 2 * Fp.BYTES)],
+    ['zero coordinates', encode(0n, 0n)],
+    ['off-curve point', encode(G.x, (G.y + 1n) % Fp.ORDER)],
+    ['x = 0 encoded as p', encode(Fp.ORDER, zeroX.y)],
+    ['y = 1 encoded as p + 1', encode(xWhereYIsOne, Fp.ORDER + 1n)],
+    ['hybrid encoding', encode(G.x, G.y, 0x06 | Number(G.y & 1n))],
+    ['compressed encoding', G.toBytes(true)],
+  ] as const
+
+  for (const [implementationName, implementation] of [
+    ['WebCrypto', HPKE],
+    ['noble', noble],
+  ] as const) {
+    const factory: HPKE.KEMFactory = implementation[factoryName]
+    const suite = new HPKE.CipherSuite(factory, HPKE.KDF_HKDF_SHA256, HPKE.AEAD_EXPORT_ONLY)
+    it(`${implementationName} ${factoryName} accepts valid public point encodings`, async () => {
+      const recipient = await suite.GenerateKeyPair()
+
+      for (const [name, bytes] of valid) {
+        const key = await suite.DeserializePublicKey(bytes)
+        assert.deepEqual(await suite.SerializePublicKey(key), bytes, name)
+        await assert.doesNotReject(suite.SetupRecipient(recipient, bytes), name)
+      }
+    })
+
+    for (const [name, bytes] of invalid) {
+      // Deno accepts uncompressed points with invalid coordinates on import.
+      // https://github.com/denoland/deno/pull/37211
+      const todo = 'Deno' in globalThis && implementation === HPKE && bytes[0] === 0x04
+      it(`${implementationName} ${factoryName} rejects ${name}`, { todo }, async () => {
+        await assert.rejects(suite.DeserializePublicKey(bytes), {
+          name: 'DeserializeError',
+          message: 'Public key deserialization failed',
+        })
+        const recipient = await suite.GenerateKeyPair()
+        await assert.rejects(suite.SetupRecipient(recipient, bytes), { name: 'DecapError' })
+      })
+    }
+  }
+}
