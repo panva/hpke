@@ -2938,6 +2938,11 @@ function DHKEM_SHARED(): Required<
       return new Uint8Array(await subtle((c) => c.exportKey('raw', key), this.name))
     },
     async DeserializePublicKey(this: DHKEM, key) {
+      // NIST curve public keys use the SEC1 uncompressed encoding. Some Web Cryptography
+      // implementations also accept the same-length X9.62 hybrid encoding (0x06 / 0x07 prefix).
+      if ('namedCurve' in this.algorithm && key[0] !== 0x04) {
+        throw new Error('Invalid public key encoding')
+      }
       return await subtle(
         (c) => c.importKey('raw', key as BufferSource, this.algorithm, true, []),
         this.name,
