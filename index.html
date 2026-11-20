@@ -2764,11 +2764,8 @@
             const plaintext = new TextDecoder().decode(decrypted)
 
             // Replace ciphertext with plaintext
-            this.innerHTML = `
-              <div class="chat-message-label">Plaintext ${seq}</div>
-              ${this.dataset.aad ? `<div class="chat-message-label">AAD: ${this.dataset.aad}</div>` : ''}
-              <div class="chat-message-content">${plaintext}</div>
-            `
+            this.querySelector('.chat-message-label').textContent = `Plaintext ${seq}`
+            this.querySelector('.chat-message-content').textContent = plaintext
             this.classList.remove('ciphertext')
             this.classList.add('decrypted')
             this.classList.remove('clickable', 'not-clickable')
