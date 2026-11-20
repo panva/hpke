@@ -2049,11 +2049,14 @@
         elements.messagesDisplaySection.classList.add('hidden')
       }
 
-      /** Checks if any input field has validation errors */
-      const hasValidationErrors = () => [
-        elements.aadInput, elements.ikmInput, elements.infoInput,
-        elements.pskInput, elements.pskIdInput
-      ].some(el => el.classList.contains('error'))
+      /** Checks if any active input field has validation errors */
+      const hasValidationErrors = () => {
+        const inputs = [elements.aadInput, elements.ikmInput, elements.infoInput]
+        if (demoState.mode === 'psk') {
+          inputs.push(elements.pskInput, elements.pskIdInput)
+        }
+        return inputs.some(el => el.classList.contains('error'))
+      }
 
       /** Selects the preferred algorithm implementation (native over noble if both pass) */
       const selectPreferredAlgorithm = (algorithms, algoName, algoType) => {
@@ -2610,6 +2613,7 @@
           }
 
           await resetAndSetupContext()
+          updateButtonStates()
         })
       })
 
