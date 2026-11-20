@@ -668,52 +668,36 @@ export async function runVectorValidation({
           ? `import:${vector.skRm}:${vector.pkRm}`
           : `derive:${vector.ikmR}`
 
-      let recipientKeyPair
-      if (kemCache.has(cacheKey)) {
-        recipientKeyPair = kemCache.get(cacheKey)
-        completeOp(true)
-      } else {
-        try {
+      let cached = kemCache.get(cacheKey)
+      try {
+        if (!cached) {
+          let keyPair
           if (kemImpl.supportsDeriveKeyPair === false) {
-            recipientKeyPair = {
+            keyPair = {
               privateKey: await keySetupSuite.DeserializePrivateKey(
                 Uint8Array.fromHex(vector.skRm),
                 true,
               ),
               publicKey: await keySetupSuite.DeserializePublicKey(Uint8Array.fromHex(vector.pkRm)),
             }
-
-            const serializedPublicKey = await keySetupSuite.SerializePublicKey(
-              recipientKeyPair.publicKey,
-            )
-            assertUint8ArraysEqual(
-              serializedPublicKey,
-              Uint8Array.fromHex(vector.pkRm),
-              'pkRm mismatch',
-            )
           } else {
-            recipientKeyPair = await keySetupSuite.DeriveKeyPair(
-              Uint8Array.fromHex(vector.ikmR),
-              true,
-            )
+            keyPair = await keySetupSuite.DeriveKeyPair(Uint8Array.fromHex(vector.ikmR), true)
           }
-
-          const serializedPrivateKey = await keySetupSuite.SerializePrivateKey(
-            recipientKeyPair.privateKey,
-          )
-          assertUint8ArraysEqual(
-            serializedPrivateKey,
-            Uint8Array.fromHex(vector.skRm),
-            'skRm mismatch',
-          )
-
-          kemCache.set(cacheKey, recipientKeyPair)
-          completeOp(true)
-        } catch (e) {
-          completeOp(false)
-          completeFailedOps(kdfImpls.length * aeadImpls.length * countVectorOps(vector))
-          continue
+          cached = {
+            keyPair,
+            pkRm: await keySetupSuite.SerializePublicKey(keyPair.publicKey),
+            skRm: await keySetupSuite.SerializePrivateKey(keyPair.privateKey),
+          }
+          kemCache.set(cacheKey, cached)
         }
+
+        assertUint8ArraysEqual(cached.pkRm, Uint8Array.fromHex(vector.pkRm), 'pkRm mismatch')
+        assertUint8ArraysEqual(cached.skRm, Uint8Array.fromHex(vector.skRm), 'skRm mismatch')
+        completeOp(true)
+      } catch (e) {
+        completeOp(false)
+        completeFailedOps(kdfImpls.length * aeadImpls.length * countVectorOps(vector))
+        continue
       }
 
       for (const kdfImpl of kdfImpls) {
@@ -729,7 +713,7 @@ export async function runVectorValidation({
 
           let ctx
           try {
-            ctx = await suite.SetupRecipient(recipientKeyPair, enc, options)
+            ctx = await suite.SetupRecipient(cached.keyPair, enc, options)
           } catch (e) {
             completeFailedOps(countVectorOps(vector))
             continue

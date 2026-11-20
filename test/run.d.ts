@@ -47,3 +47,13 @@ export function findReadmeSupportMismatches(options: {
 }): ReadmeSupportMismatch[]
 
 export function formatReadmeSupportMismatch(mismatch: ReadmeSupportMismatch): string
+
+export function runVectorValidation(options: {
+  HPKE: object
+  vectors: object[]
+  vectorsPq: object[]
+  passingImplementations: Record<
+    ReadmeSupportComponent,
+    Map<number, { factory: () => object; supportsDeriveKeyPair?: boolean }[]>
+  >
+}): Promise<{ total: number; passed: number; failed: number }>

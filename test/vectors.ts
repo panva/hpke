@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises'
 import { setImmediate } from 'node:timers/promises'
 
 import * as HPKE from '../index.ts'
+import { runVectorValidation } from './run.js'
 import {
   label,
   KEMS,
@@ -80,6 +81,28 @@ const vectors: Vector[] = [
   ...JSON.parse(await fs.readFile('./test/vectors.json', 'ascii')),
   ...JSON.parse(await fs.readFile('./test/vectors-pq.json', 'ascii')),
 ]
+
+it(
+  'runtime vector validation checks both recipient keys for every vector',
+  { skip: typeof Uint8Array.fromHex !== 'function' },
+  async (t: test.TestContext) => {
+    const vector = vectors.find(
+      (v) => v.mode === 0 && v.kem_id === 0x10 && v.kdf_id === 1 && v.aead_id === 1,
+    )!
+    const sample = { ...vector, encryptions: vector.encryptions.slice(0, 1), exports: [] }
+    const result = await runVectorValidation({
+      HPKE,
+      vectors: [{ ...sample, pkRm: '' }, sample, { ...sample, pkRm: '' }, { ...sample, skRm: '' }],
+      vectorsPq: [],
+      passingImplementations: {
+        kem: new Map([[sample.kem_id, [{ factory: HPKE.KEM_DHKEM_P256_HKDF_SHA256 }]]]),
+        kdf: new Map([[sample.kdf_id, [{ factory: HPKE.KDF_HKDF_SHA256 }]]]),
+        aead: new Map([[sample.aead_id, [{ factory: HPKE.AEAD_AES_128_GCM }]]]),
+      },
+    })
+    t.assert.deepStrictEqual(result, { total: 8, passed: 2, failed: 6 })
+  },
+)
 
 // Cache for derived keys per implementation + vector index
 interface CachedKeys {
