@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.10](https://github.com/panva/hpke/compare/v1.1.9...v1.1.10) (2026-11-20)
+
+### Fixes
+
+* reject hybrid encoded NIST public keys ([3040433](https://github.com/panva/hpke/commit/30404331e54d3c2bfb32d19874944ddd456ebeed))
+
 ## [1.1.9](https://github.com/panva/hpke/compare/v1.1.8...v1.1.9) (2026-11-20)
 
 ### Documentation
