@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [1.1.9](https://github.com/panva/hpke/compare/v1.1.8...v1.1.9) (2026-11-20)
+
+### Documentation
+
+* clarify empty PSK inputs and mode selection ([ebfc469](https://github.com/panva/hpke/commit/ebfc46944a337fa93dea81dd1729f49e3a00a035))
+
+### Refactor
+
+* keep key class accessors internal ([2b75c15](https://github.com/panva/hpke/commit/2b75c154e480ad8e592f10682cec8d077b346c42))
+
 ## [1.1.8](https://github.com/panva/hpke/compare/v1.1.7...v1.1.8) (2026-10-29)
 
 ### Documentation
