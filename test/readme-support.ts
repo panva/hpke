@@ -8,54 +8,51 @@ import {
 } from './run.js'
 import * as HPKE from '../index.ts'
 
-type Runtime = 'node' | 'deno' | 'bun'
+type Runtime = 'node' | 'deno' | 'bun' | 'electron'
 
 const runtime = (() => {
   // @ts-expect-error
   if (typeof Deno === 'object') return 'deno'
   // @ts-expect-error
   if (typeof Bun === 'object') return 'bun'
+  if (process.versions.electron) return 'electron'
   return 'node'
 })() as Runtime
 
 test.describe('README support matrix', () => {
-  const browserReadme = `
+  const readme = `
 ### Key Encapsulation Mechanisms (KEM)
 
-| Name | [Browsers][] |
-| :--- | :----------: |
-| DHKEM(P-256, HKDF-SHA256) <sub>\`0x0010\`</sub> | ✓ |
-| DHKEM(P-384, HKDF-SHA384) <sub>\`0x0011\`</sub> | ◐[^chromium] |
-| DHKEM(P-521, HKDF-SHA512) <sub>\`0x0012\`</sub> | ◐[^firefox] |
-| DHKEM(X25519, HKDF-SHA256) <sub>\`0x0020\`</sub> | ◐[^webkit] |
-| DHKEM(X448, HKDF-SHA512) <sub>\`0x0021\`</sub> | ◐[^chromium][^firefox] |
-| ML-KEM-512 <sub>\`0x0040\`</sub> | |
-
-[^chromium]: Chromium
-[^firefox]: Firefox
-[^webkit]: WebKit
+| Algorithm | Native support | [Extensibility][] |
+| :--- | :--- | :---: |
+| DHKEM(P-256, HKDF-SHA256) <sub>\`0x0010\`</sub> | All tested runtimes | ✓ |
+| DHKEM(P-384, HKDF-SHA384) <sub>\`0x0011\`</sub> | Chromium | ✓ |
+| DHKEM(P-521, HKDF-SHA512) <sub>\`0x0012\`</sub> | Firefox | ✓ |
+| DHKEM(X25519, HKDF-SHA256) <sub>\`0x0020\`</sub> | WebKit | ✓ |
+| DHKEM(X448, HKDF-SHA512) <sub>\`0x0021\`</sub> | Chromium, Firefox | ✓ |
+| ML-KEM-768 <sub>\`0x0041\`</sub> | Node.js, Cloudflare Workers[^cf-modern], Electron, Chromium Preview | ✓ |
 `
-  const browserResults = {
+  const results = {
     tests: [
       'KEM_DHKEM_P256_HKDF_SHA256',
       'KEM_DHKEM_P384_HKDF_SHA384',
       'KEM_DHKEM_P521_HKDF_SHA512',
       'KEM_DHKEM_X25519_HKDF_SHA256',
       'KEM_DHKEM_X448_HKDF_SHA512',
-      'KEM_ML_KEM_512',
+      'KEM_ML_KEM_768',
     ].map((algorithm) => ({ status: 'passed', component: 'kem' as const, algorithm })),
   }
 
-  for (const [runtime, browser, unsupported] of [
+  for (const [runtime, runtimeName, unsupported] of [
     [
       'chromium',
       'Chromium',
-      ['KEM_DHKEM_P521_HKDF_SHA512', 'KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_ML_KEM_512'],
+      ['KEM_DHKEM_P521_HKDF_SHA512', 'KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_ML_KEM_768'],
     ],
     [
       'firefox',
       'Firefox',
-      ['KEM_DHKEM_P384_HKDF_SHA384', 'KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_ML_KEM_512'],
+      ['KEM_DHKEM_P384_HKDF_SHA384', 'KEM_DHKEM_X25519_HKDF_SHA256', 'KEM_ML_KEM_768'],
     ],
     [
       'webkit',
@@ -64,16 +61,32 @@ test.describe('README support matrix', () => {
         'KEM_DHKEM_P384_HKDF_SHA384',
         'KEM_DHKEM_P521_HKDF_SHA512',
         'KEM_DHKEM_X448_HKDF_SHA512',
-        'KEM_ML_KEM_512',
+        'KEM_ML_KEM_768',
+      ],
+    ],
+    [
+      'electron',
+      'Electron',
+      [
+        'KEM_DHKEM_P384_HKDF_SHA384',
+        'KEM_DHKEM_P521_HKDF_SHA512',
+        'KEM_DHKEM_X25519_HKDF_SHA256',
+        'KEM_DHKEM_X448_HKDF_SHA512',
+      ],
+    ],
+    [
+      'workerd',
+      'Cloudflare Workers',
+      [
+        'KEM_DHKEM_P384_HKDF_SHA384',
+        'KEM_DHKEM_P521_HKDF_SHA512',
+        'KEM_DHKEM_X25519_HKDF_SHA256',
+        'KEM_DHKEM_X448_HKDF_SHA512',
       ],
     ],
   ] as const) {
-    it(`checks ${browser} support independently in the Browsers column`, (t: test.TestContext) => {
-      const mismatches = findReadmeSupportMismatches({
-        results: browserResults,
-        readme: browserReadme,
-        runtime,
-      })
+    it(`matches ${runtimeName} in the Native support column`, (t: test.TestContext) => {
+      const mismatches = findReadmeSupportMismatches({ results, readme, runtime })
 
       t.assert.deepStrictEqual(
         mismatches.map(({ algorithm }) => algorithm),
@@ -81,7 +94,7 @@ test.describe('README support matrix', () => {
       )
       for (const mismatch of mismatches) {
         t.assert.ok(
-          formatReadmeSupportMismatch(mismatch).endsWith(`does not mark ${browser} support`),
+          formatReadmeSupportMismatch(mismatch).endsWith(`does not mark ${runtimeName} support`),
         )
       }
     })

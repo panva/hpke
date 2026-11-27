@@ -85,49 +85,44 @@ provides these KEM, KDF, and AEAD implementations using Paul Miller's
 [@noble](https://paulmillr.com/noble/) cryptographic libraries. These implementations can be freely
 mixed and matched with the built-in algorithms.
 
-Below are the algorithms built in (based on Web Cryptography) and their runtime support matrix.
+**All tested runtimes** covers Node.js, Deno, Bun, Cloudflare Workers, [Electron's main process][],
+and the browser engines Chromium, Firefox, and WebKit. [Run the browser tests][browsers].
 
 ### Key Encapsulation Mechanisms (KEM)
 
-| Name                                           | Node.js | Deno | Bun |  CF Workers   | [Browsers][] | [Extensibility][] |
-| :--------------------------------------------- | :-----: | :--: | :-: | :-----------: | :----------: | :---------------: |
-| DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   |    ✓    |  ✓   |     |               |              |         ✓         |
-| ML-KEM-512 <sub>`0x0040`</sub>                 |    ✓    |  ✓   |     |               |              |         ✓         |
-| ML-KEM-768 <sub>`0x0041`</sub>                 |    ✓    |  ✓   |  ✓  | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-| ML-KEM-1024 <sub>`0x0042`</sub>                |    ✓    |  ✓   |  ✓  | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-| MLKEM768-P256 <sub>`0x0050`</sub>              |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
-| MLKEM768-X25519 <sub>`0x647a`</sub>            |    ✓    |  ✓   |     | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-| MLKEM1024-P384 <sub>`0x0051`</sub>             |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
+| Algorithm                                      | Native support                                                         | [Extensibility][] |
+| ---------------------------------------------- | ---------------------------------------------------------------------- | :---------------: |
+| DHKEM(P-256, HKDF-SHA256) <sub>`0x0010`</sub>  | All tested runtimes                                                    |         ✓         |
+| DHKEM(P-384, HKDF-SHA384) <sub>`0x0011`</sub>  | All tested runtimes                                                    |         ✓         |
+| DHKEM(P-521, HKDF-SHA512) <sub>`0x0012`</sub>  | All tested runtimes                                                    |         ✓         |
+| DHKEM(X25519, HKDF-SHA256) <sub>`0x0020`</sub> | All tested runtimes                                                    |         ✓         |
+| DHKEM(X448, HKDF-SHA512) <sub>`0x0021`</sub>   | Node.js, Deno                                                          |         ✓         |
+| ML-KEM-512 <sub>`0x0040`</sub>                 | Node.js, Deno                                                          |         ✓         |
+| ML-KEM-768 <sub>`0x0041`</sub>                 | Node.js, Deno, Bun, Cloudflare Workers[^cf-modern], Chromium, Electron |         ✓         |
+| ML-KEM-1024 <sub>`0x0042`</sub>                | Node.js, Deno, Bun, Cloudflare Workers[^cf-modern], Chromium, Electron |         ✓         |
+| MLKEM768-P256 <sub>`0x0050`</sub>              | Node.js, Deno, Cloudflare Workers[^cf-modern]                          |         ✓         |
+| MLKEM768-X25519 <sub>`0x647a`</sub>            | Node.js, Deno, Cloudflare Workers[^cf-modern], Chromium                |         ✓         |
+| MLKEM1024-P384 <sub>`0x0051`</sub>             | Node.js, Deno, Cloudflare Workers[^cf-modern]                          |         ✓         |
 
 ### Key Derivation Functions (KDF)
 
-| Name                              | Node.js | Deno | Bun |  CF Workers   | [Browsers][] | [Extensibility][] |
-| :-------------------------------- | :-----: | :--: | :-: | :-----------: | :----------: | :---------------: |
-| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |  ✓   |     |               |              |         ✓         |
-| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
-| TurboSHAKE128 <sub>`0x0012`</sub> |    ✓    |  ✓   |     |               |              |         ✓         |
-| TurboSHAKE256 <sub>`0x0013`</sub> |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
+| Algorithm                         | Native support                                          | [Extensibility][] |
+| --------------------------------- | ------------------------------------------------------- | :---------------: |
+| HKDF-SHA256 <sub>`0x0001`</sub>   | All tested runtimes                                     |         ✓         |
+| HKDF-SHA384 <sub>`0x0002`</sub>   | All tested runtimes                                     |         ✓         |
+| HKDF-SHA512 <sub>`0x0003`</sub>   | All tested runtimes                                     |         ✓         |
+| SHAKE128 <sub>`0x0010`</sub>      | Node.js, Deno                                           |         ✓         |
+| SHAKE256 <sub>`0x0011`</sub>      | Node.js, Deno, Cloudflare Workers[^cf-modern]           |         ✓         |
+| TurboSHAKE128 <sub>`0x0012`</sub> | Node.js, Deno, Electron                                 |         ✓         |
+| TurboSHAKE256 <sub>`0x0013`</sub> | Node.js, Deno, Cloudflare Workers[^cf-modern], Electron |         ✓         |
 
 ### Authenticated Encryption (AEAD)
 
-| Name                                 | Node.js | Deno | Bun |  CF Workers   | [Browsers][] | [Extensibility][] |
-| :----------------------------------- | :-----: | :--: | :-: | :-----------: | :----------: | :---------------: |
-| AES-128-GCM <sub>`0x0001`</sub>      |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| AES-256-GCM <sub>`0x0002`</sub>      |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
-| ChaCha20Poly1305 <sub>`0x0003`</sub> |    ✓    |  ✓   |  ✓  | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-
-[^chromium]: Chromium
-
-[^firefox]: Firefox
-
-[^webkit]: WebKit
+| Algorithm                            | Native support                                                         | [Extensibility][] |
+| ------------------------------------ | ---------------------------------------------------------------------- | :---------------: |
+| AES-128-GCM <sub>`0x0001`</sub>      | All tested runtimes                                                    |         ✓         |
+| AES-256-GCM <sub>`0x0002`</sub>      | All tested runtimes                                                    |         ✓         |
+| ChaCha20Poly1305 <sub>`0x0003`</sub> | Node.js, Deno, Bun, Cloudflare Workers[^cf-modern], Chromium, Electron |         ✓         |
 
 [^cf-modern]:
     Requires the
@@ -154,3 +149,5 @@ specifications.
 [Modern Algorithms]: https://wicg.github.io/webcrypto-modern-algos/
 [extensibility]: https://github.com/panva/hpke/tree/main/examples/noble-suite#readme
 [browsers]: https://panva.github.io/hpke/
+[Electron's main process]:
+  https://www.electronjs.org/docs/latest/tutorial/process-model#the-main-process

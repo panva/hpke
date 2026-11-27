@@ -35,17 +35,16 @@ export const ALGORITHM_IDS = {
   AEAD_EXPORT_ONLY: 0xffff,
 }
 
-const README_RUNTIME_COLUMNS = {
+const README_RUNTIME_NAMES = {
   node: 'Node.js',
   deno: 'Deno',
   bun: 'Bun',
-  chromium: 'Browsers',
-  firefox: 'Browsers',
-  webkit: 'Browsers',
-  workerd: 'CF Workers',
+  chromium: 'Chromium',
+  firefox: 'Firefox',
+  webkit: 'WebKit',
+  workerd: 'Cloudflare Workers',
+  electron: 'Electron',
 }
-
-const README_BROWSER_NAMES = { chromium: 'Chromium', firefox: 'Firefox', webkit: 'WebKit' }
 
 const README_SECTION_COMPONENTS = {
   'Key Encapsulation Mechanisms (KEM)': 'kem',
@@ -168,43 +167,40 @@ const splitReadmeTableRow = (line) =>
 function parseReadmeSupportMatrix(readme) {
   const matrix = { kem: new Map(), kdf: new Map(), aead: new Map() }
   let component
-  let columns
+  let inSupportTable = false
 
-  for (const line of readme.split('\n')) {
+  for (const line of readme.split(/\r?\n/)) {
     const heading = line.match(/^### (.+)$/)
     if (heading) {
       component = README_SECTION_COMPONENTS[heading[1]]
-      columns = undefined
+      inSupportTable = false
       continue
     }
 
     if (!component || !line.startsWith('|')) continue
 
-    const cells = splitReadmeTableRow(line)
-    const firstCell = cells[0]
-
-    if (firstCell === 'Name') {
-      columns = cells.map(normalizeReadmeCell)
+    const [algorithmCell, supportCell] = splitReadmeTableRow(line.trimEnd())
+    if (algorithmCell === 'Algorithm' && supportCell === 'Native support') {
+      inSupportTable = true
       continue
     }
 
-    if (!columns || firstCell.startsWith(':')) continue
+    if (!inSupportTable || supportCell === undefined) continue
 
-    const id = firstCell.match(/`0x([0-9a-fA-F]+)`/)
+    const id = algorithmCell.match(/`0x([0-9a-fA-F]+)`/)
     if (!id) continue
 
-    const row = { name: normalizeReadmeCell(firstCell), support: {} }
-
-    for (const [runtime, columnName] of Object.entries(README_RUNTIME_COLUMNS)) {
-      const index = columns.indexOf(columnName)
-      const cell = cells[index] ?? ''
-      const browserName = README_BROWSER_NAMES[runtime]
-      row.support[runtime] = browserName
-        ? cell === '✓' || (cell.startsWith('◐') && cell.includes(`[^${browserName.toLowerCase()}]`))
-        : cell.includes('✓')
-    }
-
-    matrix[component].set(Number.parseInt(id[1], 16), row)
+    const support =
+      supportCell === 'All tested runtimes'
+        ? Object.values(README_RUNTIME_NAMES)
+        : supportCell
+            .replace(/\[\^[^\]]+\]/g, '')
+            .split(',')
+            .map((name) => name.trim())
+    matrix[component].set(Number.parseInt(id[1], 16), {
+      name: normalizeReadmeCell(algorithmCell),
+      support,
+    })
   }
 
   return matrix
@@ -223,7 +219,7 @@ export function findReadmeSupportMismatches({ results, readme, runtime }) {
     const id = ALGORITHM_IDS[algorithm]
     const row = matrix[test.component]?.get(id)
 
-    if (!row?.support[runtime]) {
+    if (!row?.support.includes(README_RUNTIME_NAMES[runtime])) {
       mismatches.push({
         component: test.component,
         algorithm,
@@ -237,7 +233,7 @@ export function findReadmeSupportMismatches({ results, readme, runtime }) {
 }
 
 export function formatReadmeSupportMismatch(mismatch) {
-  const runtime = README_BROWSER_NAMES[mismatch.runtime] ?? README_RUNTIME_COLUMNS[mismatch.runtime]
+  const runtime = README_RUNTIME_NAMES[mismatch.runtime]
   return `${mismatch.name} (${mismatch.component}) passed but README.md does not mark ${runtime} support`
 }
 
