@@ -99,21 +99,21 @@ Below are the algorithms built in (based on Web Cryptography) and their runtime 
 | ML-KEM-512 <sub>`0x0040`</sub>                 |    ✓    |  ✓   |     |               |              |         ✓         |
 | ML-KEM-768 <sub>`0x0041`</sub>                 |    ✓    |  ✓   |  ✓  | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
 | ML-KEM-1024 <sub>`0x0042`</sub>                |    ✓    |  ✓   |  ✓  | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-| MLKEM768-P256 <sub>`0x0050`</sub>              |    ✓    |  ✓   |     |               |              |         ✓         |
+| MLKEM768-P256 <sub>`0x0050`</sub>              |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
 | MLKEM768-X25519 <sub>`0x647a`</sub>            |    ✓    |  ✓   |     | ✓[^cf-modern] | ◐[^chromium] |         ✓         |
-| MLKEM1024-P384 <sub>`0x0051`</sub>             |    ✓    |  ✓   |     |               |              |         ✓         |
+| MLKEM1024-P384 <sub>`0x0051`</sub>             |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
 
 ### Key Derivation Functions (KDF)
 
-| Name                              | Node.js | Deno | Bun | CF Workers | [Browsers][] | [Extensibility][] |
-| :-------------------------------- | :-----: | :--: | :-: | :--------: | :----------: | :---------------: |
-| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓    |  ✓   |  ✓  |     ✓      |      ✓       |         ✓         |
-| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |  ✓   |     |            |              |         ✓         |
-| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |  ✓   |     |            |              |         ✓         |
-| TurboSHAKE128 <sub>`0x0012`</sub> |    ✓    |  ✓   |     |            |              |         ✓         |
-| TurboSHAKE256 <sub>`0x0013`</sub> |    ✓    |  ✓   |     |            |              |         ✓         |
+| Name                              | Node.js | Deno | Bun |  CF Workers   | [Browsers][] | [Extensibility][] |
+| :-------------------------------- | :-----: | :--: | :-: | :-----------: | :----------: | :---------------: |
+| HKDF-SHA256 <sub>`0x0001`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
+| HKDF-SHA384 <sub>`0x0002`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
+| HKDF-SHA512 <sub>`0x0003`</sub>   |    ✓    |  ✓   |  ✓  |       ✓       |      ✓       |         ✓         |
+| SHAKE128 <sub>`0x0010`</sub>      |    ✓    |  ✓   |     |               |              |         ✓         |
+| SHAKE256 <sub>`0x0011`</sub>      |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
+| TurboSHAKE128 <sub>`0x0012`</sub> |    ✓    |  ✓   |     |               |              |         ✓         |
+| TurboSHAKE256 <sub>`0x0013`</sub> |    ✓    |  ✓   |     | ✓[^cf-modern] |              |         ✓         |
 
 ### Authenticated Encryption (AEAD)
 
