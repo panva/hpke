@@ -108,6 +108,25 @@ jobs:
       - run: npm clean-install
       - run: bun run test:bun
 
+  electron:
+    needs: build
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: lts/*
+          cache: 'npm'
+          check-latest: true
+          cache-dependency-path: |
+            package-lock.json
+            test/electron/package-lock.json
+      - run: npm clean-install
+      - run: npm clean-install --prefix test/electron
+      - run: node --run test:electron
+
   workerd:
     needs: build
     runs-on: ubuntu-latest

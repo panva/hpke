@@ -21,6 +21,13 @@ updates:
     allow:
       - dependency-name: 'playwright'
   - package-ecosystem: 'npm'
+    directory: '/test/electron'
+    patterns:
+      - '*'
+    multi-ecosystem-group: 'dependencies'
+    allow:
+      - dependency-name: 'electron'
+  - package-ecosystem: 'npm'
     directory: '/test/workerd'
     patterns:
       - '*'

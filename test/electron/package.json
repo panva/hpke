@@ -1,0 +1,7 @@
+{
+  "name": "hpke-electron-tests",
+  "private": true,
+  "devDependencies": {
+    "electron": "45.4.1"
+  }
+}
