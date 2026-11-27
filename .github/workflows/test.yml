@@ -14,7 +14,7 @@ on:
 
 jobs:
   node-versions:
-    uses: panva/.github/.github/workflows/node-versions.yml@75ad63f5730195dd3e9ec22dbbf29101c99d8501 # v4
+    uses: panva/.github/.github/workflows/node-versions.yml@d71c8a3185bc52e7a16672506fc6d75e16e0d964 # v5
     with:
       min: 22
 
